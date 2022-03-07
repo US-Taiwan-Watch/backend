@@ -17,17 +17,40 @@
   "dependencies": {
     "apollo-server": "^3.6.3",
     "apollo-server-express": "^3.6.3",
+    "applicationinsights": "^2.2.2",
+    "dotenv": "^16.0.0",
     "express": "^4.17.3",
+    "graphql": "^15.3.0",
+    "graphql-redis-subscriptions": "^2.4.2",
+    "ioredis": "^4.28.5",
+    "jsonwebtoken": "^8.5.1",
+    "jwks-rsa": "^2.0.5",
+    "lodash": "^4.17.21",
+    "mongodb": "^4.4.1",
+    "mongodb-uri": "^0.9.7",
+    "nodemon": "^2.0.15",
+    "request": "^2.88.2",
+    "request-promise": "^4.2.6",
+    "subscriptions-transport-ws": "^0.11.0",
     "ts-node": "^10.7.0",
     "type-graphql": "^1.1.1",
-    "typescript": "^4.6.2"
+    "typed-rest-client": "^1.8.6",
+    "typescript": "^4.6.2",
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
+    "@types/ioredis": "^4.28.8",
+    "@types/jsonwebtoken": "^8.5.8",
+    "@types/lodash": "^4.14.179",
+    "@types/mongodb-uri": "^0.9.1",
+    "@types/request-promise": "^4.1.48",
+    "@types/uuid": "^8.3.4",
     "@typescript-eslint/eslint-plugin": "^5.13.0",
     "@typescript-eslint/parser": "^5.13.0",
     "eslint": "^8.10.0",
     "eslint-config-next": "^12.1.0",
     "eslint-plugin-unicorn": "^41.0.0",
+    "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2"
   }
 }

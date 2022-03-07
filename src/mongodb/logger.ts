@@ -1,0 +1,38 @@
+import { v4 as uuid } from "uuid";
+import { inspect } from "util";
+
+export class Logger {
+  protected _id: string;
+  protected _methodName: string | undefined;
+
+  constructor(protected _className: string = "") {
+    this._id = uuid();
+  }
+
+  public in(methodName: string): Logger {
+    const o = new Logger(this._className);
+    o._id = this._id;
+    o._methodName = methodName;
+    return o;
+  }
+
+  public log(msg: any) {
+    const prefix =
+      (this._methodName
+        ? `${this._className}.${this._methodName}`
+        : `${this._className}`) + `:${this._id}`;
+    Logger.log(msg, prefix);
+  }
+
+  public static log(msg: any, prefix?: string) {
+    if (typeof msg !== "string") {
+      const colors = process.env.IS_LOCAL ? true : false;
+      msg = inspect(msg, { depth: null, colors: colors });
+    }
+    if (prefix !== undefined) {
+      console.log(`[${prefix}] ${msg}`);
+    } else {
+      console.log(msg);
+    }
+  }
+}
