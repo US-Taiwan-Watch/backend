@@ -29,4 +29,9 @@ export class AdminResolver {
     }
     return null;
   }
+
+  @Query(() => String, { nullable: true })
+  public test() {
+    return "Hello!";
+  }
 }
