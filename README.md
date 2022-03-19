@@ -17,5 +17,6 @@
 3. Local API endpoint launches at: `http://localhost:5487`
 
 ## Deployment
-1. Just run `docker-push.sh`
+1. Make sure your Docker daemon is running
+2. Just run `docker-push.sh`
    - No need to run `yarn build` where it's already taken care
