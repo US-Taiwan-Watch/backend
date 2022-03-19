@@ -8,6 +8,8 @@ import { ApolloServer, AuthenticationError } from "apollo-server-express";
 import express from "express";
 import { RedisClient } from "./redis/redis-client";
 import { UserResolver } from "./resolver/user.resolver";
+import { MessagingResolver } from "./resolver/messaging.resolver";
+import { SubscriptionResolver } from "./resolver/subscription.resolver";
 import config from "./config";
 import * as bodyParser from "body-parser";
 import cors from "cors";
@@ -15,8 +17,9 @@ import { ApolloServerPluginInlineTrace } from "apollo-server-core";
 import { authChecker } from "./util/auth-helper";
 import auth0RuleWebhookRouter from "./auth0/webhook";
 import { appInsightsClient } from "./util/app-insights";
-import { SubscriptionServer } from "subscriptions-transport-ws";
-import { execute, subscribe } from "graphql";
+import WS from "ws";
+import { useServer } from "graphql-ws/lib/use/ws";
+import { ApolloServerPluginDrainHttpServer } from "apollo-server-core";
 
 async function bootstrap() {
   const jwks = require("jwks-rsa");
@@ -69,12 +72,33 @@ async function bootstrap() {
   const schema = buildSchemaSync({
     pubSub: RedisClient.pubsub,
     // resolvers: [__dirname + "/**/*.resolver.{ts,js}"]
-    resolvers: [UserResolver],
+    resolvers: [SubscriptionResolver, MessagingResolver, UserResolver],
     validate: false,
     authChecker,
     // emitSchemaFile: true,
   });
 
+  const app = express();
+  app.use(bodyParser.json({ limit: "10mb" }));
+  app.use(bodyParser.urlencoded({ limit: "10mb", extended: true }));
+  app.use(cors());
+
+  app.use("/auth0-rule", auth0RuleWebhookRouter);
+
+  // Create server
+  const httpServer: http.Server = http.createServer((req, res) => {
+    appInsightsClient.trackNodeHttpRequest({ request: req, response: res });
+    return app(req, res);
+  });
+
+  // Set up WebSocket server.
+  const wsServer = new WS.Server<WS.WebSocket>({
+    server: httpServer,
+    path: "/",
+  });
+  const serverCleanup = useServer({ schema }, wsServer);
+
+  // Set up ApolloServer.
   const apollo = new ApolloServer({
     schema,
     context: async ({ req }) => {
@@ -93,37 +117,34 @@ async function bootstrap() {
         throw new AuthenticationError("You must be logged in.");
       }
     },
-    plugins: [ApolloServerPluginInlineTrace()],
+    plugins: [
+      ApolloServerPluginInlineTrace(),
+      // Proper shutdown for the HTTP server.
+      ApolloServerPluginDrainHttpServer({ httpServer }),
+
+      // Proper shutdown for the WebSocket server.
+      {
+        async serverWillStart() {
+          return {
+            async drainServer() {
+              await serverCleanup.dispose();
+            },
+          };
+        },
+      },
+    ],
   });
-
-  const app = express();
-  app.use(bodyParser.json({ limit: "10mb" }));
-  app.use(bodyParser.urlencoded({ limit: "10mb", extended: true }));
-  app.use(cors());
-
-  app.use("/auth0-rule", auth0RuleWebhookRouter);
 
   await apollo.start();
   apollo.applyMiddleware({ app, path: "/" });
 
-  // Create server
-  const server: http.Server = http.createServer((req, res) => {
-    appInsightsClient.trackNodeHttpRequest({ request: req, response: res });
-    return app(req, res);
-  });
-
-  server.listen({ port: config.port }, async () => {
-    // Add subscription support
-    SubscriptionServer.create(
-      { execute, subscribe, schema },
-      {
-        server,
-        path: apollo.graphqlPath,
-      }
-    );
-
+  // Now that our HTTP server is fully set up, actually listen.
+  httpServer.listen({ port: config.port }, async () => {
     console.log(
-      `🚀 Server ready at PORT=${config.port} PATH=${apollo.graphqlPath}`
+      `🚀 Query endpoint ready at http://localhost:${config.port}${apollo.graphqlPath}`
+    );
+    console.log(
+      `🚀 Subscription endpoint ready at ws://localhost:${config.port}${apollo.graphqlPath}`
     );
   });
 }
