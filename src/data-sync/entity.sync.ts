@@ -1,3 +1,3 @@
 export interface EntitySyncer<T> {
-  sync(entity: T, fields: string[]): Promise<T>;
+  sync(entity: T, fields: (keyof T)[]): Promise<T>;
 }

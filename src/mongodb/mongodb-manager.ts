@@ -119,6 +119,18 @@ export abstract class MongoDBTable {
 
   // ============
 
+  protected queryItemsWorking<T>(
+    query: any,
+    attrNamesToGet?: (keyof T)[]
+  ): Promise<T[]> {
+    const prjFields = this.composeProjectFields<T>(attrNamesToGet);
+    return this.getTable<T>()
+      .find(query, prjFields)
+      .limit(100)
+      .toArray()
+      .then((res) => this.addBackIdField(res) as T[]);
+  }
+
   public async queryItems<T>(
     query: any,
     attrNamesToGet?: (keyof T)[],
@@ -159,7 +171,7 @@ export abstract class MongoDBTable {
         const numItems = limit && limit < pageSize ? limit : pageSize;
         console.log(
           `[MongoDBTable::queryItems()] getting ` +
-            `${numItems} items, maxId=${maxId}`
+          `${numItems} items, maxId=${maxId}`
         );
         const batch = await runQuery(maxId, numItems);
         console.log(`[MongoDBTable::queryItems()] got ${batch.length} items`);
@@ -183,7 +195,7 @@ export abstract class MongoDBTable {
         if (retryCount >= NUM_RETRIES) {
           console.log(
             `[MongoDBTable::queryItems()] DB Error after ` +
-              `${NUM_RETRIES} retries: ${JSON.stringify(err, null, 2)}`
+            `${NUM_RETRIES} retries: ${JSON.stringify(err, null, 2)}`
           );
           if (throwsError) {
             throw err;
@@ -193,7 +205,7 @@ export abstract class MongoDBTable {
         ++retryCount;
         console.log(
           `[MongoDBTable::queryItems()] DB Error = ` +
-            `${err}.\nRetry ${retryCount} ...`
+          `${err}.\nRetry ${retryCount} ...`
         );
         await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
       }
@@ -381,7 +393,7 @@ export class MongoDBManager {
   }
 
   public static async instance(
-    ...TblClasses: { new (db: mongodb.Db): MongoDBTable }[]
+    ...TblClasses: { new(db: mongodb.Db): MongoDBTable }[]
   ): Promise<MongoDBManager> {
     if (!MongoDBManager._instance) {
       MongoDBManager._instance = new MongoDBManager();
@@ -427,7 +439,7 @@ export class MongoDBManager {
   }
 
   public getTable<T extends MongoDBTable>(TblClass: {
-    new (db: mongodb.Db): T;
+    new(db: mongodb.Db): T;
   }): T {
     const tbl = _.find(this.tables, (t) => t instanceof TblClass);
     console.log(`tbl.tableName = ${tbl && tbl.tableName}`);
@@ -516,7 +528,7 @@ export function MongoDBTableBase(tableName: string, suggestPageSize?: number) {
 }
 
 export function TableProvider<TableType extends MongoDBTable>(TableClass: {
-  new (db: mongodb.Db): TableType;
+  new(db: mongodb.Db): TableType;
 }) {
   class X {
     private static _db: MongoDBManager;
