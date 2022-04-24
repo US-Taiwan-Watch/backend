@@ -23,7 +23,7 @@ export class LegislatorResolver extends TableProvider(LegislatorTable) {
     return await new LegislatorSyncer().sync(legislator, fields);
   }
 
-  public async syncLegislatorWithID(bioGuideId: string, fields: (keyof Legislator)[]): Promise<Legislator | null> {
+  public async syncLegislatorWithKey(bioGuideId: string, fields: (keyof Legislator)[]): Promise<Legislator | null> {
     let legislator = await this.legislator(bioGuideId);
     if (!legislator) {
       return null;

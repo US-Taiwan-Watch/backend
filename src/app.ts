@@ -11,6 +11,7 @@ import { UserResolver } from "./resolver/user.resolver";
 import { MessagingResolver } from "./resolver/messaging.resolver";
 import { SubscriptionResolver } from "./resolver/subscription.resolver";
 import { LegislatorResolver } from "./resolver/legislator.resolver";
+import { BillResolver } from "./resolver/bill.resolver";
 import config from "./config";
 import * as bodyParser from "body-parser";
 import cors from "cors";
@@ -73,7 +74,7 @@ async function bootstrap() {
   const schema = buildSchemaSync({
     pubSub: RedisClient.pubsub,
     // resolvers: [__dirname + "/**/*.resolver.{ts,js}"]
-    resolvers: [SubscriptionResolver, MessagingResolver, UserResolver, LegislatorResolver],
+    resolvers: [SubscriptionResolver, MessagingResolver, UserResolver, LegislatorResolver, BillResolver],
     validate: false,
     authChecker,
     // emitSchemaFile: true,

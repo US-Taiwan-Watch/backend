@@ -76,7 +76,7 @@ export abstract class MongoDBTable {
   }
 
   // CMS
-  public getItemByMultiKeys<T, KeyType = string>(
+  public getItemByMultiKeys<T, KeyType = any>(
     keyNames: string[],
     keyValues: KeyType[],
     attrNamesToGet?: (keyof T)[]
