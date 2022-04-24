@@ -5,7 +5,7 @@ export class ProPublicaHelper {
     return new Promise((resolve, reject) => {
       request.get(url, {
         headers: {
-          'x-api-key': 'update with the real key'
+          'x-api-key': process.env.PROPUBLICA_API_KEY
         }
       }, (err, response, body) => {
         if (err || response.statusCode !== 200) {
