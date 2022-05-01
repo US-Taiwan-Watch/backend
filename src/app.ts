@@ -10,7 +10,7 @@ import { RedisClient } from "./redis/redis-client";
 import { UserResolver } from "./resolver/user.resolver";
 import { MessagingResolver } from "./resolver/messaging.resolver";
 import { SubscriptionResolver } from "./resolver/subscription.resolver";
-import { LegislatorResolver } from "./resolver/legislator.resolver";
+import { MemberResolver } from "./resolver/member.resolver";
 import { BillResolver } from "./resolver/bill.resolver";
 import config from "./config";
 import * as bodyParser from "body-parser";
@@ -74,7 +74,7 @@ async function bootstrap() {
   const schema = buildSchemaSync({
     pubSub: RedisClient.pubsub,
     // resolvers: [__dirname + "/**/*.resolver.{ts,js}"]
-    resolvers: [SubscriptionResolver, MessagingResolver, UserResolver, LegislatorResolver, BillResolver],
+    resolvers: [SubscriptionResolver, MessagingResolver, UserResolver, MemberResolver, BillResolver],
     validate: false,
     authChecker,
     // emitSchemaFile: true,

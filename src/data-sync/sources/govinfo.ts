@@ -23,7 +23,7 @@ export class GovInfoHelper {
   }
 
   public static async getBillStatus(bill: Bill): Promise<any> {
-    const url = `https://www.govinfo.gov/bulkdata/BILLSTATUS/116/${bill.billType}/BILLSTATUS-${this.getBillId(bill)}.xml`;
+    const url = `https://www.govinfo.gov/bulkdata/BILLSTATUS/${bill.congress}/${bill.billType}/BILLSTATUS-${this.getBillId(bill)}.xml`;
     return this.getXML(url);
   }
 
