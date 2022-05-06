@@ -2,7 +2,7 @@ import { MongoDBTableBase } from "../mongodb/mongodb-manager";
 import { Member } from "../../common/models";
 import * as _ from "lodash";
 
-export class MemberTable extends MongoDBTableBase("legislators") {
+export class MemberTable extends MongoDBTableBase("members") {
   public addMember(member: Member) {
     return this.putItem(member);
   }
