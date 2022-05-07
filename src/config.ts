@@ -39,4 +39,7 @@ export default {
     application_insights_app_id: process.env.APP_INSIGHTS_APP_ID as string,
     application_insights_api_key: process.env.APP_INSIGHTS_API_KEY as string,
   },
+  storage: {
+    connection_string: process.env.AZURE_STORAGE_CONNECTION_STRING as string,
+  },
 };

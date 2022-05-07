@@ -1,6 +1,7 @@
 import request from "request";
 import { Bill, TextVersionCode } from "../../../common/models";
 import { parseStringPromise } from 'xml2js';
+import { RequestHelper } from "./request-helper";
 
 interface BillVersion {
   dateIssued: string;
@@ -11,7 +12,7 @@ interface BillVersion {
   lastModified: string,
 }
 
-export class GovInfoHelper {
+export abstract class GovInfoHelper {
   private static getBillId(bill: Bill): string {
     return `${bill.congress}${bill.billType}${bill.billNumber}`;
   }
@@ -27,41 +28,27 @@ export class GovInfoHelper {
     return this.getXML(url);
   }
 
-  public static get(url: string): Promise<any> {
-    return new Promise((resolve, reject) => {
-      request.get(url, {
-        qs: {
-          api_key: process.env.GOVINFO_API_KEY
-        }
-      }, (err, response, body) => {
-        if (err || response.statusCode !== 200) {
-          reject(err);
-        } else {
-          resolve(JSON.parse(body));
-        }
-      });
-    });
+  public static async get(url: string): Promise<any> {
+    const result = await RequestHelper.get(url, {
+      qs: {
+        api_key: process.env.GOVINFO_API_KEY
+      }
+    })
+    return JSON.parse(result);
   }
 
-  public static getXML(url: string): Promise<any> {
-    return new Promise((resolve, reject) => {
-      request.get(url, {
-        qs: {
-          api_key: process.env.GOVINFO_API_KEY
-        }
-      }, (err, response, body) => {
-        if (err || response.statusCode !== 200) {
-          reject(err);
-          return;
-        }
-        parseStringPromise(body).then(result => {
-          resolve(result);
-        }).catch(xmlErr => {
-          reject(xmlErr);
-        });
-      });
-    });
+  public static async getXML(url: string): Promise<any> {
+    const result = await RequestHelper.get(url, {
+      qs: {
+        api_key: process.env.GOVINFO_API_KEY
+      }
+    })
+    try {
+      const xml = await parseStringPromise(result);
+      return xml;
+    } catch (err) {
+      throw err;
+    }
   }
-
 
 }
