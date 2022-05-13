@@ -36,7 +36,7 @@ export class Logger {
     const h = String(date.getHours()).padStart(2, '0');
     const m = String(date.getMinutes()).padStart(2, '0');
     const s = String(date.getSeconds()).padStart(2, '0');
-    const dateString = `[${y}/${M}/${d} ${h}:${m}:${s}]`;
+    const dateString = `[${y}-${M}-${d} ${h}:${m}:${s}]`;
     if (prefix !== undefined) {
       console.log(`${dateString}[${prefix}] ${msg}`);
     } else {
