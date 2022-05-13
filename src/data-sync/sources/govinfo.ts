@@ -1,7 +1,6 @@
-import request from "request";
 import { Bill, TextVersionCode } from "../../../common/models";
 import { parseStringPromise } from 'xml2js';
-import { RequestHelper } from "./request-helper";
+import { RequestHelper, RequestSource } from "./request-helper";
 
 interface BillVersion {
   dateIssued: string;
@@ -29,7 +28,7 @@ export abstract class GovInfoHelper {
   }
 
   public static async get(url: string): Promise<any> {
-    const result = await RequestHelper.get(url, {
+    const result = await RequestHelper.from(RequestSource.GOV_INFO).get(url, {
       qs: {
         api_key: process.env.GOVINFO_API_KEY
       }
@@ -38,7 +37,7 @@ export abstract class GovInfoHelper {
   }
 
   public static async getXML(url: string): Promise<any> {
-    const result = await RequestHelper.get(url, {
+    const result = await RequestHelper.from(RequestSource.GOV_INFO).get(url, {
       qs: {
         api_key: process.env.GOVINFO_API_KEY
       }
