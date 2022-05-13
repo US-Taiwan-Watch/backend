@@ -1,6 +1,6 @@
 import * as mongodbUri from "mongodb-uri";
 import * as mongodb from "mongodb";
-import { Logger } from "./logger";
+import { Logger } from "../util/logger";
 import * as _ from "lodash";
 import { v4 as uuid } from "uuid";
 import config from "../config";

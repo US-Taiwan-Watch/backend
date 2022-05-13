@@ -29,10 +29,18 @@ export class Logger {
       const colors = process.env.IS_LOCAL ? true : false;
       msg = inspect(msg, { depth: null, colors: colors });
     }
+    const date = new Date();
+    const y = date.getFullYear();
+    const M = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    const h = String(date.getHours()).padStart(2, '0');
+    const m = String(date.getMinutes()).padStart(2, '0');
+    const s = String(date.getSeconds()).padStart(2, '0');
+    const dateString = `[${y}/${M}/${d} ${h}:${m}:${s}]`;
     if (prefix !== undefined) {
-      console.log(`[${prefix}] ${msg}`);
+      console.log(`${dateString}[${prefix}] ${msg}`);
     } else {
-      console.log(msg);
+      console.log(`${dateString} ${msg}`);
     }
   }
 }
