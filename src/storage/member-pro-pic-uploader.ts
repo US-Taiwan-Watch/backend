@@ -1,6 +1,6 @@
 import { AzureStorageManager, Container } from './azure-storage-manager';
 
-export abstract class MemberProPicHelper {
+export abstract class MemberProPicUploader {
   private static getPath(bioguideID: string) {
     return `profile_pictures/${bioguideID}.jpg`;
   }
