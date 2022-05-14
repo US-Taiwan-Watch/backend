@@ -9,26 +9,33 @@ const blobServiceClient = BlobServiceClient.fromConnectionString(
 
 export enum Container {
   TEST = 'test',
+  PUBLIC_IMAGE = 'public-image',
+  BILL = 'bill',
 }
 
 export abstract class AzureStorageManager {
-  // public static async createContainerIfNotExist(containerName: string): Promise<boolean> {
-  //   const containerClient = blobServiceClient.getContainerClient(containerName);
-  //   if (await containerClient.exists()) {
-  //     return false;
-  //   }
-  //   const createContainerResponse = await containerClient.create();
-  //   return true;
-  // }
+  public static async checkBlobExists(container: Container, blobName: string): Promise<boolean> {
+    const containerClient = blobServiceClient.getContainerClient(container);
+    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+    return await blockBlobClient.exists();
+  }
 
   public static async uploadBlob(container: Container, blobName: string, contentType: ContentType, data: Buffer) {
     const containerClient = blobServiceClient.getContainerClient(container);
 
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
 
-    const uploadBlobResponse = await blockBlobClient.uploadData(data, {
+    let uploadBlobResponse;
+    const options = {
       blobHTTPHeaders: { blobContentType: this.getMimeType(contentType) }
-    });
+    };
+
+    if (contentType === 'xml' || contentType === 'txt') {
+      uploadBlobResponse = await blockBlobClient.upload(data, data.length, options);
+    }
+    else {
+      uploadBlobResponse = await blockBlobClient.uploadData(data, options);
+    }
     return uploadBlobResponse.lastModified;
   }
 
