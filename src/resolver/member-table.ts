@@ -8,12 +8,12 @@ export class MemberTable extends MongoDBTableBase("members") {
   }
 
   public async getAllMembers(): Promise<Member[]> {
-    // return await this.getAllItems<Member>();
-    return await this.queryItemsWorking({ 'bioGuideId': { $ne: null } });
+    return await this.getAllItems<Member>();
+    // return await this.queryItemsWorking({ 'bioGuideId': { $ne: null } });
   }
 
   public getMember(bioGuideId: string, ...attrNamesToGet: (keyof Member)[]): Promise<Member | null> {
-    return this.getItem<Member>('bioGuideId', bioGuideId, attrNamesToGet);
+    return this.getItem<Member>('_id', bioGuideId, attrNamesToGet);
   }
 
   // public updateMember(id: string, update: Partial<User>) {

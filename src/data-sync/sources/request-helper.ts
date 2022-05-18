@@ -99,10 +99,16 @@ export class RequestHelper {
     }
     _logger.log(`Queue ${this.source} starts fetching ${task.options.url}`);
     RequestHelper.getImpl(task.options)
-      .then(value => task.resolve(value))
-      .catch(reason => task.reject(reason))
-      .finally(() => {
+      .then(value => {
         _logger.log(`Queue ${this.source} finished fetching ${task.options.url}`);
+        task.resolve(value);
+      })
+      .catch(reason => {
+        _logger.log(`Queue ${this.source} failed to fetch ${task.options.url}`);
+        // TODO: retry or log
+        task.reject(reason);
+      })
+      .finally(() => {
         this.scheduleNextTask();
       });
   }

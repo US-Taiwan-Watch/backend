@@ -15,7 +15,7 @@ export class MemberSyncer implements EntitySyncer<Member> {
 class MemberProPublicaSyncer implements EntitySyncer<Member> {
   public async sync(member: Member, fields: (keyof Member)[]): Promise<Member> {
     if (fields.includes('firstName')) {
-      const result = await ProPublicaHelper.get(`https://api.propublica.org/congress/v1/members/${member.bioGuideId}.json`);
+      const result = await ProPublicaHelper.get(`https://api.propublica.org/congress/v1/members/${member.id}.json`);
       member.firstName = result[0]['first_name'];
     }
     return member;

@@ -28,7 +28,7 @@ export class MemberResolver extends TableProvider(MemberTable) {
     if (!member) {
       return null;
     }
-    new MemberSyncer().sync(member, fields);
+    await new MemberSyncer().sync(member, fields);
     // TODO: save update to DB
     return member;
   }
