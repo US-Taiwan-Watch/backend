@@ -4,27 +4,27 @@ import { EntitySyncer, } from "./entity.sync";
 import { GovInfoHelper } from "./sources/govinfo";
 
 
-export class BillSyncer implements EntitySyncer<Bill> {
-  public async sync(bill: Bill, fields: (keyof Bill)[]): Promise<Bill> {
-    await new BillGovInfoSyncer().sync(bill, fields);
-    await new BillProPublicaSyncer().sync(bill, fields);
+export class BillSyncer extends EntitySyncer<Bill> {
+  public async sync(): Promise<Bill> {
+    await new BillGovInfoSyncer(this.entity, this.fields).sync();
+    await new BillProPublicaSyncer(this.entity, this.fields).sync();
     // Add other syncers here. Will run in sequential. TODO: update to parallel
-    return bill;
+    return this.entity;
   }
 }
 
-class BillGovInfoSyncer implements EntitySyncer<Bill> {
-  public async sync(bill: Bill, fields: (keyof Bill)[]): Promise<Bill> {
+class BillGovInfoSyncer extends EntitySyncer<Bill> {
+  public async sync(): Promise<Bill> {
     // Just to test the API
-    const result = await GovInfoHelper.getBillVersions(bill);
+    const result = await GovInfoHelper.getBillVersions(this.entity);
     console.log(result);
-    return bill;
+    return this.entity;
   }
 }
 
-class BillProPublicaSyncer implements EntitySyncer<Bill> {
-  public async sync(bill: Bill, fields: (keyof Bill)[]): Promise<Bill> {
+class BillProPublicaSyncer extends EntitySyncer<Bill> {
+  public async sync(): Promise<Bill> {
     // TODO: go sync with source
-    return bill;
+    return this.entity;
   }
 }

@@ -7,18 +7,30 @@ export class MemberTable extends MongoDBTableBase("members") {
     return this.putItem(member);
   }
 
+  public async getMembers(ids: string[], ...attrNamesToGet: (keyof Member)[]): Promise<Member[]> {
+    return await this.getItems<Member>('_id', ids, attrNamesToGet);
+  }
+
   public async getAllMembers(): Promise<Member[]> {
     return await this.getAllItems<Member>();
-    // return await this.queryItemsWorking({ 'bioGuideId': { $ne: null } });
   }
 
   public getMember(bioGuideId: string, ...attrNamesToGet: (keyof Member)[]): Promise<Member | null> {
     return this.getItem<Member>('_id', bioGuideId, attrNamesToGet);
   }
 
-  // public updateMember(id: string, update: Partial<User>) {
-  // this.updateItemByCustomQuery()
-  // return this.updateItemByObjectId<User>(id, update);
-  // }
+  public updateMember(id: string, update: Partial<Member>) {
+    return this.updateItemByObjectId<Member>(id, update);
+  }
+
+  public async createOrReplaceMember(member: Member) {
+    const existing = await this.getMember(member.id);
+    if (existing) {
+      const { id, ...updateMember } = member;
+      this.updateMember(member.id, updateMember);
+    } else {
+      this.addMember(member);
+    }
+  }
 
 }

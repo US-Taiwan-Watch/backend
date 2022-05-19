@@ -4,20 +4,31 @@ import { EntitySyncer, } from "./entity.sync";
 import { ProPublicaHelper } from "./sources/propublica";
 
 
-export class MemberSyncer implements EntitySyncer<Member> {
-  public async sync(member: Member, fields: (keyof Member)[]): Promise<Member> {
-    await new MemberProPublicaSyncer().sync(member, fields);
+export class MemberSyncer extends EntitySyncer<Member> {
+  public static async fetchAll(): Promise<Member[]> {
+    // TODO
+    return [];
+  }
+
+  public static async fetchUpdated(): Promise<Member[]> {
+    // tmp code just for testing in the script
+    const result = await ProPublicaHelper.get(`https://api.propublica.org/congress/v1/116/senate/members.json`);
+    return result[0].members.slice(0, 2).map((m: any) => ({ id: m.id }));
+  }
+
+  public async sync(): Promise<Member> {
+    await new MemberProPublicaSyncer(this.entity, this.fields).sync();
     // Add other syncers here. Will run in sequential. TODO: update to parallel
-    return member;
+    return this.entity;
   }
 }
 
-class MemberProPublicaSyncer implements EntitySyncer<Member> {
-  public async sync(member: Member, fields: (keyof Member)[]): Promise<Member> {
-    if (fields.includes('firstName')) {
-      const result = await ProPublicaHelper.get(`https://api.propublica.org/congress/v1/members/${member.id}.json`);
-      member.firstName = result[0]['first_name'];
+class MemberProPublicaSyncer extends EntitySyncer<Member> {
+  public async sync(): Promise<Member> {
+    if (this.fields == null || this.fields.includes('firstName')) {
+      const result = await ProPublicaHelper.get(`https://api.propublica.org/congress/v1/members/${this.entity.id}.json`);
+      this.entity.firstName = result[0]['first_name'];
     }
-    return member;
+    return this.entity;
   }
 }

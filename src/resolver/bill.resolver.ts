@@ -23,8 +23,8 @@ export class BillResolver extends TableProvider(BillTable) {
     return await tbl.getBill(congress, billType, billNumber);
   }
 
-  public async syncBill(Bill: Bill, fields: (keyof Bill)[]): Promise<Bill> {
-    return await new BillSyncer().sync(Bill, fields);
+  public async syncBill(bill: Bill, fields: (keyof Bill)[]): Promise<Bill> {
+    return await new BillSyncer(bill, fields).sync();
   }
 
   public async syncBillWithKeys(
@@ -33,13 +33,13 @@ export class BillResolver extends TableProvider(BillTable) {
     billNumber: number,
     fields: (keyof Bill)[]
   ): Promise<Bill | null> {
-    let Bill = await this.bill(congress, billType, billNumber);
-    if (!Bill) {
+    let bill = await this.bill(congress, billType, billNumber);
+    if (!bill) {
       return null;
     }
-    new BillSyncer().sync(Bill, fields);
+    new BillSyncer(bill, fields).sync();
     // TODO: save update to DB
-    return Bill;
+    return bill;
   }
 
   // public async syncAllBill(fields: (keyof Bill)[]) {
