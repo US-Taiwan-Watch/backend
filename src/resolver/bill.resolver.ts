@@ -37,16 +37,9 @@ export class BillResolver extends TableProvider(BillTable) {
     if (!bill) {
       return null;
     }
-    new BillSyncer(bill, fields).sync();
+    await new BillSyncer(bill, fields).sync();
     // TODO: save update to DB
     return bill;
   }
-
-  // public async syncAllBill(fields: (keyof Bill)[]) {
-  //   let allBills = await this.getAllBills();
-  //   allBills.forEach(async Bill =>
-  //     await this.syncBill(Bill, fields)
-  //   );
-  // }
 
 }

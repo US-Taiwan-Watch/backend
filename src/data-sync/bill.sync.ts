@@ -16,8 +16,20 @@ export class BillSyncer extends EntitySyncer<Bill> {
 class BillGovInfoSyncer extends EntitySyncer<Bill> {
   public async sync(): Promise<Bill> {
     // Just to test the API
-    const result = await GovInfoHelper.getBillVersions(this.entity);
-    console.log(result);
+    const versions = await GovInfoHelper.getBillVersions(this.entity);
+    const pubLaw = await GovInfoHelper.getBillPublicLaw(this.entity);
+    this.entity.versions = [
+      ...versions.map(v => ({
+        code: v.billVersion,
+        date: v.dateIssued,
+        label: v.billVersionLabel
+      })),
+      ...pubLaw.map(v => ({
+        code: 'pl',
+        date: v.dateIssued,
+        label: v.citation,
+        id: v.packageId.split('-')[1],
+      }))];
     return this.entity;
   }
 }

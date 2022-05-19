@@ -2,6 +2,9 @@ import _ from "lodash";
 import { Logger } from "../../util/logger";
 import request from "request";
 
+// Should only use for debugging purpose. Update to false to request in parallel.
+const COOL_DOWN = true;
+
 const logger = new Logger('RequestHelper');
 
 export type ContentType = 'xml' | 'txt' | 'pdf' | 'jpg';
@@ -46,14 +49,13 @@ export class RequestHelper {
   }
 
   public get(url: string, options?: request.CoreOptions): Promise<any> {
-    const promise = this.pushTask({ url, ...options });
+    const params = { url, ...options };
+    if (!COOL_DOWN) {
+      return RequestHelper.getImpl(params);
+    }
+    const promise = this.pushTask(params);
     this.startScheduling();
     return promise;
-  }
-
-  // Should only use for debugging purpose. Will not queue up. Update to public to test.
-  private static get(url: string, options?: request.CoreOptions): Promise<any> {
-    return this.getImpl({ url, ...options });
   }
 
   private static getImpl(options: request.OptionsWithUrl): Promise<any> {
