@@ -1,14 +1,18 @@
-import { intersection } from "lodash";
 import { Bill } from "../../common/models";
 import { EntitySyncer, } from "./entity.sync";
+import { CongressGovHelper } from "./sources/congress-gov";
 import { GovInfoHelper } from "./sources/govinfo";
+import { ProPublicaHelper } from "./sources/propublica";
 
 
 export class BillSyncer extends EntitySyncer<Bill> {
   public async sync(): Promise<Bill> {
-    await new BillGovInfoSyncer(this.entity, this.fields).sync();
-    await new BillProPublicaSyncer(this.entity, this.fields).sync();
-    // Add other syncers here. Will run in sequential. TODO: update to parallel
+    await Promise.allSettled([
+      new BillGovInfoSyncer(this.entity, this.fields).sync(),
+      new BillProPublicaSyncer(this.entity, this.fields).sync(),
+      new BillCongressGovSyncer(this.entity, this.fields).sync(),
+    ])
+    console.log(this.entity);
     return this.entity;
   }
 }
@@ -36,7 +40,30 @@ class BillGovInfoSyncer extends EntitySyncer<Bill> {
 
 class BillProPublicaSyncer extends EntitySyncer<Bill> {
   public async sync(): Promise<Bill> {
-    // TODO: go sync with source
+    const res = await ProPublicaHelper.getCosponsors(this.entity);
+    this.entity.sponsorInfo = {
+      memberId: res[0].sponsor_id,
+      sponsorDate: res[0].introduced_date,
+    }
+    this.entity.cosponsorInfos = res[0].cosponsors.map((co: any) => ({
+      memberId: co.cosponsor_id,
+      sponsorDate: co.date,
+    }))
+    return this.entity;
+  }
+}
+
+class BillCongressGovSyncer extends EntitySyncer<Bill> {
+  public async sync(): Promise<Bill> {
+    const $ = await CongressGovHelper.getBill(this.entity);
+    let progress = $('ol.bill_progress > li').toArray();
+    if (progress.length === 0) {
+      return this.entity;
+    }
+    this.entity.trackers = progress.map(p => ({
+      stepName: $(p).contents().first().text(),
+      selected: $(p).hasClass('selected')
+    }));
     return this.entity;
   }
 }
