@@ -38,7 +38,7 @@ db.entities.find({_type: 3}).forEach(
     let bill = Object.assign(
       Object.fromEntries(Object.entries(x).filter(([k, v]) => !['s3Entity', '_type', 'title', 'title_zh', 'summary', 'summary_zh'].includes(k))),
       {
-        _id: x.congress + x.billType + x.billNumber,
+        _id: x.congress + '-' + x.billType + '-' + x.billNumber,
         title: {
           en: x.title,
           zh: x.title_zh
