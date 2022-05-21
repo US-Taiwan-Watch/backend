@@ -6,11 +6,12 @@ import { ProPublicaHelper } from "./sources/propublica";
 
 export class MemberSyncer extends EntitySyncer<Member> {
   public static async fetchAll(): Promise<Member[]> {
-    // TODO
+    // TODO: fetch all members!
     return [];
   }
 
   public static async fetchUpdated(): Promise<Member[]> {
+    // TODO: fetch updated members
     // tmp code just for testing in the script
     const result = await ProPublicaHelper.get(`https://api.propublica.org/congress/v1/116/senate/members.json`);
     return result[0].members.slice(0, 2).map((m: any) => ({ id: m.id }));

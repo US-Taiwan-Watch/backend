@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { BillResolver } from "../src/resolver/bill.resolver";
+import { BillResolver } from "../../src/resolver/bill.resolver";
 
 // yarn ts-node ./scripts/bill-add-one.ts
 

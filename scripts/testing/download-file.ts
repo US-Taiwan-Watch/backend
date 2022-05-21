@@ -1,7 +1,7 @@
 import 'reflect-metadata';
-import { RequestHelper, RequestSource } from '../src/data-sync/sources/request-helper';
-import { AzureStorageManager, Container } from '../src/storage/azure-storage-manager';
-import { MemberProPicUploader } from '../src/storage/member-pro-pic-uploader';
+import { RequestHelper, RequestSource } from '../../src/data-sync/sources/request-helper';
+import { AzureStorageManager, Container } from '../../src/storage/azure-storage-manager';
+import { MemberProPicUploader } from '../../src/storage/member-pro-pic-uploader';
 
 // yarn ts-node ./scripts/download-file.ts
 

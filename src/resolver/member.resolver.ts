@@ -20,12 +20,12 @@ export class MemberResolver extends TableProvider(MemberTable) {
   }
 
   // For one-time use
-  public async syncAllMembers(): Promise<Member[]> {
+  public async fetchAndSyncAllMembers(): Promise<Member[]> {
     const members = await MemberSyncer.fetchAll();
     return await this.syncMembers(members);
   }
 
-  public async syncUpdatedMembers(): Promise<Member[]> {
+  public async fetchAndSyncUpdatedMembers(): Promise<Member[]> {
     const members = await MemberSyncer.fetchUpdated();
     return await this.syncMembers(members);
   }
