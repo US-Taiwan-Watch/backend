@@ -26,12 +26,12 @@ class BillGovInfoSyncer extends EntitySyncer<Bill> {
       ...versions.map(v => ({
         code: v.billVersion,
         date: v.dateIssued,
-        label: v.billVersionLabel
+        name: v.billVersionLabel
       })),
       ...pubLaw.map(v => ({
         code: 'pl',
         date: v.dateIssued,
-        label: v.citation,
+        name: v.citation,
         id: v.packageId.split('-')[1],
       }))];
     return this.entity;
@@ -41,13 +41,10 @@ class BillGovInfoSyncer extends EntitySyncer<Bill> {
 class BillProPublicaSyncer extends EntitySyncer<Bill> {
   public async sync(): Promise<Bill> {
     const res = await ProPublicaHelper.getCosponsors(this.entity);
-    this.entity.sponsorInfo = {
-      memberId: res[0].sponsor_id,
-      sponsorDate: res[0].introduced_date,
-    }
+    this.entity.sponsorId = res[0].sponsor_id;
     this.entity.cosponsorInfos = res[0].cosponsors.map((co: any) => ({
       memberId: co.cosponsor_id,
-      sponsorDate: co.date,
+      date: co.date,
     }))
     return this.entity;
   }
