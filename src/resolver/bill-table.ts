@@ -13,21 +13,28 @@ export class BillTable extends MongoDBTableBase("bills") {
   }
 
   public getBill(
-    congress: number,
-    billType: BillType,
-    billNumber: number,
+    id: string,
     ...attrNamesToGet: (keyof Bill)[]
   ): Promise<Bill | null> {
-    return this.getItemByMultiKeys<Bill>(
-      ['congress', 'billType', 'billNumber'],
-      [congress, billType, billNumber],
-      attrNamesToGet
-    );
+    return this.getItem('_id', id, attrNamesToGet);
   }
 
-  // public updateBill(id: string, update: Partial<User>) {
-  // this.updateItemByCustomQuery()
-  // return this.updateItemByObjectId<User>(id, update);
-  // }
+  public async getBills(ids: string[], ...attrNamesToGet: (keyof Bill)[]): Promise<Bill[]> {
+    return await this.getItems<Bill>('_id', ids, attrNamesToGet);
+  }
+
+  public updateBill(id: string, update: Partial<Bill>) {
+    return this.updateItemByObjectId<Bill>(id, update);
+  }
+
+  public async createOrReplaceBill(bill: Bill) {
+    const existing = await this.getBill(bill.id);
+    if (existing) {
+      const { id, ...updateBill } = bill;
+      this.updateBill(bill.id, updateBill);
+    } else {
+      this.addBill(bill);
+    }
+  }
 
 }

@@ -34,8 +34,8 @@ export class MemberResolver extends TableProvider(MemberTable) {
     return await this.syncMember({ id: bioGuideId }, fields);
   }
 
-  private async syncMember(member: Member, fields?: (keyof Member)[], ignoreDB = false): Promise<Member> {
-    if (!ignoreDB) {
+  private async syncMember(member: Member, fields?: (keyof Member)[], skipDB = false): Promise<Member> {
+    if (!skipDB) {
       member = await this.member(member.id) || member;
     }
     try {
