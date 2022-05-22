@@ -3,7 +3,7 @@ import { RequestHelper, RequestSource } from '../../src/data-sync/sources/reques
 import { AzureStorageManager, Container } from '../../src/storage/azure-storage-manager';
 import { MemberProPicUploader } from '../../src/storage/member-pro-pic-uploader';
 
-// yarn ts-node ./scripts/download-file.ts
+// yarn ts-node ./scripts/testing/download-file.ts
 
 if (require.main === module) {
   RequestHelper.from(RequestSource.CONGRESS_GOV).get('https://theunitedstates.io/congress-legislators/legislators-current.json').then(file => {

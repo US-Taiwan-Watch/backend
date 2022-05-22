@@ -8,8 +8,8 @@ import { MemberResolver } from "../src/resolver/member.resolver";
  */
 
 if (require.main === module) {
-  new MemberResolver().fetchAndSyncAllMembers().then(l => {
-    console.log(l);
+  new MemberResolver().fetchAndSyncAllMembers().then(_ => {
+    console.log('sync succcessfully!');
   })
 }
 

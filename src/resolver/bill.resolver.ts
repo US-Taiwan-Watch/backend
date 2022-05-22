@@ -7,6 +7,11 @@ import { BillTable } from "./bill-table";
 
 @Resolver(Bill)
 export class BillResolver extends TableProvider(BillTable) {
+  // TODO: false for debugging. Should be true while in real use
+  private static shouldSave() {
+    return false;
+  }
+
   @Query(() => [Bill], { nullable: false })
   public async bills(): Promise<Bill[]> {
     const tbl = await this.table();
@@ -32,47 +37,62 @@ export class BillResolver extends TableProvider(BillTable) {
     return this.bill(bill.id);
   }
 
+  public async syncNewBills(fields?: (keyof Bill)[]): Promise<Bill[]> {
+    const tbl = await this.table();
+    // TODO: update query
+    let bills = await tbl.getAllBills();
+    return await this.syncBills(bills, false, fields);
+  }
+
+  public async syncOngoingBills(fields?: (keyof Bill)[]): Promise<Bill[]> {
+    const tbl = await this.table();
+    // TODO: update query
+    let bills = await tbl.getAllBills();
+    return await this.syncBills(bills, false, fields);
+  }
+
   // For one-time use
   public async syncAllBills(fields?: (keyof Bill)[]): Promise<Bill[]> {
     const tbl = await this.table();
     let bills = await tbl.getAllBills();
-    bills = await Promise.all(bills.map(bill =>
-      // Add some fields
-      this.syncBill(bill, fields, true)
-    ));
-    return bills;
+    return await this.syncBills(bills, false, fields);
   }
 
   public async syncBillWithId(
     id: string,
-    fields: (keyof Bill)[]
+    fields?: (keyof Bill)[]
   ): Promise<Bill | null> {
-    return this.syncBill(Bill.fromId(id), fields, false);
+    return this.syncBill(Bill.fromId(id), true, fields);
   }
 
-  private async syncBill(bill: Bill, fields?: (keyof Bill)[], skipDB = false): Promise<Bill> {
-    if (!skipDB) {
+  private async syncBill(bill: Bill, compareExisting: boolean, fields?: (keyof Bill)[]): Promise<Bill> {
+    if (compareExisting) {
       bill = await this.bill(bill.id) || bill;
     }
     try {
       await new BillSyncer(bill, fields).sync();
-      // TODO: save update to DB
+      if (BillResolver.shouldSave()) {
+        const tbl = await this.table();
+        await tbl.createOrReplaceBill(bill);
+      }
     } catch (e) {
       console.log(`Cannot sync bill ${bill.id}`);
     }
     return bill;
   }
 
-  private async syncBills(bills: Bill[], fields?: (keyof Bill)[], skipDB = false): Promise<Bill[]> {
-    // Get existing bills from DB
-    const tbl = await this.table();
-    const existingBills = await tbl.getBills(bills.map(m => m.id));
-    // Merge fields from updated over existing ones
-    bills = bills.map(ub => ({ ...existingBills.find(eb => eb.id === ub.id), ...ub }));
-    // Fetch some extra fields individually
+  private async syncBills(bills: Bill[], compareExisting: boolean, fields?: (keyof Bill)[]): Promise<Bill[]> {
+    if (compareExisting) {
+      // Get existing bills from DB
+      const tbl = await this.table();
+      const existingBills = await tbl.getBills(bills.map(m => m.id));
+      // Merge fields from updated over existing ones
+      bills = bills.map(ub => ({ ...existingBills.find(eb => eb.id === ub.id), ...ub }));
+    }
+    // Fetch extra fields individually
     bills = await Promise.all(bills.map(bill =>
       // Add some fields
-      this.syncBill(bill, fields, true)
+      this.syncBill(bill, false, fields)
     ));
     return bills;
   }
