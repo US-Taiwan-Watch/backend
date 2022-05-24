@@ -57,7 +57,7 @@ class BillCongressGovSyncer extends EntitySyncer<Bill> {
     if (progress.length === 0) {
       return this.entity;
     }
-    this.entity.trackers = progress.map(p => ({
+    this.entity.trackers = progress.map((p: any) => ({
       stepName: $(p).contents().first().text(),
       selected: $(p).hasClass('selected')
     }));
