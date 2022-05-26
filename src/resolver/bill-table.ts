@@ -19,6 +19,13 @@ export class BillTable extends MongoDBTableBase("bills") {
     return this.getItem('_id', id, attrNamesToGet);
   }
 
+  public async getBillsByCongress(...congresses: number[]): Promise<Bill[]> {
+    return await this.queryItemsWorking({
+      'congress': { $in: congresses },
+      'versions.code': { $ne: 'pl' }
+    });
+  }
+
   public async getBills(ids: string[], ...attrNamesToGet: (keyof Bill)[]): Promise<Bill[]> {
     return await this.getItems<Bill>('_id', ids, attrNamesToGet);
   }

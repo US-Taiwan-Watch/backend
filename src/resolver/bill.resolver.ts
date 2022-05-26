@@ -1,12 +1,22 @@
 import _ from "lodash";
+
 import { Resolver, Query, Arg } from "type-graphql";
 import { Bill, BillType } from "../../common/models";
 import { BillSyncer } from "../data-sync/bill.sync";
+import { CongressGovHelper } from "../data-sync/sources/congress-gov";
 import { TableProvider } from "../mongodb/mongodb-manager";
+import { CongressUtils } from "../util/congress-utils";
+import { Logger } from "../util/logger";
 import { BillTable } from "./bill-table";
 
 @Resolver(Bill)
 export class BillResolver extends TableProvider(BillTable) {
+  logger: Logger;
+
+  constructor() {
+    super();
+    this.logger = new Logger('BillResolver')
+  }
   // TODO: false for debugging. Should be true while in real use
   private static shouldSave() {
     return false;
@@ -45,9 +55,12 @@ export class BillResolver extends TableProvider(BillTable) {
   }
 
   public async syncOngoingBills(fields?: (keyof Bill)[]): Promise<Bill[]> {
+    return this.syncBillsForCongress(CongressUtils.getCurrentCongress());
+  }
+
+  public async syncBillsForCongress(congress: number, fields?: (keyof Bill)[]): Promise<Bill[]> {
     const tbl = await this.table();
-    // TODO: update query
-    let bills = await tbl.getAllBills();
+    let bills = await tbl.getBillsByCongress(congress);
     return await this.syncBills(bills, false, fields);
   }
 
@@ -82,6 +95,7 @@ export class BillResolver extends TableProvider(BillTable) {
   }
 
   private async syncBills(bills: Bill[], compareExisting: boolean, fields?: (keyof Bill)[]): Promise<Bill[]> {
+    this.logger.log(`Syncing ${bills.length} bills: ${bills.map(b => b.id).join(', ')}`);
     if (compareExisting) {
       // Get existing bills from DB
       const tbl = await this.table();
