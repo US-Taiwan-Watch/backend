@@ -5,18 +5,19 @@ export class Logger {
   protected _id: string;
   protected _methodName: string | undefined;
 
-  constructor(protected _className: string = "") {
+
+  constructor(protected _className: string = "", private debugMode = false) {
     this._id = uuid();
   }
 
-  public in(methodName: string): Logger {
-    const o = new Logger(this._className);
+  public in(methodName: string, debugMode = false): Logger {
+    const o = new Logger(this._className, debugMode);
     o._id = this._id;
     o._methodName = methodName;
     return o;
   }
 
-  public log(msg: any) {
+  public log(msg: any, debug = false) {
     const prefix =
       (this._methodName
         ? `${this._className}.${this._methodName}`
@@ -24,7 +25,13 @@ export class Logger {
     Logger.log(msg, prefix);
   }
 
-  public static log(msg: any, prefix?: string) {
+  public debug(msg: any) {
+    if (this.debugMode) {
+      this.log(msg);
+    }
+  }
+
+  public static log(msg: any, prefix?: string,) {
     if (typeof msg !== "string") {
       const colors = process.env.IS_LOCAL ? true : false;
       msg = inspect(msg, { depth: null, colors: colors });

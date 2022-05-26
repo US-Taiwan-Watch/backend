@@ -72,7 +72,7 @@ export class RequestHelper {
   }
 
   private pushTask(options: request.OptionsWithUrl): Promise<any> {
-    logger.in('pushTask').log(`Queue ${this.source}: ${options.url} pushed`);
+    logger.in('pushTask').debug(`Queue ${this.source}: ${options.url} pushed`);
     return new Promise((resolve, reject) => {
       if (!(this.source in RequestHelper.requestQueueMap)) {
         RequestHelper.requestQueueMap[this.source] = [];
@@ -83,10 +83,10 @@ export class RequestHelper {
 
   private startScheduling() {
     if (RequestHelper.queueRunning[this.source]) {
-      logger.in('startScheduling').log(`Queue ${this.source} is already running.`);
+      logger.in('startScheduling').debug(`Queue ${this.source} is already running.`);
       return;
     }
-    logger.in('startScheduling').log(`Queue ${this.source} starts running.`);
+    logger.in('startScheduling').debug(`Queue ${this.source} starts running.`);
     RequestHelper.queueRunning[this.source] = true;
     this.runFirstTask();
   }
@@ -95,18 +95,18 @@ export class RequestHelper {
     const _logger = logger.in('runFirstTask');
     const task = RequestHelper.requestQueueMap[this.source].shift();
     if (task === undefined) {
-      _logger.log(`Queue ${this.source} is empty. Stopped running.`);
+      _logger.debug(`Queue ${this.source} is empty. Stopped running.`);
       RequestHelper.queueRunning[this.source] = false;
       return;
     }
     _logger.log(`Queue ${this.source} starts fetching ${task.options.url}`);
     RequestHelper.getImpl(task.options)
       .then(value => {
-        _logger.log(`Queue ${this.source} finished fetching ${task.options.url}`);
+        _logger.debug(`Queue ${this.source} finished fetching ${task.options.url}`);
         task.resolve(value);
       })
       .catch(reason => {
-        _logger.log(`Queue ${this.source} failed to fetch ${task.options.url}`);
+        _logger.debug(`Queue ${this.source} failed to fetch ${task.options.url}`);
         // TODO: retry or log
         task.reject(reason);
       })
@@ -116,7 +116,7 @@ export class RequestHelper {
   }
 
   private scheduleNextTask() {
-    // logger.in('scheduleNextTask').log(`Queue ${source} scheduled!`);
+    // logger.in('scheduleNextTask').debug(`Queue ${source} scheduled!`);
     setTimeout(() => {
       this.runFirstTask();
     }, requestCoolDown[this.source]);
