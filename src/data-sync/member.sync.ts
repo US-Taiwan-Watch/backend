@@ -17,15 +17,14 @@ export class MemberSyncer extends EntitySyncer<Member> {
     return result[0].members.slice(0, 2).map((m: any) => ({ id: m.id }));
   }
 
-  public async sync(): Promise<Member> {
+  protected async syncImpl() {
     await new MemberProPublicaSyncer(this.entity, this.fields).sync();
     // Add other syncers here. Will run in sequential. TODO: update to parallel
-    return this.entity;
   }
 }
 
 class MemberProPublicaSyncer extends EntitySyncer<Member> {
-  public async sync(): Promise<Member> {
+  protected async syncImpl() {
     const proPublicaResult = await ProPublicaHelper.get(`https://api.propublica.org/congress/v1/members/${this.entity.id}.json`);
 
     if (proPublicaResult[0]['first_name']) {
@@ -137,7 +136,6 @@ class MemberProPublicaSyncer extends EntitySyncer<Member> {
       }
     }
 
-    return this.entity;
   }
 
   // TODO: party & state mapping from propublica to member type

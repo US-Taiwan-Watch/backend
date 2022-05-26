@@ -1,4 +1,4 @@
-import { Bill } from "../../common/models";
+import { Bill, TextVersionCode } from "../../common/models";
 import { EntitySyncer, } from "./entity.sync";
 import { CongressGovHelper } from "./sources/congress-gov";
 import { GovInfoHelper } from "./sources/govinfo";
@@ -6,23 +6,25 @@ import { ProPublicaHelper } from "./sources/propublica";
 
 
 export class BillSyncer extends EntitySyncer<Bill> {
-  public async sync(): Promise<Bill> {
+  protected async syncImpl() {
     await Promise.allSettled([
       new BillGovInfoSyncer(this.entity, this.fields).sync(),
       new BillProPublicaSyncer(this.entity, this.fields).sync(),
       new BillCongressGovSyncer(this.entity, this.fields).sync(),
-    ])
+    ]);
     console.log(this.entity);
-    return this.entity;
   }
 }
 
 class BillGovInfoSyncer extends EntitySyncer<Bill> {
-  public async sync(): Promise<Bill> {
-    // Just to test the API
-    const versions = await GovInfoHelper.getBillVersions(this.entity);
-    const pubLaw = await GovInfoHelper.getBillPublicLaw(this.entity);
-    this.entity.versions = [
+  protected async syncImpl() {
+    const [versions, pubLaw] = await Promise.all([
+      GovInfoHelper.getBillVersions(this.entity),
+      GovInfoHelper.getBillPublicLaw(this.entity)
+    ]);
+    const existingVersions = this.entity.versions || [];
+    const existingVersionCodes = existingVersions.map(v => v.code);
+    const newVersions = [
       ...versions.map(v => ({
         code: v.billVersion,
         date: v.dateIssued,
@@ -33,34 +35,53 @@ class BillGovInfoSyncer extends EntitySyncer<Bill> {
         date: v.dateIssued,
         name: v.citation,
         id: v.packageId.split('-')[1],
-      }))];
-    return this.entity;
+      }))
+    ].filter(v => !existingVersionCodes.includes(v.code));
+
+    this.entity.versions = [
+      ...existingVersions,
+      ...newVersions,
+    ];
   }
 }
 
 class BillProPublicaSyncer extends EntitySyncer<Bill> {
-  public async sync(): Promise<Bill> {
+  protected async syncImpl() {
+    await Promise.allSettled([
+      this.syncCosponsors(),
+      this.syncActions(),
+    ]);
+  }
+
+  private async syncCosponsors() {
     const res = await ProPublicaHelper.getCosponsors(this.entity);
     this.entity.sponsorId = res[0].sponsor_id;
     this.entity.cosponsorInfos = res[0].cosponsors.map((co: any) => ({
       memberId: co.cosponsor_id,
       date: co.date,
-    }))
-    return this.entity;
+    }));
+  }
+
+  private async syncActions() {
+    const res = await ProPublicaHelper.getBill(this.entity);
+    this.entity.actionsAll = res[0].actions.map((v: any) => ({
+      description: v.description,
+      date: v.datetime,
+      chamber: v.chamber,
+    }));
   }
 }
 
 class BillCongressGovSyncer extends EntitySyncer<Bill> {
-  public async sync(): Promise<Bill> {
+  protected async syncImpl() {
     const $ = await CongressGovHelper.getBill(this.entity);
     let progress = $('ol.bill_progress > li').toArray();
     if (progress.length === 0) {
-      return this.entity;
+      return;
     }
     this.entity.trackers = progress.map((p: any) => ({
       stepName: $(p).contents().first().text(),
       selected: $(p).hasClass('selected')
     }));
-    return this.entity;
   }
 }
