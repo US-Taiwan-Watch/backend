@@ -12,7 +12,6 @@ export class BillSyncer extends EntitySyncer<Bill> {
       new BillProPublicaSyncer(this.entity, this.fields).sync(),
       new BillCongressGovSyncer(this.entity, this.fields).sync(),
     ]);
-    console.log(this.entity);
   }
 }
 

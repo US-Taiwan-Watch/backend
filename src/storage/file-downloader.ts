@@ -29,7 +29,7 @@ export abstract class FileDownloader<T> {
       const file = await this.download();
       await this.upload(this.process(file));
     } catch (e) {
-      logger.log(`Failed to download and update file ${this.getPath()}`);
+      logger.log(`Failed to download and update file ${this.getPath()}: ${e}`);
       return false;
     }
     return true;

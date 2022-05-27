@@ -7,6 +7,7 @@ type BillVersionKeys = {
   billId: string;
   versionCode: TextVersionCode;
   contentType: ContentType;
+  publ?: string;
 }
 
 export class BillVersionDownloader extends FileDownloader<BillVersionKeys> {
@@ -14,8 +15,15 @@ export class BillVersionDownloader extends FileDownloader<BillVersionKeys> {
   source = RequestSource.CONGRESS_GOV;
 
   protected getUrl(): string {
-    const [c, t, n] = this.key.billId.split('-');
     const ext = this.key.contentType === 'txt' ? 'htm' : this.key.contentType;
+    const [c, t, n] = this.key.billId.split('-');
+    if (this.key.versionCode === 'pl') {
+      if (!this.key.publ) {
+        throw new Error('Downloading public law needs id. ');
+      }
+      const key = this.key.publ.replace(c, '');
+      return `https://www.congress.gov/${c}/plaws/${key}/PLAW-${this.key.publ}.${ext}`;
+    }
     return `https://www.congress.gov/${c}/bills/${t}${n}/BILLS-${c}${t}${n}${this.key.versionCode}.${ext}`;
   }
 

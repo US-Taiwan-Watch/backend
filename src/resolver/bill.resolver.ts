@@ -5,6 +5,7 @@ import { Bill, BillType } from "../../common/models";
 import { BillSyncer } from "../data-sync/bill.sync";
 import { CongressGovHelper } from "../data-sync/sources/congress-gov";
 import { TableProvider } from "../mongodb/mongodb-manager";
+import { BillVersionDownloader } from "../storage/bill-version-downloader";
 import { CongressUtils } from "../util/congress-utils";
 import { Logger } from "../util/logger";
 import { BillTable } from "./bill-table";
@@ -91,6 +92,16 @@ export class BillResolver extends TableProvider(BillTable) {
     } catch (e) {
       console.log(`Cannot sync bill ${bill.id}`);
     }
+    try {
+      await this.downloadBillVersions(bill, false);
+      if (BillResolver.shouldSave()) {
+        const tbl = await this.table();
+        await tbl.createOrReplaceBill(bill);
+      }
+    } catch (e) {
+      console.log(`Cannot download versions for bill ${bill.id}`);
+    }
+    console.dir(bill);
     return bill;
   }
 
@@ -109,6 +120,35 @@ export class BillResolver extends TableProvider(BillTable) {
       this.syncBill(bill, false, fields)
     ));
     return bills;
+  }
+
+  public async downloadBillVersions(bill: Bill, compareExisting: boolean) {
+    if (compareExisting) {
+      bill = await this.bill(bill.id) || bill;
+    }
+    try {
+      const contentTypes = BillVersionDownloader.getContentTypes();
+      const all = bill.versions?.filter(v =>
+        !v.downloaded || v.downloaded.length < contentTypes.length
+      ).map(v =>
+        contentTypes.filter(t => !v.downloaded || !v.downloaded.includes(t)).map(type =>
+          new BillVersionDownloader({
+            billId: bill.id,
+            versionCode: v.code,
+            contentType: type,
+            publ: v.id,
+          }).downloadAndUpload().then(suc => {
+            if (!v.downloaded) {
+              v.downloaded = [];
+            }
+            v.downloaded = [...v.downloaded, type];
+          })
+        )
+      ).flat();
+      await Promise.allSettled(all || []);
+    } catch (e) {
+      console.log(`Cannot sync bill ${bill.id}`);
+    }
   }
 
 }
