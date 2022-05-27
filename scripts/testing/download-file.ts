@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { RequestHelper, RequestSource } from '../../src/data-sync/sources/request-helper';
 import { AzureStorageManager, Container } from '../../src/storage/azure-storage-manager';
-import { MemberProPicUploader } from '../../src/storage/member-pro-pic-uploader';
+import { MemberProPicDownloader } from '../../src/storage/member-pro-pic-downloader';
 
 // yarn ts-node ./scripts/testing/download-file.ts
 
@@ -17,7 +17,7 @@ if (require.main === module) {
     );
   });
   RequestHelper.from(RequestSource.CONGRESS_GOV).getFile('https://bioguide.congress.gov/bioguide/photo/S/S000622.jpg', 'jpg').then(file => {
-    MemberProPicUploader.upload('S000622', file).then(l =>
+    new MemberProPicDownloader('C000432').upload(file).then(l =>
       console.log(l)
     );
   });
