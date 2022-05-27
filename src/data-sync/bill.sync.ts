@@ -22,8 +22,6 @@ class BillGovInfoSyncer extends EntitySyncer<Bill> {
       GovInfoHelper.getBillVersions(this.entity),
       GovInfoHelper.getBillPublicLaw(this.entity)
     ]);
-    const existingVersions = this.entity.versions || [];
-    const existingVersionCodes = existingVersions.map(v => v.code);
     const newVersions = [
       ...versions.map(v => ({
         code: v.billVersion,
@@ -36,12 +34,15 @@ class BillGovInfoSyncer extends EntitySyncer<Bill> {
         name: v.citation,
         id: v.packageId.split('-')[1],
       }))
-    ].filter(v => !existingVersionCodes.includes(v.code));
-
-    this.entity.versions = [
-      ...existingVersions,
-      ...newVersions,
     ];
+
+    this.entity.versions = newVersions.map(nv => {
+      const existing = this.entity.versions?.find(ev => nv.code == ev.code);
+      if (existing) {
+        return { ...existing, ...nv };
+      }
+      return nv;
+    });
   }
 }
 
