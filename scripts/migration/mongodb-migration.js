@@ -50,7 +50,8 @@ db.entities.find({_type: 3}).forEach(
         cosponsorInfos: db.assocs.find({_type: 1004, _id2: x._id}).toArray().map(r => ({
           date: r.date == null ? undefined : new Date(r.date).toISOString().slice(0, 10),
           memberId: db.entities.findOne({ _type: 4, _id: r._id1}).bioGuideId
-        }))
+        })),
+        tags: db.assocs.find({_type: 1005, _id1: x._id}).toArray().map(r => r._id2)
       })
     if (x.introducedDate) {
       bill.introducedDate = x.introducedDate == null ? undefined : new Date(x.introducedDate).toISOString().slice(0, 10)
