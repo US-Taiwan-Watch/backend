@@ -26,6 +26,12 @@ export class BillTable extends MongoDBTableBase("bills") {
     });
   }
 
+  public async getBillsThatNeedSync(): Promise<Bill[]> {
+    return await this.queryItemsWorking({
+      'needsSync': { $ne: false },
+    });
+  }
+
   public async getBills(ids: string[], ...attrNamesToGet: (keyof Bill)[]): Promise<Bill[]> {
     return await this.getItems<Bill>('_id', ids, attrNamesToGet);
   }

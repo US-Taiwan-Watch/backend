@@ -1,6 +1,7 @@
 import _ from "lodash";
 import { Logger } from "../../util/logger";
 import request from "request";
+import Heap from 'heap';
 
 // Should only use for debugging purpose. Update to false to request in parallel.
 const COOL_DOWN = true;
@@ -25,12 +26,13 @@ const requestCoolDown = {
 
 interface RequestTask {
   options: request.OptionsWithUrl;
+  priority: number,
   resolve: (value: any) => void;
   reject: (reason?: any) => void;
 }
 
 export class RequestHelper {
-  private static requestQueueMap: { [key: string]: RequestTask[] } = {};
+  private static requestQueueMap: { [key: string]: Heap<RequestTask> } = {};
   private static queueRunning: { [key: string]: boolean } = {};
 
   private constructor(private source: RequestSource) { }
@@ -47,15 +49,15 @@ export class RequestHelper {
     if (contentType === 'pdf' || contentType === 'jpg') {
       options = { ...options, encoding: null }
     }
-    return this.get(url, options).then(v => v as Buffer);
+    return this.get(url, options, 1).then(v => v as Buffer);
   }
 
-  public get(url: string, options?: request.CoreOptions): Promise<any> {
+  public get(url: string, options?: request.CoreOptions, priority = 0): Promise<any> {
     const params = { url, ...options };
     if (!COOL_DOWN) {
       return RequestHelper.getImpl(params);
     }
-    const promise = this.pushTask(params);
+    const promise = this.pushTask(params, priority);
     this.startScheduling();
     return promise;
   }
@@ -72,13 +74,13 @@ export class RequestHelper {
     });
   }
 
-  private pushTask(options: request.OptionsWithUrl): Promise<any> {
+  private pushTask(options: request.OptionsWithUrl, priority: number): Promise<any> {
     logger.in('pushTask').debug(`Queue ${this.source}: ${options.url} pushed`);
     return new Promise((resolve, reject) => {
       if (!(this.source in RequestHelper.requestQueueMap)) {
-        RequestHelper.requestQueueMap[this.source] = [];
+        RequestHelper.requestQueueMap[this.source] = new Heap((a, b) => a.priority - b.priority);
       }
-      RequestHelper.requestQueueMap[this.source].push({ options, resolve, reject });
+      RequestHelper.requestQueueMap[this.source].push({ options, priority, resolve, reject });
     });
   }
 
@@ -94,13 +96,13 @@ export class RequestHelper {
 
   private runFirstTask() {
     const _logger = logger.in('runFirstTask');
-    const task = RequestHelper.requestQueueMap[this.source].shift();
+    const task = RequestHelper.requestQueueMap[this.source].pop();
     if (task === undefined) {
       _logger.debug(`Queue ${this.source} is empty. Stopped running.`);
       RequestHelper.queueRunning[this.source] = false;
       return;
     }
-    _logger.log(`Queue ${this.source} starts fetching ${task.options.url}`);
+    _logger.debug(`Queue ${this.source} starts fetching ${task.options.url}`);
     RequestHelper.getImpl(task.options)
       .then(value => {
         _logger.debug(`Queue ${this.source} finished fetching ${task.options.url}`);

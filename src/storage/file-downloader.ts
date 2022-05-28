@@ -26,6 +26,7 @@ export abstract class FileDownloader<T> {
         logger.log(`File ${this.getPath()} exists. Do not download.`);
         return true;
       }
+      logger.log(`Starts downloading and update file ${this.getPath()}`);
       const file = await this.download();
       await this.upload(this.process(file));
     } catch (e) {

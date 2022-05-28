@@ -126,7 +126,6 @@ export abstract class MongoDBTable {
     const prjFields = this.composeProjectFields<T>(attrNamesToGet);
     return this.getTable<T>()
       .find(query, prjFields)
-      .limit(100)
       .toArray()
       .then((res) => this.addBackIdField(res) as T[]);
   }
@@ -533,6 +532,9 @@ export function TableProvider<TableType extends MongoDBTable>(TableClass: {
   class X {
     private static _db: MongoDBManager;
     protected async table(): Promise<TableType> {
+      if (X._db) {
+        return X._db.getTable(TableClass);
+      }
       X._db = await MongoDBManager.instance(TableClass);
       return X._db.getTable(TableClass);
     }

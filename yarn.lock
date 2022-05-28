@@ -501,6 +501,11 @@
     "@types/minimatch" "*"
     "@types/node" "*"
 
+"@types/heap@^0.2.30":
+  version "0.2.30"
+  resolved "https://registry.yarnpkg.com/@types/heap/-/heap-0.2.30.tgz#01911b83703c0f73a53146400981b5d7331f03af"
+  integrity sha512-nHNZ88yQwc1scC5oERUEXC/XtQ9TnU6JWIDvZ9i6sq3Gy2d6Q3oKIsk1TSFyNzUb8f82U+1IXxWGd+VxDxDaCg==
+
 "@types/ioredis@^4.28.8":
   version "4.28.8"
   resolved "https://registry.yarnpkg.com/@types/ioredis/-/ioredis-4.28.8.tgz#a181d6eb70e402a6db670fe54b9c5bb66c0fac17"
@@ -2418,6 +2423,11 @@ has@^1.0.3:
   integrity sha512-f2dvO0VU6Oej7RkWJGrehjbzMAjFp5/VKPp5tTpWIV4JHHZK1/BxbFRtf/siA2SWTe09caDmVtYYzWEIbBS4zw==
   dependencies:
     function-bind "^1.1.1"
+
+heap@^0.2.7:
+  version "0.2.7"
+  resolved "https://registry.yarnpkg.com/heap/-/heap-0.2.7.tgz#1e6adf711d3f27ce35a81fe3b7bd576c2260a8fc"
+  integrity sha512-2bsegYkkHO+h/9MGbn6KWcE45cHZgPANo5LXF7EvWdT0yT2EguSVO1nDgU5c8+ZOPwp2vMNa7YFsJhVcDR9Sdg==
 
 hosted-git-info@^2.1.4:
   version "2.8.9"

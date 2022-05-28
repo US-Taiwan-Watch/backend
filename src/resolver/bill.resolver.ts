@@ -47,8 +47,7 @@ export class BillResolver extends TableProvider(BillTable) {
 
   public async syncNewBills(fields?: (keyof Bill)[]): Promise<Bill[]> {
     const tbl = await this.table();
-    // TODO: update query
-    let bills = await tbl.getAllBills();
+    let bills = await tbl.getBillsThatNeedSync();
     return await this.syncBills(bills, false, fields);
   }
 
@@ -90,11 +89,11 @@ export class BillResolver extends TableProvider(BillTable) {
         const tbl = await this.table();
         await tbl.createOrReplaceBill(bill);
       }
-      // await this.downloadBillVersions(bill, false);
-      // if (BillResolver.shouldSave()) {
-      //   const tbl = await this.table();
-      //   await tbl.createOrReplaceBill(bill);
-      // }
+      await this.downloadBillVersions(bill, false);
+      if (BillResolver.shouldSave()) {
+        const tbl = await this.table();
+        await tbl.createOrReplaceBill(bill);
+      }
     } catch (e) {
       console.log(`Failed to save bill ${bill.id}: ${e}`);
     }
