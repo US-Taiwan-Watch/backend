@@ -18,7 +18,7 @@ export class MemberSyncer extends EntitySyncer<Member> {
   }
 
   protected async syncImpl() {
-    await new MemberProPublicaSyncer(this.entity, this.fields).sync();
+    return await new MemberProPublicaSyncer(this.entity, this.fields).sync();
     // Add other syncers here. Will run in sequential. TODO: update to parallel
   }
 }
@@ -135,6 +135,7 @@ class MemberProPublicaSyncer extends EntitySyncer<Member> {
         }
       }
     }
+    return true;
 
   }
 

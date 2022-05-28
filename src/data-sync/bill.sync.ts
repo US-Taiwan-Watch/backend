@@ -1,22 +1,37 @@
-import { Bill, TextVersionCode } from "../../common/models";
+import { Bill } from "../../common/models";
+import { Logger } from "../util/logger";
 import { EntitySyncer, } from "./entity.sync";
 import { CongressGovHelper } from "./sources/congress-gov";
 import { GovInfoHelper } from "./sources/govinfo";
 import { ProPublicaHelper } from "./sources/propublica";
 
+const logger = new Logger('BillSyncer');
 
 export class BillSyncer extends EntitySyncer<Bill> {
-  protected async syncImpl() {
-    await Promise.allSettled([
-      new BillGovInfoSyncer(this.entity, this.fields).sync(),
-      new BillProPublicaSyncer(this.entity, this.fields).sync(),
-      new BillCongressGovSyncer(this.entity, this.fields).sync(),
-    ]);
-  }
-}
+  syncMethods = [
+    // GovInfo
+    this.syncVersions,
+    // Propublica
+    this.syncCosponsors,
+    this.syncActions,
+    // CongressGov
+    this.syncTrackers,
+  ];
 
-class BillGovInfoSyncer extends EntitySyncer<Bill> {
-  protected async syncImpl() {
+  public async syncImpl() {
+    const results = await Promise.allSettled(this.syncMethods.map(m => m.call(this)));
+    let succeed = true;
+    results.forEach((res, i) => {
+      if (res.status == 'fulfilled') {
+        return;
+      }
+      logger.log(`Failed in ${this.syncMethods[i].name} for ${this.entity.id}: ${res.reason}`);
+      succeed = false;
+    });
+    return succeed;
+  }
+
+  protected async syncVersions() {
     const [versions, pubLaw] = await Promise.all([
       GovInfoHelper.getBillVersions(this.entity),
       GovInfoHelper.getBillPublicLaw(this.entity)
@@ -43,15 +58,6 @@ class BillGovInfoSyncer extends EntitySyncer<Bill> {
       return nv;
     });
   }
-}
-
-class BillProPublicaSyncer extends EntitySyncer<Bill> {
-  protected async syncImpl() {
-    await Promise.allSettled([
-      this.syncCosponsors(),
-      this.syncActions(),
-    ]);
-  }
 
   private async syncCosponsors() {
     const res = await ProPublicaHelper.getCosponsors(this.entity);
@@ -70,10 +76,8 @@ class BillProPublicaSyncer extends EntitySyncer<Bill> {
       chamber: v.chamber,
     }));
   }
-}
 
-class BillCongressGovSyncer extends EntitySyncer<Bill> {
-  protected async syncImpl() {
+  protected async syncTrackers() {
     const $ = await CongressGovHelper.getBill(this.entity);
     let progress = $('ol.bill_progress > li').toArray();
     if (progress.length === 0) {

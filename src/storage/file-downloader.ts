@@ -20,11 +20,11 @@ export abstract class FileDownloader<T> {
     return data;
   }
 
-  public async downloadAndUpload() {
+  public async downloadAndUpload(): Promise<boolean> {
     try {
       if (await this.exists()) {
         logger.log(`File ${this.getPath()} exists. Do not download.`);
-        return;
+        return true;
       }
       const file = await this.download();
       await this.upload(this.process(file));

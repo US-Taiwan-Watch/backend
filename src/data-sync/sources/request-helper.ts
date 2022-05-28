@@ -64,7 +64,6 @@ export class RequestHelper {
     return new Promise((resolve, reject) => {
       request.get(options, (err, response, body) => {
         if (err || response.statusCode !== 200) {
-          // TODO: log
           reject(err);
         } else {
           resolve(body);

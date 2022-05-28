@@ -1,9 +1,6 @@
-import _ from "lodash";
-
 import { Resolver, Query, Arg } from "type-graphql";
 import { Bill, BillType } from "../../common/models";
 import { BillSyncer } from "../data-sync/bill.sync";
-import { CongressGovHelper } from "../data-sync/sources/congress-gov";
 import { TableProvider } from "../mongodb/mongodb-manager";
 import { BillVersionDownloader } from "../storage/bill-version-downloader";
 import { CongressUtils } from "../util/congress-utils";
@@ -20,7 +17,7 @@ export class BillResolver extends TableProvider(BillTable) {
   }
   // TODO: false for debugging. Should be true while in real use
   private static shouldSave() {
-    return false;
+    return true;
   }
 
   @Query(() => [Bill], { nullable: false })
@@ -84,24 +81,26 @@ export class BillResolver extends TableProvider(BillTable) {
       bill = await this.bill(bill.id) || bill;
     }
     try {
-      await new BillSyncer(bill, fields).sync();
+      const suc = await new BillSyncer(bill, fields).sync();
+      bill.needsSync = !suc || (
+        bill.congress === CongressUtils.getCurrentCongress() &&
+        bill.trackers?.find(t => t.stepName === 'Became Law' && t.selected) === undefined
+      );
       if (BillResolver.shouldSave()) {
         const tbl = await this.table();
         await tbl.createOrReplaceBill(bill);
       }
+      // await this.downloadBillVersions(bill, false);
+      // if (BillResolver.shouldSave()) {
+      //   const tbl = await this.table();
+      //   await tbl.createOrReplaceBill(bill);
+      // }
     } catch (e) {
-      console.log(`Cannot sync bill ${bill.id}`);
+      console.log(`Failed to save bill ${bill.id}: ${e}`);
     }
-    try {
-      await this.downloadBillVersions(bill, false);
-      if (BillResolver.shouldSave()) {
-        const tbl = await this.table();
-        await tbl.createOrReplaceBill(bill);
-      }
-    } catch (e) {
-      console.log(`Cannot download versions for bill ${bill.id}`);
+    if (!BillResolver.shouldSave()) {
+      console.dir(bill);
     }
-    console.dir(bill);
     return bill;
   }
 
@@ -126,29 +125,28 @@ export class BillResolver extends TableProvider(BillTable) {
     if (compareExisting) {
       bill = await this.bill(bill.id) || bill;
     }
-    try {
-      const contentTypes = BillVersionDownloader.getContentTypes();
-      const all = bill.versions?.filter(v =>
-        !v.downloaded || v.downloaded.length < contentTypes.length
-      ).map(v =>
-        contentTypes.filter(t => !v.downloaded || !v.downloaded.includes(t)).map(type =>
-          new BillVersionDownloader({
-            billId: bill.id,
-            versionCode: v.code,
-            contentType: type,
-            publ: v.id,
-          }).downloadAndUpload().then(suc => {
-            if (!v.downloaded) {
-              v.downloaded = [];
-            }
-            v.downloaded = [...v.downloaded, type];
-          })
-        )
-      ).flat();
-      await Promise.allSettled(all || []);
-    } catch (e) {
-      console.log(`Cannot sync bill ${bill.id}`);
-    }
+    const contentTypes = BillVersionDownloader.getContentTypes();
+    const all = bill.versions?.filter(v =>
+      !v.downloaded || v.downloaded.length < contentTypes.length
+    ).map(v =>
+      contentTypes.filter(t => !v.downloaded || !v.downloaded.includes(t)).map(type =>
+        new BillVersionDownloader({
+          billId: bill.id,
+          versionCode: v.code,
+          contentType: type,
+          publ: v.id,
+        }).downloadAndUpload().then(suc => {
+          if (!suc) {
+            return;
+          }
+          if (!v.downloaded) {
+            v.downloaded = [];
+          }
+          v.downloaded = [...v.downloaded, type];
+        })
+      )
+    ).flat();
+    await Promise.allSettled(all || []);
   }
 
 }
