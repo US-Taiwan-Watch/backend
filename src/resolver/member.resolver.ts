@@ -24,27 +24,38 @@ export class MemberResolver extends TableProvider(MemberTable) {
     return await tbl.getMember(bioGuideId);
   }
 
-  // For one-time use
+  // get all members and update data from APIs
   public async fetchAndSyncAllMembers(): Promise<Member[]> {
-    const members = await MemberSyncer.fetchAll();
+    const members = await MemberSyncer.getAllMembers();
     return await this.syncMembers(members, true);
   }
 
-  public async fetchAndSyncUpdatedMembers(): Promise<Member[]> {
-    const members = await MemberSyncer.fetchUpdated();
+  // get members of specific congress and update data from APIs
+  public async fetchAndSyncMemberByCongress(chamber: 'senate' | 'house', congressNum: number): Promise<Member[]> {
+    const members = await MemberSyncer.getMemberList(chamber, congressNum);
     return await this.syncMembers(members, true);
   }
 
-  public async syncMemberWithId(bioGuideId: string, fields?: (keyof Member)[]): Promise<Member | null> {
-    return await this.syncMember({ id: bioGuideId }, true, fields);
+  // get the given member (by ID) and update data from APIs
+  public async fetchAndSyncMemberById(reqId: string): Promise<Member | null> {
+    return await this.syncMember({ id: reqId }, { id: reqId }, true);
   }
 
-  private async syncMember(member: Member, compareExisting: boolean, fields?: (keyof Member)[]): Promise<Member> {
-    if (compareExisting) {
+  // get the given member (by ID) and update data with what given
+  public async updateMemberWithData(memberData: Member): Promise<Member | null> {
+    return await this.syncMember({ id: memberData.id }, memberData, true);
+  }
+
+  private async syncMember(member: Member, memberData: Member, isFromDB: boolean): Promise<Member> {
+    // member - the based data for member sync (overwritten by data in DB if isFromDB is true)
+    // memberData - the data requested to be overwritten onto member
+    if (isFromDB) {
       member = await this.member(member.id) || member;
     }
+
     try {
-      await new MemberSyncer(member, fields).sync();
+      await new MemberSyncer(member, memberData).sync();
+
       if (MemberResolver.shouldSave()) {
         const tbl = await this.table();
         await tbl.createOrReplaceMember(member);
@@ -56,19 +67,21 @@ export class MemberResolver extends TableProvider(MemberTable) {
     return member;
   }
 
-  private async syncMembers(members: Member[], compareExisting: boolean, fields?: (keyof Member)[]): Promise<Member[]> {
+  private async syncMembers(members: Member[], isFromDB: Boolean): Promise<Member[]> {
     // Get existing members from DB
-    if (compareExisting) {
+    if (isFromDB) {
       const tbl = await this.table();
       const existingMembers = await tbl.getMembers(members.map(m => m.id));
       // Merge fields from updated over existing ones
       members = members.map(um => ({ ...existingMembers.find(em => em.id === um.id), ...um }));
     }
+
     // Fetch extra fields individually
     members = await Promise.all(members.map(member =>
       // Add some fields
-      this.syncMember(member, false, fields)
+      this.syncMember(member, { id: member.id }, false)
     ));
+
     return members;
   }
 }
