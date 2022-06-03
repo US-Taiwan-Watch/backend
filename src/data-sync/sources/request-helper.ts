@@ -15,6 +15,7 @@ export enum RequestSource {
   PROPUBLICA = 'propublica',
   CONGRESS_GOV = 'congress.gov',
   BIO_GUIDE = 'buiGuide',
+  UNITEDSTATES = 'theunitedstates.io',
 }
 
 const requestCoolDown = {
@@ -22,6 +23,7 @@ const requestCoolDown = {
   [RequestSource.GOV_INFO]: 500,
   [RequestSource.PROPUBLICA]: 500,
   [RequestSource.BIO_GUIDE]: 500,
+  [RequestSource.UNITEDSTATES]: 500,
 }
 
 interface RequestTask {

@@ -2,24 +2,26 @@ import { intersection } from "lodash";
 import { Member, MemberRole } from "../../common/models";
 import { EntitySyncer, } from "./entity.sync";
 import { ProPublicaHelper } from "./sources/propublica";
+import { UnitedStatesHelper } from "./sources/unitedstates";
 
 
 export class MemberSyncer extends EntitySyncer<Member> {
-  public static async fetchAll(): Promise<Member[]> {
-    // TODO: fetch all members!
-    return [];
+  public static async getAllMembers(): Promise<Member[]> {
+    const result = await UnitedStatesHelper.get("https://theunitedstates.io/congress-legislators/legislators-historical.json");
+    return result.map(((m: any) => ({ id: m.id.bioguide })));
   }
 
-  public static async fetchUpdated(): Promise<Member[]> {
-    // TODO: fetch updated members
-    // tmp code just for testing in the script
-    const result = await ProPublicaHelper.get(`https://api.propublica.org/congress/v1/116/senate/members.json`);
-    return result[0].members.slice(0, 2).map((m: any) => ({ id: m.id }));
+  public static async getMemberList(chamber: 'senate' | 'house', congressNum: number): Promise<Member[]> {
+    const result = await ProPublicaHelper.get(`https://api.propublica.org/congress/v1/${congressNum}/${chamber}/members.json`);
+    return result[0].members.map((m: any) => ({ id: m.id }));
   }
 
   protected async syncImpl() {
-    return await new MemberProPublicaSyncer(this.entity, this.fields).sync();
+    return await new MemberProPublicaSyncer(this.entity).sync();
     // Add other syncers here. Will run in sequential. TODO: update to parallel
+
+    // update pic
+    // update from user data (this.toUpdate)
   }
 }
 
@@ -43,10 +45,6 @@ class MemberProPublicaSyncer extends EntitySyncer<Member> {
       this.entity.nameSuffix = proPublicaResult[0]['suffix'];
     }
 
-    // if (this.fields?.includes('nickname')) {
-    //   this.entity.nickname = ?
-    // }
-
     if (proPublicaResult[0]['gender']) {
       const gender = proPublicaResult[0]['gender'];
 
@@ -60,18 +58,6 @@ class MemberProPublicaSyncer extends EntitySyncer<Member> {
     if (proPublicaResult[0]['date_of_birth']) {
       this.entity.birthday = proPublicaResult[0]['date_of_birth'];
     }
-
-    // if (this.fields?.includes('website')) {
-    //   this.entity.website = ?
-    // }
-
-    // if (this.fields?.includes('office')) {
-    //   this.entity.office = ?
-    // }
-
-    // if (this.fields?.includes('phone')) {
-    //   this.entity.phone = ?
-    // }
 
     if (proPublicaResult[0]['cspan_id']) {
       this.entity.cspanId = proPublicaResult[0]['cspan_id'];
