@@ -24,6 +24,9 @@ export class BillVersionDownloader extends FileDownloader<BillVersionKeys> {
       const key = this.key.publ.replace(c, '');
       return `https://www.congress.gov/${c}/plaws/${key}/PLAW-${this.key.publ}.${ext}`;
     }
+    if (this.key.publ) {
+      return `https://www.congress.gov/${c}/bills/${t}${n}/BILLS-${c}${t}${n}${this.key.publ}.${ext}`;
+    }
     return `https://www.congress.gov/${c}/bills/${t}${n}/BILLS-${c}${t}${n}${this.key.versionCode}.${ext}`;
   }
 

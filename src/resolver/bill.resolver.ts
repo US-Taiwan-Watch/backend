@@ -97,10 +97,6 @@ export class BillResolver extends TableProvider(BillTable) {
         await tbl.createOrReplaceBill(bill);
       }
       await this.downloadBillVersions(bill, false);
-      if (BillResolver.shouldSave()) {
-        const tbl = await this.table();
-        await tbl.createOrReplaceBill(bill);
-      }
     } catch (e) {
       console.log(`Failed to save bill ${bill.id}: ${e}`);
     }
@@ -150,6 +146,8 @@ export class BillResolver extends TableProvider(BillTable) {
         )
     ).flat();
     await Promise.allSettled(all || []);
+    const tbl = await this.table();
+    await tbl.createOrReplaceBill(bill);
   }
 
 }
