@@ -9,7 +9,6 @@ export class BillTable extends MongoDBTableBase("bills") {
 
   public async getAllBills(): Promise<Bill[]> {
     return await this.getAllItems<Bill>();
-    // return await this.queryItemsWorking({ 'bioGuideId': { $ne: null } });
   }
 
   public getBill(
@@ -26,9 +25,21 @@ export class BillTable extends MongoDBTableBase("bills") {
     });
   }
 
+  public async getBillsThatNeedDownload(): Promise<Bill[]> {
+    return await this.queryItemsWorking({
+      versions: { $exists: true },
+      $or: [
+        { "versions.downloaded.txt": undefined },
+        { "versions.downloaded.pdf": undefined },
+        { "versions.downloaded.xml": undefined },
+      ]
+    });
+  }
+
   public async getBillsThatNeedSync(): Promise<Bill[]> {
     return await this.queryItemsWorking({
       'needsSync': { $ne: false },
+      'manualSync': { $ne: true }
     });
   }
 

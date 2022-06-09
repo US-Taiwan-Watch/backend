@@ -45,6 +45,13 @@ export class BillResolver extends TableProvider(BillTable) {
     return this.bill(bill.id);
   }
 
+  public async downloadAllBillVersions(): Promise<Bill[]> {
+    const tbl = await this.table();
+    let bills = await tbl.getBillsThatNeedDownload();
+    await Promise.allSettled(bills.map(b => this.downloadBillVersions(b, false)));
+    return bills;
+  }
+
   public async syncNewBills(fields?: (keyof Bill)[]): Promise<Bill[]> {
     const tbl = await this.table();
     let bills = await tbl.getBillsThatNeedSync();
@@ -125,25 +132,22 @@ export class BillResolver extends TableProvider(BillTable) {
       bill = await this.bill(bill.id) || bill;
     }
     const contentTypes = BillVersionDownloader.getContentTypes();
-    const all = bill.versions?.filter(v =>
-      !v.downloaded || v.downloaded.length < contentTypes.length
-    ).map(v =>
-      contentTypes.filter(t => !v.downloaded || !v.downloaded.includes(t)).map(type =>
-        new BillVersionDownloader({
-          billId: bill.id,
-          versionCode: v.code,
-          contentType: type,
-          publ: v.id,
-        }).downloadAndUpload().then(suc => {
-          if (!suc) {
-            return;
-          }
-          if (!v.downloaded) {
-            v.downloaded = [];
-          }
-          v.downloaded = [...v.downloaded, type];
-        })
-      )
+    const all = bill.versions?.map(v =>
+      contentTypes
+        .filter(t => !v.downloaded || !(t in v.downloaded))
+        .map(type =>
+          new BillVersionDownloader({
+            billId: bill.id,
+            versionCode: v.code,
+            contentType: type,
+            publ: v.id,
+          }).downloadAndUpload().then(suc => {
+            if (!suc) {
+              return;
+            }
+            v.downloaded = { ...v.downloaded, [type]: true };
+          })
+        )
     ).flat();
     await Promise.allSettled(all || []);
   }

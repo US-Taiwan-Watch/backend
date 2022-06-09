@@ -441,7 +441,7 @@ export class MongoDBManager {
     new(db: mongodb.Db): T;
   }): T {
     const tbl = _.find(this.tables, (t) => t instanceof TblClass);
-    console.log(`tbl.tableName = ${tbl && tbl.tableName}`);
+    // console.log(`tbl.tableName = ${tbl && tbl.tableName}`);
     return <T>(tbl as MongoDBTable);
   }
 
