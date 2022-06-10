@@ -1,4 +1,4 @@
-import { Resolver, Query, Arg } from "type-graphql";
+import { Resolver, Query, Arg, Args } from "type-graphql";
 import { Bill, BillType } from "../../common/models";
 import { BillSyncer } from "../data-sync/bill.sync";
 import { TableProvider } from "../mongodb/mongodb-manager";
@@ -6,6 +6,7 @@ import { BillVersionDownloader } from "../storage/bill-version-downloader";
 import { CongressUtils } from "../util/congress-utils";
 import { Logger } from "../util/logger";
 import { BillTable } from "./bill-table";
+import { PaginatedBills, Pagination, PaginationArgs } from "../util/pagination";
 
 @Resolver(Bill)
 export class BillResolver extends TableProvider(BillTable) {
@@ -21,9 +22,17 @@ export class BillResolver extends TableProvider(BillTable) {
   }
 
   @Query(() => [Bill], { nullable: false })
-  public async bills(): Promise<Bill[]> {
+  public async bills(@Args() pageInfo: PaginationArgs): Promise<Bill[]> {
     const tbl = await this.table();
-    return await tbl.getAllBills();
+    const bills = await tbl.getAllBills();
+    return Pagination.getPaginatedList(bills, pageInfo);
+  }
+
+  @Query(() => PaginatedBills, { nullable: false })
+  public async paginatedBills(@Args() pageInfo: PaginationArgs): Promise<PaginatedBills> {
+    const tbl = await this.table();
+    const bills = await tbl.getAllBills();
+    return new PaginatedBills(bills, pageInfo);
   }
 
   @Query(() => Bill, { nullable: true })
