@@ -21,15 +21,8 @@ export class BillResolver extends TableProvider(BillTable) {
     return true;
   }
 
-  @Query(() => [Bill], { nullable: false })
-  public async bills(@Args() pageInfo: PaginationArgs): Promise<Bill[]> {
-    const tbl = await this.table();
-    const bills = await tbl.getAllBills();
-    return Pagination.getPaginatedList(bills, pageInfo);
-  }
-
   @Query(() => PaginatedBills, { nullable: false })
-  public async paginatedBills(@Args() pageInfo: PaginationArgs): Promise<PaginatedBills> {
+  public async bills(@Args() pageInfo: PaginationArgs): Promise<PaginatedBills> {
     const tbl = await this.table();
     const bills = await tbl.getAllBills();
     return new PaginatedBills(bills, pageInfo);
