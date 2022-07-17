@@ -24,26 +24,28 @@ export class MemberResolver extends TableProvider(MemberTable) {
     return await tbl.getMember(bioGuideId);
   }
 
+  //TODO: @Query for member by name (fuzzy search)
+
   // get all members and update data from APIs
   public async fetchAndSyncAllMembers(): Promise<Member[]> {
     const members = await MemberSyncer.getAllMembers();
     return await this.syncMembers(members, true);
   }
 
-  // get members of specific congress and update data from APIs
+  // get members of specific congress and update data from external sources
   public async fetchAndSyncMemberByCongress(chamber: 'senate' | 'house', congressNum: number): Promise<Member[]> {
     const members = await MemberSyncer.getMemberList(chamber, congressNum);
     return await this.syncMembers(members, true);
   }
 
-  // get the given member (by ID) and update data from APIs
+  // get the given member (by ID) and update data from external sources
   public async fetchAndSyncMemberById(reqId: string): Promise<Member | null> {
-    return await this.syncMember({ id: reqId }, { id: reqId }, true);
+    return await this.syncMember(new Member(reqId), new Member(reqId), true);
   }
 
   // get the given member (by ID) and update data with what given
   public async updateMemberWithData(memberData: Member): Promise<Member | null> {
-    return await this.syncMember({ id: memberData.id }, memberData, true);
+    return await this.syncMember(new Member(memberData.id), memberData, true);
   }
 
   private async syncMember(member: Member, memberData: Member, isFromDB: boolean): Promise<Member> {
@@ -79,7 +81,7 @@ export class MemberResolver extends TableProvider(MemberTable) {
     // Fetch extra fields individually
     members = await Promise.all(members.map(member =>
       // Add some fields
-      this.syncMember(member, { id: member.id }, false)
+      this.syncMember(member, new Member(member.id), false)
     ));
 
     return members;

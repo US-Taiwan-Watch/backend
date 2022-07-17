@@ -18,7 +18,14 @@ export abstract class ProPublicaHelper {
         'x-api-key': process.env.PROPUBLICA_API_KEY
       }
     });
-    return JSON.parse(result).results;
+
+    const parsed_result = JSON.parse(result);
+
+    if (parsed_result.status != "OK") {
+      throw parsed_result;
+    }
+
+    return parsed_result.results;
   }
 
 }

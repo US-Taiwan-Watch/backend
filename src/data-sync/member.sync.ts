@@ -5,6 +5,8 @@ import { ProPublicaHelper } from "./sources/propublica";
 import { UnitedStatesHelper } from "./sources/unitedstates";
 
 
+type MemberSrc = 'ProPublica' | 'UserData';
+
 export class MemberSyncer extends EntitySyncer<Member> {
   public static async getAllMembers(): Promise<Member[]> {
     const result = await UnitedStatesHelper.get("https://theunitedstates.io/congress-legislators/legislators-historical.json");
@@ -16,114 +18,233 @@ export class MemberSyncer extends EntitySyncer<Member> {
     return result[0].members.map((m: any) => ({ id: m.id }));
   }
 
-  protected async syncImpl() {
-    return await new MemberProPublicaSyncer(this.entity).sync();
+  protected async syncImpl(): Promise<boolean> {
+    await new MemberProPublicaSyncer(this.entity).sync().catch(
+      e => {
+        if (e.status) {
+          console.log(`Cannot sync member ${this.entity.id} from Propublica (Error ${e.status})`);
+        } else {
+          console.log(`Cannot sync member ${this.entity.id} from Propublica`);
+          console.log(e);
+        }
+      });
+
+    await new MemberDataUpdateSyncer(this.entity, this.toUpdate).sync();
     // Add other syncers here. Will run in sequential. TODO: update to parallel
 
     // update pic
-    // update from user data (this.toUpdate)
+    return true;
   }
 }
 
 class MemberProPublicaSyncer extends EntitySyncer<Member> {
-  protected async syncImpl() {
-    const proPublicaResult = await ProPublicaHelper.get(`https://api.propublica.org/congress/v1/members/${this.entity.id}.json`);
+  protected async syncImpl(): Promise<boolean> {
+    const propublicaResult = await ProPublicaHelper.get(`https://api.propublica.org/congress/v1/members/${this.entity.id}.json`);
+    const proPublicaMember = this.buildMemberFromPropublicaResult(propublicaResult[0]);
 
-    if (proPublicaResult[0]['first_name']) {
-      this.entity.firstName = proPublicaResult[0]['first_name'];
+    if (this.entity.propublicaMember) {
+      this.entity.propublicaMember = mergeMember("ProPublica", this.entity.propublicaMember, proPublicaMember);
+    } else {
+      this.entity.propublicaMember = proPublicaMember;
+      console.log(`[Member][ProPublica] ${this.entity.id} data added`);
     }
 
-    if (proPublicaResult[0]['middle_name']) {
-      this.entity.middleName = proPublicaResult[0]['middle_name'];
+    return true;
+  }
+
+  private buildMemberFromPropublicaResult(propublicaData: any): Member {
+    let propublicaMember = new Member(propublicaData['id']);
+
+    if (propublicaData['first_name']) {
+      propublicaMember.firstName = propublicaData['first_name'];
     }
 
-    if (proPublicaResult[0]['last_name']) {
-      this.entity.lastName = proPublicaResult[0]['last_name'];
+    if (propublicaData['middle_name']) {
+      propublicaMember.middleName = propublicaData['middle_name'];
     }
 
-    if (proPublicaResult[0]['suffix']) {
-      this.entity.nameSuffix = proPublicaResult[0]['suffix'];
+    if (propublicaData['last_name']) {
+      propublicaMember.lastName = propublicaData['last_name'];
     }
 
-    if (proPublicaResult[0]['gender']) {
-      const gender = proPublicaResult[0]['gender'];
+    if (propublicaData['suffix']) {
+      propublicaMember.nameSuffix = propublicaData['suffix'];
+    }
 
-      if (gender === 'M') {
-        this.entity.gender = 'male';
-      } else if (gender === 'F') {
-        this.entity.gender = 'female';
+    if (propublicaData['gender']) {
+      const gender = propublicaData['gender'];
+
+      if (gender === "M") {
+        propublicaMember.gender = "male";
+      } else if (gender === "F") {
+        propublicaMember.gender = "female";
       }
     }
 
-    if (proPublicaResult[0]['date_of_birth']) {
-      this.entity.birthday = proPublicaResult[0]['date_of_birth'];
+    if (propublicaData['date_of_birth']) {
+      propublicaMember.birthday = propublicaData['date_of_birth'];
     }
 
-    if (proPublicaResult[0]['cspan_id']) {
-      this.entity.cspanId = proPublicaResult[0]['cspan_id'];
+    if (propublicaData['url']) {
+      propublicaMember.website = propublicaData['url'];
     }
 
-    if (proPublicaResult[0]['twitter_account']) {
-      this.entity.twitterId = proPublicaResult[0]['twitter_account'];
+    if (propublicaData['office']) {
+      propublicaMember.office = propublicaData['office'];
     }
 
-    if (proPublicaResult[0]['facebook_account']) {
-      this.entity.facebookId = proPublicaResult[0]['facebook_account'];
+    if (propublicaData['phone']) {
+      propublicaMember.phone = propublicaData['phone'];
     }
 
-    if (proPublicaResult[0]['youtube_account']) {
-      this.entity.youtubeId = proPublicaResult[0]['youtube_account'];
+    if (propublicaData['cspan_id']) {
+      propublicaMember.cspanId = propublicaData['cspan_id'];
     }
 
-    // if (this.fields?.includes('profilePictureUri')) {
-    //   this.entity.profilePictureUri = ?
-    // }
+    if (propublicaData['twitter_account']) {
+      propublicaMember.twitterId = propublicaData['twitter_account'];
+    }
 
-    if (proPublicaResult[0]['roles'].length > 0) {
-      const roles = proPublicaResult[0]['roles'];
+    if (propublicaData['facebook_account']) {
+      propublicaMember.facebookId = propublicaData['facebook_account'];
+    }
+
+    if (propublicaData['youtube_account']) {
+      propublicaMember.youtubeId = propublicaData['youtube_account'];
+    }
+
+    if (propublicaData['roles'].length > 0) {
+      const roles = propublicaData['roles'];
+
+      // init congress role array
+      propublicaMember.congressRoles = [];
 
       for (let role_idx = 0; role_idx < roles.length; role_idx++) {
         const role = roles[role_idx];
 
-        if (this.entity.congressRoles?.some((congressRole: MemberRole): boolean =>
-          congressRole.congressNumbers.some((congressNum: number): boolean =>
-            congressNum === Number(role['congress'])))
-        ) {
-          // this role exists => update the data
-          console.log(`role: ${Number(role['congress'])} exists`);
-        } else {
-          // this role doesn't exist => push a new one
-          if (!this.entity.congressRoles) {
-            this.entity.congressRoles = [];
-          }
-
-          if (role['chamber'] === 'Senate') {
-            this.entity.congressRoles.push({
-              congressNumbers: [Number(role['congress'])],
-              chamber: 's',
-              startDate: role['start_date'],
-              endDate: role['end_date'],
-              party: role['party'],
-              state: role['state'],
-              senatorClass: role['senate_class']
-            });
-          } else {
-            this.entity.congressRoles.push({
-              congressNumbers: [Number(role['congress'])],
-              chamber: 'h',
-              startDate: role['start_date'],
-              endDate: role['end_date'],
-              party: role['party'],
-              state: role['state'],
-              district: role['district']
-            });
-          }
+        if (role['chamber'] === "Senate") {
+          propublicaMember.congressRoles.push({
+            congressNumbers: [Number(role['congress'])],
+            chamber: 's',
+            startDate: role['start_date'],
+            endDate: role['end_date'],
+            party: role['party'],
+            state: role['state'],
+            senatorClass: Number(role['senate_class'])
+          });
+        } else if (role['chamber'] === "House") {
+          propublicaMember.congressRoles.push({
+            congressNumbers: [Number(role['congress'])],
+            chamber: 'h',
+            startDate: role['start_date'],
+            endDate: role['end_date'],
+            party: role['party'],
+            state: role['state'],
+            district: Number(role['district'])
+          });
         }
       }
     }
-    return true;
 
+    return propublicaMember;
   }
 
   // TODO: party & state mapping from propublica to member type
+}
+
+class MemberDataUpdateSyncer extends EntitySyncer<Member> {
+  protected async syncImpl(): Promise<boolean> {
+
+    // toUpdate not exist or is not Member, no need to update
+    if (!this.toUpdate || !("id" in this.toUpdate)) {
+      return true;
+    }
+
+    // toUpdate data is not the one for this entity
+    if (this.toUpdate.id != this.entity.id) {
+      return false;
+    }
+
+    this.entity = mergeMember("UserData", this.entity, this.toUpdate);
+
+    return true;
+  }
+}
+
+function mergeMember(source: MemberSrc, targetMember: Member, srcMember: Member): Member {
+  // srcMember -merge-> targetMember
+
+  if (isNeedUpdate(targetMember.id, source, "firstName", targetMember.firstName, srcMember.firstName)) {
+    targetMember.firstName = srcMember.firstName;
+  }
+
+  if (isNeedUpdate(targetMember.id, source, "middleName", targetMember.middleName, srcMember.middleName)) {
+    targetMember.middleName = srcMember.middleName;
+  }
+
+  if (isNeedUpdate(targetMember.id, source, "lastName", targetMember.lastName, srcMember.lastName)) {
+    targetMember.lastName = srcMember.lastName;
+  }
+
+  if (isNeedUpdate(targetMember.id, source, "nameSuffix", targetMember.nameSuffix, srcMember.nameSuffix)) {
+    targetMember.nameSuffix = srcMember.nameSuffix;
+  }
+
+  if (isNeedUpdate(targetMember.id, source, "gender", targetMember.gender, srcMember.gender)) {
+    targetMember.gender = srcMember.gender;
+  }
+
+  if (isNeedUpdate(targetMember.id, source, "birthday", targetMember.birthday, srcMember.birthday)) {
+    targetMember.birthday = srcMember.birthday;
+  }
+
+  if (isNeedUpdate(targetMember.id, source, "cspanId", targetMember.cspanId, srcMember.cspanId)) {
+    targetMember.cspanId = srcMember.cspanId;
+  }
+
+  if (isNeedUpdate(targetMember.id, source, "twitterId", targetMember.twitterId, srcMember.twitterId)) {
+    targetMember.twitterId = srcMember.twitterId;
+  }
+
+  if (isNeedUpdate(targetMember.id, source, "facebookId", targetMember.facebookId, srcMember.facebookId)) {
+    targetMember.facebookId = srcMember.facebookId;
+  }
+
+  if (isNeedUpdate(targetMember.id, source, "youtubeId", targetMember.youtubeId, srcMember.youtubeId)) {
+    targetMember.youtubeId = srcMember.youtubeId;
+  }
+
+  return targetMember;
+}
+
+function isNeedUpdate(memeberId: string, source: MemberSrc, field: string, oldData: any, newData: any): boolean {
+  // for User source, only update when newData is valid
+  if (source == 'UserData' && !newData) {
+    return false;
+  }
+
+  // identical data, no need to update
+  if (oldData && newData && oldData === newData) {
+    return false;
+  }
+
+  // no valid data updated, no need to update
+  if (!oldData && !newData) {
+    return false;
+  }
+
+  if (oldData !== newData) {
+    if (oldData && newData) {
+      // data modified
+      console.log(`[Member][${source}] ${memeberId} ${field}: ${oldData} -> ${newData}`);
+    } else if (oldData && !newData) {
+      // data removed
+      console.log(`[Member][${source}] ${memeberId} ${field}: ${oldData} removed`);
+    } else if (!oldData && newData) {
+      // data added
+      console.log(`[Member][${source}] ${memeberId} ${field}: ${newData} added`);
+    }
+  }
+
+  return true;
 }
