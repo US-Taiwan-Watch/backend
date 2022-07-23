@@ -19,6 +19,10 @@ export class MemberSyncer extends EntitySyncer<Member> {
   }
 
   protected async syncImpl(): Promise<boolean> {
+    // Update user's input data
+    new MemberDataUpdateSyncer(this.entity, this.toUpdate).sync();
+
+    // Query data from ProPublica
     await new MemberProPublicaSyncer(this.entity).sync().catch(
       e => {
         if (e.status) {
@@ -29,7 +33,8 @@ export class MemberSyncer extends EntitySyncer<Member> {
         }
       });
 
-    await new MemberDataUpdateSyncer(this.entity, this.toUpdate).sync();
+    // Query data from the United States database
+
     // Add other syncers here. Will run in sequential. TODO: update to parallel
 
     // update pic
@@ -190,12 +195,36 @@ function mergeMember(source: MemberSrc, targetMember: Member, srcMember: Member)
     targetMember.nameSuffix = srcMember.nameSuffix;
   }
 
+  if (isNeedUpdate(targetMember.id, source, "nickname", targetMember.nickname, srcMember.nickname)) {
+    targetMember.nickname = srcMember.nickname;
+  }
+
+  if (isNeedUpdate(targetMember.id, source, "firstName_zh", targetMember.firstName_zh, srcMember.firstName_zh)) {
+    targetMember.firstName_zh = srcMember.firstName_zh;
+  }
+
+  if (isNeedUpdate(targetMember.id, source, "lastName_zh", targetMember.lastName_zh, srcMember.lastName_zh)) {
+    targetMember.lastName_zh = srcMember.lastName_zh;
+  }
+
   if (isNeedUpdate(targetMember.id, source, "gender", targetMember.gender, srcMember.gender)) {
     targetMember.gender = srcMember.gender;
   }
 
   if (isNeedUpdate(targetMember.id, source, "birthday", targetMember.birthday, srcMember.birthday)) {
     targetMember.birthday = srcMember.birthday;
+  }
+
+  if (isNeedUpdate(targetMember.id, source, "website", targetMember.website, srcMember.website)) {
+    targetMember.website = srcMember.website;
+  }
+
+  if (isNeedUpdate(targetMember.id, source, "office", targetMember.office, srcMember.office)) {
+    targetMember.office = srcMember.office;
+  }
+
+  if (isNeedUpdate(targetMember.id, source, "phone", targetMember.phone, srcMember.phone)) {
+    targetMember.phone = srcMember.phone;
   }
 
   if (isNeedUpdate(targetMember.id, source, "cspanId", targetMember.cspanId, srcMember.cspanId)) {
@@ -212,6 +241,10 @@ function mergeMember(source: MemberSrc, targetMember: Member, srcMember: Member)
 
   if (isNeedUpdate(targetMember.id, source, "youtubeId", targetMember.youtubeId, srcMember.youtubeId)) {
     targetMember.youtubeId = srcMember.youtubeId;
+  }
+
+  if (isNeedUpdate(targetMember.id, source, "revokedFields", targetMember.revokedFields, srcMember.revokedFields)) {
+    targetMember.revokedFields = srcMember.revokedFields;
   }
 
   return targetMember;
