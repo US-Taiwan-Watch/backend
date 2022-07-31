@@ -25,7 +25,16 @@ export class MemberSyncer extends EntitySyncer<Member> {
     new MemberDataUpdateSyncer(this.entity, this.toUpdate).sync();
 
     // Query data from ProPublica
-    await new MemberProPublicaSyncer(this.entity).sync().catch(
+    await new MemberProPublicaSyncer(this.entity).sync().then(
+      () => {
+        if (this.entity.propublicaMember) {
+          this.entity.propublicaMember.updateTimestamp = Date.now();
+        } else {
+          console.log(`Cannot sync member ${this.entity.id} from Propublica`);
+          console.log("No propublicaMember in the result")
+        }
+      }
+    ).catch(
       e => {
         if (e.status) {
           console.log(`Cannot sync member ${this.entity.id} from Propublica (Error ${e.status})`);
@@ -33,13 +42,42 @@ export class MemberSyncer extends EntitySyncer<Member> {
           console.log(`Cannot sync member ${this.entity.id} from Propublica`);
           console.log(e);
         }
+
+        if (!this.entity.propublicaMember) {
+          this.entity.propublicaMember = new Member(this.entity.id);
+        }
+
+        if (this.entity.propublicaMember.failCount) {
+          this.entity.propublicaMember.failCount++;
+        } else {
+          this.entity.propublicaMember.failCount = 1;
+        }
       });
 
     // Query data from the United States database
-    await new MemberUnitedStateSyncer(this.entity).sync().catch(
+    await new MemberUnitedStateSyncer(this.entity).sync().then(
+      () => {
+        if (this.entity.unitedstatesMember) {
+          this.entity.unitedstatesMember.updateTimestamp = Date.now();
+        } else {
+          console.log(`Cannot sync member ${this.entity.id} from Propublica`);
+          console.log("No unitedstatesMember in the result")
+        }
+      }
+    ).catch(
       e => {
         console.log(`Cannot sync member ${this.entity.id} from the United States project database`);
         console.log(e);
+
+        if (!this.entity.unitedstatesMember) {
+          this.entity.unitedstatesMember = new Member(this.entity.id);
+        }
+
+        if (this.entity.unitedstatesMember.failCount) {
+          this.entity.unitedstatesMember.failCount++;
+        } else {
+          this.entity.unitedstatesMember.failCount = 1;
+        }
       }
     );
 

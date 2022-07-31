@@ -14,6 +14,8 @@ if (require.main === module) {
   const currYear = new Date().getFullYear();
   const currCongress = 117 + Math.floor((currYear - 2021) / 2);   // check for session start data: Jan. 3?
 
+  console.log(`Start sync recent members [Congress Num ${currCongress - 1} and ${currCongress}] @${Date.now()}`);
+
   // Sync for latest 2 terms of Senate
   new MemberResolver().fetchAndSyncMemberByCongress('senate', currCongress - 1).then(_ => {
     console.log(`sync senate ${currCongress - 1} succcessfully!`);
@@ -31,5 +33,7 @@ if (require.main === module) {
   new MemberResolver().fetchAndSyncMemberByCongress('house', currCongress).then(_ => {
     console.log(`sync house ${currCongress} succcessfully!`);
   });
+
+  console.log(`Sync recent members [Congress Num ${currCongress - 1} and ${currCongress}] finished @${Date.now()}`);
 }
 
