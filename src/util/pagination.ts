@@ -1,5 +1,5 @@
 import { Field, ArgsType, ClassType, ObjectType, Int } from "type-graphql";
-import { Bill } from "../../common/models";
+import { DenormalizedBill } from "../graphql/bill.model";
 
 export abstract class Pagination {
   public static getPaginatedList<T>(items: T[], pageInfo: PaginationArgs): T[] {
@@ -49,4 +49,4 @@ export function PaginatedResponse<TItem>(
 }
 
 @ObjectType()
-export class PaginatedBills extends PaginatedResponse(Bill) { }
+export class PaginatedBills extends PaginatedResponse(DenormalizedBill) { }

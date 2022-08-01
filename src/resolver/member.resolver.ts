@@ -13,9 +13,14 @@ export class MemberResolver extends TableProvider(MemberTable) {
   }
 
   @Query(() => [Member], { nullable: false })
-  public async members(): Promise<Member[]> {
+  public async members(
+    @Arg('bioGuideIds', () => [String], { nullable: true }) bioGuideIds: string[] | null = null
+  ): Promise<Member[]> {
     const tbl = await this.table();
-    return await tbl.getAllMembers();
+    if (!bioGuideIds) {
+      return await tbl.getAllMembers();
+    }
+    return await tbl.getMembers(bioGuideIds);
   }
 
   @Query(() => Member, { nullable: true })
