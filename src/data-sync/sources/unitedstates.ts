@@ -12,23 +12,38 @@ export abstract class UnitedStatesHelper {
   }
 
   public static async getAllMemberData(): Promise<any[]> {
-    // TODO: handle concurrent query
 
     // no cached data or cached data is out of date
-    if (this.lastUpdateTime == 0 || Date.now() - this.lastUpdateTime > CACHE_TIME) {
-      console.log("get all data from the united states!")
+    if (this.lastUpdateTime === 0 || Date.now() - this.lastUpdateTime > CACHE_TIME) {
+      let currentTime = 0;
+
+      // Fetch Current Members
+      console.log("get current member data from the united states source")
       console.log(`last update time: ${this.lastUpdateTime}`);
 
-      const result = await RequestHelper.from(RequestSource.UNITEDSTATES).get(
+      const result_currMember = await RequestHelper.from(RequestSource.UNITEDSTATES).get(
+        "https://theunitedstates.io/congress-legislators/legislators-current.json"
+      );
+
+      currentTime = Date.now();
+      this.cachedAllMemberData = JSON.parse(result_currMember);
+
+      console.log(`updated last update time: ${currentTime}`);
+
+      // Fetch Historical Members
+      console.log("get historical member data from the united states source")
+      console.log(`last update time: ${this.lastUpdateTime}`);
+
+      const result_histMember = await RequestHelper.from(RequestSource.UNITEDSTATES).get(
         "https://theunitedstates.io/congress-legislators/legislators-historical.json"
       );
 
-      this.lastUpdateTime = Date.now();
-      this.cachedAllMemberData = JSON.parse(result);
+      currentTime = Date.now();
+      this.cachedAllMemberData = this.cachedAllMemberData.concat(JSON.parse(result_histMember))
 
-      console.log(`updated last update time: ${this.lastUpdateTime}`);
-    } else {
-      //console.log("skip getting data from the united states");
+      console.log(`updated last update time: ${currentTime}`);
+
+      this.lastUpdateTime = currentTime;
     }
 
     return this.cachedAllMemberData;

@@ -15,8 +15,6 @@ if (require.main === module) {
 
   new MemberResolver().fetchAndSyncAllMembers().then(_ => {
     console.log('sync all members succcessfully!');
-  })
-
-  console.log(`Sync all members finished @${Date.now()}`);
+  });
 }
 

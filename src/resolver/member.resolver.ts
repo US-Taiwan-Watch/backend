@@ -9,7 +9,7 @@ import { MemberTable } from "./member-table";
 export class MemberResolver extends TableProvider(MemberTable) {
   // TODO: false for debugging. Should be true while in real use
   private static shouldSave() {
-    return false;
+    return true;
   }
 
   @Query(() => [Member], { nullable: false })
@@ -62,7 +62,6 @@ export class MemberResolver extends TableProvider(MemberTable) {
         const tbl = await this.table();
         await tbl.createOrReplaceMember(member);
       }
-      // TODO: save update to DB
     } catch (e) {
       console.log(`Cannot sync member ${member.id}`);
     }
@@ -77,6 +76,9 @@ export class MemberResolver extends TableProvider(MemberTable) {
       // Merge fields from updated over existing ones
       members = members.map(um => ({ ...existingMembers.find(em => em.id === um.id), ...um }));
     }
+
+    // Fetch from the united states source in advance for caching
+    await MemberSyncer.getAllMembers();
 
     // Fetch extra fields individually
     members = await Promise.all(members.map(member =>

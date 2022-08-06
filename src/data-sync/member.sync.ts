@@ -9,8 +9,14 @@ type MemberSrc = 'ProPublica' | 'unitedStates' | 'UserData';
 
 export class MemberSyncer extends EntitySyncer<Member> {
   public static async getAllMembers(): Promise<Member[]> {
+    const moreMembers =
+      ["J000069", "R000429", "C000738", "A000059",
+        "M000564", "C000527", "D000147", "R000363",
+        "A000303", "H000660", "M000164", "A000039",
+        "S000605", "W000178", "W000077", "T000306"];  // the 16 members are not listed in united states source
+
     const result = await UnitedStatesHelper.getAllMemberData();
-    return result.map(((m: any) => ({ id: m.id.bioguide })));
+    return result.map(((m: any) => ({ id: m.id.bioguide }))).concat(moreMembers.map((id: string) => ({ id: id })));
   }
 
   public static async getMemberList(chamber: 'senate' | 'house', congressNum: number): Promise<Member[]> {
@@ -25,34 +31,42 @@ export class MemberSyncer extends EntitySyncer<Member> {
     new MemberDataUpdateSyncer(this.entity, this.toUpdate).sync();
 
     // Query data from ProPublica
-    await new MemberProPublicaSyncer(this.entity).sync().then(
-      () => {
-        if (this.entity.propublicaMember) {
-          this.entity.propublicaMember.updateTimestamp = Date.now();
-        } else {
-          console.log(`Cannot sync member ${this.entity.id} from Propublica`);
-          console.log("No propublicaMember in the result")
-        }
-      }
-    ).catch(
-      e => {
-        if (e.status) {
-          console.log(`Cannot sync member ${this.entity.id} from Propublica (Error ${e.status})`);
-        } else {
-          console.log(`Cannot sync member ${this.entity.id} from Propublica`);
-          console.log(e);
-        }
+    //if (!this.entity.propublicaMember) 
+    {
+      await new MemberProPublicaSyncer(this.entity).sync().then(
+        () => {
+          if (this.entity.propublicaMember) {
+            this.entity.propublicaMember.updateTimestamp = Date.now();
 
-        if (!this.entity.propublicaMember) {
-          this.entity.propublicaMember = new Member(this.entity.id);
+            // clear fail count as success
+            // if (this.entity.propublicaMember.failCount) {
+            //   this.entity.propublicaMember.failCount = 0;
+            // }
+          } else {
+            console.log(`Cannot sync member ${this.entity.id} from Propublica`);
+            console.log("No propublicaMember in the result")
+          }
         }
+      ).catch(
+        e => {
+          if (e.status) {
+            console.log(`Cannot sync member ${this.entity.id} from Propublica (Error ${e.status})`);
+          } else {
+            console.log(`Cannot sync member ${this.entity.id} from Propublica`);
+            console.log(e);
+          }
 
-        if (this.entity.propublicaMember.failCount) {
-          this.entity.propublicaMember.failCount++;
-        } else {
-          this.entity.propublicaMember.failCount = 1;
-        }
-      });
+          if (!this.entity.propublicaMember) {
+            this.entity.propublicaMember = new Member(this.entity.id);
+          }
+
+          if (this.entity.propublicaMember.failCount) {
+            this.entity.propublicaMember.failCount++;
+          } else {
+            this.entity.propublicaMember.failCount = 1;
+          }
+        });
+    }
 
     // Query data from the United States database
     await new MemberUnitedStateSyncer(this.entity).sync().then(
@@ -205,16 +219,21 @@ class MemberUnitedStateSyncer extends EntitySyncer<Member> {
   protected async syncImpl(): Promise<boolean> {
     const unitedStatesAllMemberResult = await UnitedStatesHelper.getAllMemberData();
     const unitedStatesResult = unitedStatesAllMemberResult.find(result => result.id.bioguide === this.entity.id);
-    const unitedStatesMember = this.buildMemberFromUnitedStatesResult(unitedStatesResult);
 
-    if (this.entity.unitedstatesMember) {
-      this.entity.unitedstatesMember = mergeMember("unitedStates", this.entity.unitedstatesMember, unitedStatesMember);
+    if (unitedStatesResult) {
+      const unitedStatesMember = this.buildMemberFromUnitedStatesResult(unitedStatesResult);
+
+      if (this.entity.unitedstatesMember) {
+        this.entity.unitedstatesMember = mergeMember("unitedStates", this.entity.unitedstatesMember, unitedStatesMember);
+      } else {
+        this.entity.unitedstatesMember = unitedStatesMember;
+        console.log(`[Member][unitedStates] ${this.entity.id} data added`);
+      }
+
+      return true;
     } else {
-      this.entity.unitedstatesMember = unitedStatesMember;
-      console.log(`[Member][unitedStates] ${this.entity.id} data added`);
+      throw "member doesn't exist"
     }
-
-    return true;
   }
 
   private buildMemberFromUnitedStatesResult(uniteStatesData: any): Member {
