@@ -22,6 +22,7 @@ import { appInsightsClient } from "./util/app-insights";
 import WS from "ws";
 import { useServer } from "graphql-ws/lib/use/ws";
 import { ApolloServerPluginDrainHttpServer } from "apollo-server-core";
+import { AdminResolver } from "./resolver/admin.resolver";
 
 async function bootstrap() {
   const jwks = require("jwks-rsa");
@@ -74,7 +75,7 @@ async function bootstrap() {
   const schema = buildSchemaSync({
     pubSub: RedisClient.pubsub,
     // resolvers: [__dirname + "/**/*.resolver.{ts,js}"]
-    resolvers: [SubscriptionResolver, MessagingResolver, UserResolver, MemberResolver, BillResolver],
+    resolvers: [SubscriptionResolver, MessagingResolver, UserResolver, MemberResolver, BillResolver, AdminResolver],
     validate: false,
     authChecker,
     // emitSchemaFile: true,

@@ -33,6 +33,7 @@ registerEnumType(Auth0RoleName, { name: "Auth0RoleName" });
 
 const Auth0RoleIdMap: { [key in Auth0RoleName]: string } = {
   [Auth0RoleName.Admin]: "rol_c3oKfG2GuW967l60",
+  [Auth0RoleName.Editor]: "rol_Ajs5PfwHvfmKqcaf",
   [Auth0RoleName.S2S]: "N/A",
 };
 
