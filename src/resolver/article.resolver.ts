@@ -1,4 +1,4 @@
-import { Resolver, Query, Arg, Args } from "type-graphql";
+import { Resolver, Query, Arg, Args, Mutation } from "type-graphql";
 import { Article, ArticleStatus } from "../../common/models";
 import { TableProvider } from "../mongodb/mongodb-manager";
 import { ArticleTable } from "./article-table";
@@ -24,14 +24,15 @@ export class ArticleResolver extends TableProvider(ArticleTable) {
         return await tbl.getArticle(id);
     }
 
-    @Query(() => Article, { nullable: true })
+    /*@Query(() => Article, { nullable: true })
     public async articles(
         @Arg('ids') ids: string[],
     ): Promise<Article[] | null> {
         const tbl = await this.table();
         return await tbl.getArticles(ids);
-    }
+    }*/
 
+    @Mutation(() => Boolean, { nullable: true })
     public async addArticle(
         title: string,
         content: string,
