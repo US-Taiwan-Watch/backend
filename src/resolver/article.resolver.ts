@@ -5,11 +5,6 @@ import { ArticleTable } from "./article-table";
 
 @Resolver(Article)
 export class ArticleResolver extends TableProvider(ArticleTable) {
-    // TODO: false for debugging. Should be true while in real use
-    private static shouldSave() {
-        return true;
-    }
-
     @Query(() => [Article], { nullable: false })
     public async allArticles(): Promise<Article[]> {
         const tbl = await this.table();
@@ -24,22 +19,30 @@ export class ArticleResolver extends TableProvider(ArticleTable) {
         return await tbl.getArticle(id);
     }
 
-    /*@Query(() => Article, { nullable: true })
+    @Query(() => [Article], { nullable: true })
     public async articles(
-        @Arg('ids') ids: string[],
+        @Arg('ids', () => [String]) ids: string[],
     ): Promise<Article[] | null> {
         const tbl = await this.table();
         return await tbl.getArticles(ids);
-    }*/
+    }
 
-    @Mutation(() => Boolean, { nullable: true })
+    @Mutation(() => Article, { nullable: true })
+    public async createEmptyArticle(): Promise<Article | null> {
+        const tbl = await this.table();
+        const article = new Article();
+        await tbl.createOrReplaceArticle(article);
+        return this.article(article.id);
+    }
+
+    @Mutation(() => Article, { nullable: true })
     public async addArticle(
-        title: string,
-        content: string,
-        status: ArticleStatus,
-        author: string,
-        imageSource: string,
-        tags: string[]
+        @Arg("title", { nullable: true }) title?: string,
+        @Arg("content", { nullable: true }) content?: string,
+        @Arg("status", { nullable: true }) status?: ArticleStatus,
+        @Arg("author", () => [String], { nullable: true }) author?: string[],
+        @Arg("imageSource", { nullable: true }) imageSource?: string,
+        @Arg("tags", () => [String], { nullable: true }) tags?: string[]
     ): Promise<Article | null> {
         const tbl = await this.table();
         const article = new Article(title, content, status, author, imageSource, tags);
@@ -47,15 +50,33 @@ export class ArticleResolver extends TableProvider(ArticleTable) {
         return this.article(article.id);
     }
 
-    public async updateArticle(article: Article): Promise<Article | null> {
+    @Mutation(() => Article, { nullable: true })
+    public async updateArticleWithId(
+        @Arg('id') id: string,
+        @Arg("title", { nullable: true }) title?: string,
+        @Arg("content", { nullable: true }) content?: string,
+        @Arg("status", { nullable: true }) status?: ArticleStatus,
+        @Arg("author", () => [String], { nullable: true }) author?: string[],
+        @Arg("imageSource", { nullable: true }) imageSource?: string,
+        @Arg("tags", () => [String], { nullable: true }) tags?: string[]): Promise<Article | null> {
+        const article = <Article>{
+            id,
+            title,
+            content,
+            status,
+            author,
+            imageSource,
+            tags
+        };
         const tbl = await this.table();
-        await tbl.createOrReplaceArticle(article);
-
+        await tbl.updateArticle(id, article);
         return this.article(article.id);
     }
 
-    public async deleteArticle(id: string) {
+    @Mutation(() => Boolean, { nullable: true })
+    public async deleteArticle(@Arg('id') id: string) {
         const tbl = await this.table();
-        return await tbl.deleteArticle(id);
+        const result = await tbl.deleteArticle(id);
+        return result.deletedCount > 0;
     }
 }
