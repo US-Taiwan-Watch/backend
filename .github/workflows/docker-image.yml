@@ -1,0 +1,38 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+env:
+  IMG_TAG: ustw-backend:latest
+  HOST: ustaiwanwatch.azurecr.io
+  ENV_URL: https://dev.azure.com/ustw/US%20Taiwan%20Watch/_apis/git/repositories/secret-credentials/items?path=/backend-env&api-version=6.0
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository and submodules
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: Curl to download .env
+      uses: wei/curl@v1.1.1
+      with:
+        args: "-X GET '${{ env.ENV_URL }}' --header 'Authorization: Basic ${{ secrets.AZURE_PAT_B64 }}' -o .env"
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag ${{ env.HOST }}/${{ secrets.ACR_USER }}/${{ env.IMG_TAG }}
+    - name: Login to ACR
+      uses: docker/login-action@v2
+      with:
+        registry: ${{ env.HOST }}
+        username: ${{ secrets.ACR_USER }}
+        password: ${{ secrets.ACR_PASS }}
+    - name: Push Docker image
+      run: docker push ${{ env.HOST }}/${{ secrets.ACR_USER }}/${{ env.IMG_TAG }}

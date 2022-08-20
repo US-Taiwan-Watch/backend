@@ -5,12 +5,18 @@ import { ProPublicaHelper } from "./sources/propublica";
 import { UnitedStatesHelper } from "./sources/unitedstates";
 
 
-type MemberSrc = 'ProPublica' | 'UserData';
+type MemberSrc = 'ProPublica' | 'unitedStates' | 'UserData';
 
 export class MemberSyncer extends EntitySyncer<Member> {
   public static async getAllMembers(): Promise<Member[]> {
-    const result = await UnitedStatesHelper.get("https://theunitedstates.io/congress-legislators/legislators-historical.json");
-    return result.map(((m: any) => ({ id: m.id.bioguide })));
+    const moreMembers =
+      ["J000069", "R000429", "C000738", "A000059",
+        "M000564", "C000527", "D000147", "R000363",
+        "A000303", "H000660", "M000164", "A000039",
+        "S000605", "W000178", "W000077", "T000306"];  // the 16 members are not listed in united states source
+
+    const result = await UnitedStatesHelper.getAllMemberData();
+    return result.map(((m: any) => ({ id: m.id.bioguide }))).concat(moreMembers.map((id: string) => ({ id: id })));
   }
 
   public static async getMemberList(chamber: 'senate' | 'house', congressNum: number): Promise<Member[]> {
@@ -19,23 +25,75 @@ export class MemberSyncer extends EntitySyncer<Member> {
   }
 
   protected async syncImpl(): Promise<boolean> {
+    // Syncers run in sequential. TODO: update to parallel
+
     // Update user's input data
     new MemberDataUpdateSyncer(this.entity, this.toUpdate).sync();
 
     // Query data from ProPublica
-    await new MemberProPublicaSyncer(this.entity).sync().catch(
-      e => {
-        if (e.status) {
-          console.log(`Cannot sync member ${this.entity.id} from Propublica (Error ${e.status})`);
-        } else {
-          console.log(`Cannot sync member ${this.entity.id} from Propublica`);
-          console.log(e);
+    //if (!this.entity.propublicaMember) 
+    {
+      await new MemberProPublicaSyncer(this.entity).sync().then(
+        () => {
+          if (this.entity.propublicaMember) {
+            this.entity.propublicaMember.updateTimestamp = Date.now();
+
+            // clear fail count as success
+            // if (this.entity.propublicaMember.failCount) {
+            //   this.entity.propublicaMember.failCount = 0;
+            // }
+          } else {
+            console.log(`Cannot sync member ${this.entity.id} from Propublica`);
+            console.log("No propublicaMember in the result")
+          }
         }
-      });
+      ).catch(
+        e => {
+          if (e.status) {
+            console.log(`Cannot sync member ${this.entity.id} from Propublica (Error ${e.status})`);
+          } else {
+            console.log(`Cannot sync member ${this.entity.id} from Propublica`);
+            console.log(e);
+          }
+
+          if (!this.entity.propublicaMember) {
+            this.entity.propublicaMember = new Member(this.entity.id);
+          }
+
+          if (this.entity.propublicaMember.failCount) {
+            this.entity.propublicaMember.failCount++;
+          } else {
+            this.entity.propublicaMember.failCount = 1;
+          }
+        });
+    }
 
     // Query data from the United States database
+    await new MemberUnitedStateSyncer(this.entity).sync().then(
+      () => {
+        if (this.entity.unitedstatesMember) {
+          this.entity.unitedstatesMember.updateTimestamp = Date.now();
+        } else {
+          console.log(`Cannot sync member ${this.entity.id} from Propublica`);
+          console.log("No unitedstatesMember in the result")
+        }
+      }
+    ).catch(
+      e => {
+        console.log(`Cannot sync member ${this.entity.id} from the United States project database`);
+        console.log(e);
 
-    // Add other syncers here. Will run in sequential. TODO: update to parallel
+        if (!this.entity.unitedstatesMember) {
+          this.entity.unitedstatesMember = new Member(this.entity.id);
+        }
+
+        if (this.entity.unitedstatesMember.failCount) {
+          this.entity.unitedstatesMember.failCount++;
+        } else {
+          this.entity.unitedstatesMember.failCount = 1;
+        }
+      }
+    );
 
     // update pic
     return true;
@@ -157,6 +215,101 @@ class MemberProPublicaSyncer extends EntitySyncer<Member> {
   // TODO: party & state mapping from propublica to member type
 }
 
+class MemberUnitedStateSyncer extends EntitySyncer<Member> {
+  protected async syncImpl(): Promise<boolean> {
+    const unitedStatesAllMemberResult = await UnitedStatesHelper.getAllMemberData();
+    const unitedStatesResult = unitedStatesAllMemberResult.find(result => result.id.bioguide === this.entity.id);
+
+    if (unitedStatesResult) {
+      const unitedStatesMember = this.buildMemberFromUnitedStatesResult(unitedStatesResult);
+
+      if (this.entity.unitedstatesMember) {
+        this.entity.unitedstatesMember = mergeMember("unitedStates", this.entity.unitedstatesMember, unitedStatesMember);
+      } else {
+        this.entity.unitedstatesMember = unitedStatesMember;
+        console.log(`[Member][unitedStates] ${this.entity.id} data added`);
+      }
+
+      return true;
+    } else {
+      throw "member doesn't exist"
+    }
+  }
+
+  private buildMemberFromUnitedStatesResult(uniteStatesData: any): Member {
+    let unitedStatesMember = new Member(uniteStatesData.id.bioguide);
+
+    if (uniteStatesData.name.first) {
+      unitedStatesMember.firstName = uniteStatesData.name.first;
+    }
+
+    if (uniteStatesData.name.middle) {
+      unitedStatesMember.middleName = uniteStatesData.name.middle;
+    }
+
+    if (uniteStatesData.name.last) {
+      unitedStatesMember.lastName = uniteStatesData.name.last;
+    }
+
+    if (uniteStatesData.name.suffix) {
+      unitedStatesMember.nameSuffix = uniteStatesData.name.suffix;
+    }
+
+    if (uniteStatesData.name.nickname) {
+      unitedStatesMember.nickname = uniteStatesData.name.nickname;
+    }
+
+    if (uniteStatesData.bio.gender) {
+      const gender = uniteStatesData.bio.gender;
+
+      if (gender === "M") {
+        unitedStatesMember.gender = "male";
+      } else if (gender === "F") {
+        unitedStatesMember.gender = "female";
+      }
+    }
+
+    if (uniteStatesData.bio.birthday) {
+      unitedStatesMember.birthday = uniteStatesData.bio.birthday;
+    }
+
+    if (uniteStatesData.terms.length > 0) {
+      const terms = uniteStatesData.terms;
+
+      // init congress role array
+      unitedStatesMember.congressRoles = [];
+
+      for (let term_idx = 0; term_idx < terms.length; term_idx++) {
+        const term = terms[term_idx];
+
+        if (term.type === "sen") {
+          unitedStatesMember.congressRoles.push({
+            congressNumbers: [],   // have no congress number info
+            chamber: 's',
+            startDate: term.start,
+            endDate: term.end,
+            party: term.party,
+            state: term.state,
+            senatorClass: Number(term.class)
+          });
+        } else if (term.type === "rep") {
+          unitedStatesMember.congressRoles.push({
+            congressNumbers: [],   // have no congress number info
+            chamber: 'h',
+            startDate: term.start,
+            endDate: term.end,
+            party: term.party,
+            state: term.state,
+            district: Number(term.district)
+          });
+        }
+      }
+    }
+
+    return unitedStatesMember;
+  }
+}
+
 class MemberDataUpdateSyncer extends EntitySyncer<Member> {
   protected async syncImpl(): Promise<boolean> {
 
@@ -246,6 +399,107 @@ function mergeMember(source: MemberSrc, targetMember: Member, srcMember: Member)
   if (isNeedUpdate(targetMember.id, source, "revokedFields", targetMember.revokedFields, srcMember.revokedFields)) {
     targetMember.revokedFields = srcMember.revokedFields;
   }
+
+  srcMember.congressRoles?.forEach(srcRole => {
+    let action: 'Append' | 'Update' | 'None' = 'None';
+    let updateTargetRoleIdx = -1;
+    let roleFieldNote = "";
+
+    // Handle congress roles from probublica source
+    if (source === 'ProPublica') {
+      // ProPublica: one congress number for each role
+
+      roleFieldNote = `num: ${srcRole.congressNumbers[0]}`;
+
+      if (targetMember.congressRoles) {
+        updateTargetRoleIdx = targetMember.congressRoles?.findIndex(
+          targetRole => {
+            if (!targetRole.congressNumbers[0]) {
+              throw "Unexpected Data structure!";
+            }
+            return targetRole.congressNumbers[0] === srcRole.congressNumbers[0];
+          }
+        );
+
+        if (updateTargetRoleIdx !== -1) {
+          action = 'Update';  // same congress number found => update the role data
+        } else {
+          action = 'Append';  // cannot find the same congress number => append the data
+        }
+      } else {
+        action = 'Append';  // no congress role exists => append the data with new array
+      }
+    }
+    // Handle congress roles from theUnitedStates source
+    else if (source === 'unitedStates') {
+      // unitedStates: check the same term by the start date
+
+      roleFieldNote = `start date: ${srcRole.startDate}`;
+
+      if (targetMember.congressRoles) {
+        updateTargetRoleIdx = targetMember.congressRoles?.findIndex(
+          targetRole => targetRole.startDate === srcRole.startDate
+        );
+
+        if (updateTargetRoleIdx !== -1) {
+          action = 'Update';  // same congress number found => update the role data
+        } else {
+          action = 'Append';  // cannot find the same congress number => append the data
+        }
+      } else {
+        action = 'Append';  // no congress role exists => append the data with new array
+      }
+    }
+
+    if (action === 'Append') {
+      console.log(`[Member][${source}] ${targetMember.id} congressRole[${roleFieldNote}] added`);
+
+      if (!targetMember.congressRoles) {
+        targetMember.congressRoles = [srcRole];
+      }
+      else {
+        targetMember.congressRoles.push(srcRole);
+      }
+
+    } else if (action === 'Update' && targetMember.congressRoles && updateTargetRoleIdx !== -1) {
+      let targetRole = targetMember.congressRoles[updateTargetRoleIdx];
+
+      if (isNeedUpdate(targetMember.id, source,
+        `congressRole[${roleFieldNote}].chamber`, targetRole.chamber, srcRole.chamber)) {
+        targetRole.chamber = srcRole.chamber;
+      }
+
+      if (isNeedUpdate(targetMember.id, source,
+        `congressRole[${roleFieldNote}].startDate`, targetRole.startDate, srcRole.startDate)) {
+        targetRole.startDate = srcRole.startDate;
+      }
+
+      if (isNeedUpdate(targetMember.id, source,
+        `congressRole[${roleFieldNote}].endDate`, targetRole.endDate, srcRole.endDate)) {
+        targetRole.endDate = srcRole.endDate;
+      }
+
+      if (isNeedUpdate(targetMember.id, source,
+        `congressRole[${roleFieldNote}].party`, targetRole.party, srcRole.party)) {
+        targetRole.party = srcRole.party;
+      }
+
+      if (isNeedUpdate(targetMember.id, source,
+        `congressRole[${roleFieldNote}].state`, targetRole.state, srcRole.state)) {
+        targetRole.state = srcRole.state;
+      }
+
+      if (isNeedUpdate(targetMember.id, source,
+        `congressRole[${roleFieldNote}].district`, targetRole.district, srcRole.district)) {
+        targetRole.district = srcRole.district;
+      }
+
+      if (isNeedUpdate(targetMember.id, source,
+        `congressRole[${roleFieldNote}].senatorClass`, targetRole.senatorClass, srcRole.senatorClass)) {
+        targetRole.senatorClass = srcRole.senatorClass;
+      }
+    }
+  })
 
   return targetMember;
 }

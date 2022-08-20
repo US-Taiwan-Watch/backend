@@ -11,8 +11,10 @@ import { MemberResolver } from "../src/resolver/member.resolver";
  */
 
 if (require.main === module) {
+  console.log(`Start to sync all members @${Date.now()}`);
+
   new MemberResolver().fetchAndSyncAllMembers().then(_ => {
     console.log('sync all members succcessfully!');
-  })
+  });
 }
 

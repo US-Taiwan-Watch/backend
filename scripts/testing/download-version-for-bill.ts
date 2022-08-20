@@ -18,19 +18,17 @@ async function run() {
     return;
   }
   const contentTypes = BillVersionDownloader.getContentTypes();
-  const all = bill.versions.filter(v =>
-    !v.downloaded || v.downloaded.length < contentTypes.length
-  ).map(v =>
-    contentTypes.filter(t => !v.downloaded || !v.downloaded.includes(t)).map(type =>
+  const all = bill.versions.map(v =>
+    contentTypes.filter(t => !v.downloaded || !v.downloaded[t]).map(type =>
       new BillVersionDownloader({
         billId: bill.id,
         versionCode: v.code,
         contentType: type
       }).downloadAndUpload().then(suc => {
         if (!v.downloaded) {
-          v.downloaded = [];
+          v.downloaded = {};
         }
-        v.downloaded = [...v.downloaded, type];
+        v.downloaded[type] = suc;
       })
     )
   ).flat();

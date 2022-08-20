@@ -7,6 +7,7 @@ import { CongressUtils } from "../util/congress-utils";
 import { Logger } from "../util/logger";
 import { BillTable } from "./bill-table";
 import { PaginatedBills, Pagination, PaginationArgs } from "../util/pagination";
+import { DenormalizedBill } from "../graphql/bill.model";
 
 @Resolver(Bill)
 export class BillResolver extends TableProvider(BillTable) {
@@ -25,15 +26,16 @@ export class BillResolver extends TableProvider(BillTable) {
   public async bills(@Args() pageInfo: PaginationArgs): Promise<PaginatedBills> {
     const tbl = await this.table();
     const bills = await tbl.getAllBills();
-    return new PaginatedBills(bills, pageInfo);
+    return new PaginatedBills(bills.map(b => new DenormalizedBill(b)), pageInfo);
   }
 
-  @Query(() => Bill, { nullable: true })
+  @Query(() => DenormalizedBill, { nullable: true })
   public async bill(
     @Arg('id') id: string,
-  ): Promise<Bill | null> {
+  ): Promise<DenormalizedBill | null> {
     const tbl = await this.table();
-    return await tbl.getBill(id);
+    const bill = await tbl.getBill(id);
+    return DenormalizedBill.from(bill);
   }
 
   public async addBill(
