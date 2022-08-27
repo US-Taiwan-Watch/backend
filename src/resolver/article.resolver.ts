@@ -31,6 +31,8 @@ export class ArticleResolver extends TableProvider(ArticleTable) {
     public async createEmptyArticle(): Promise<Article | null> {
         const tbl = await this.table();
         const article = new Article();
+        article.createdTime = Date.now().valueOf();
+        article.lastModifiedTime = article.createdTime;
         await tbl.createOrReplaceArticle(article);
         return this.article(article.id);
     }
@@ -39,13 +41,17 @@ export class ArticleResolver extends TableProvider(ArticleTable) {
     public async addArticle(
         @Arg("title", { nullable: true }) title?: string,
         @Arg("content", { nullable: true }) content?: string,
-        @Arg("status", { nullable: true }) status?: ArticleStatus,
-        @Arg("author", () => [String], { nullable: true }) author?: string[],
+        @Arg("slug", { nullable: true }) slug?: string,
+        @Arg("preview", { nullable: true }) preview?: string,
+        @Arg("isPublished", { nullable: true }) isPublished?: boolean,
+        @Arg("authors", () => [String], { nullable: true }) authors?: string[],
         @Arg("imageSource", { nullable: true }) imageSource?: string,
         @Arg("tags", () => [String], { nullable: true }) tags?: string[]
     ): Promise<Article | null> {
         const tbl = await this.table();
-        const article = new Article(title, content, status, author, imageSource, tags);
+        const article = new Article(title, content, slug, preview, isPublished, authors, imageSource, tags);
+        article.createdTime = Date.now().valueOf();
+        article.lastModifiedTime = article.createdTime;
         await tbl.createOrReplaceArticle(article);
         return this.article(article.id);
     }
@@ -55,19 +61,27 @@ export class ArticleResolver extends TableProvider(ArticleTable) {
         @Arg('id') id: string,
         @Arg("title", { nullable: true }) title?: string,
         @Arg("content", { nullable: true }) content?: string,
-        @Arg("status", { nullable: true }) status?: ArticleStatus,
-        @Arg("author", () => [String], { nullable: true }) author?: string[],
+        @Arg("slug", { nullable: true }) slug?: string,
+        @Arg("preview", { nullable: true }) preview?: string,
+        @Arg("isPublished", { nullable: true }) isPublished?: boolean,
+        @Arg("authors", () => [String], { nullable: true }) authors?: string[],
         @Arg("imageSource", { nullable: true }) imageSource?: string,
         @Arg("tags", () => [String], { nullable: true }) tags?: string[]): Promise<Article | null> {
         const article = <Article>{
             id,
             title,
             content,
-            status,
-            author,
+            slug,
+            preview,
+            isPublished,
+            authors,
             imageSource,
             tags
         };
+        article.lastModifiedTime = Date.now().valueOf();
+        if (isPublished) {
+            article.pusblishTime = Date.now().valueOf();
+        }
         const tbl = await this.table();
         await tbl.updateArticle(id, article);
         return this.article(article.id);
