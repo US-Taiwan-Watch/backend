@@ -9,7 +9,9 @@
     "ts-node": "node node_modules/ts-node/dist/bin.js",
     "start": "node dist/src/app.js",
     "dev": "npm run graphql-dev",
-    "build": "npm run clean & node node_modules/typescript/bin/tsc",
+    "lint": "eslint . --ext .ts",
+    "lint-fix": "npm run lint -- --fix",
+    "build": "npm run lint && npm run clean & node node_modules/typescript/bin/tsc",
     "clean": "rimraf dist",
     "script": "nodemon --ignore '*.json' --exec node --inspect=7788 -r ts-node/register",
     "graphql-dev": "NODE_ENV=dev npm run script ./src/app.ts"

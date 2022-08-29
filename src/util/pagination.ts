@@ -38,7 +38,7 @@ export abstract class PaginatedResponseBase<TItem> {
 }
 
 export function PaginatedResponse<TItem>(
-  itemsFieldValue: ClassType<TItem> | String | Number | Boolean,
+  itemsFieldValue: ClassType<TItem> | string | number | boolean,
 ) {
   @ObjectType({ isAbstract: true })
   abstract class PaginatedResponseClass extends PaginatedResponseBase<TItem> {

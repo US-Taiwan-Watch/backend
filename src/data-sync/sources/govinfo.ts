@@ -37,12 +37,7 @@ export abstract class GovInfoHelper {
         api_key: process.env.GOVINFO_API_KEY
       }
     })
-    try {
-      const xml = await parseStringPromise(result);
-      return xml;
-    } catch (err) {
-      throw err;
-    }
+    return await parseStringPromise(result);
   }
 
 }
