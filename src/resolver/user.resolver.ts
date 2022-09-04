@@ -23,7 +23,7 @@ export class UserResolver extends TableProvider(UserTable) {
 
   @Authorized<Auth0RoleName>([Auth0RoleName.Admin])
   @Mutation(() => Boolean, { nullable: true })
-  async createUser(
+  async createOrUpdateUser(
     @Arg("user_id") id: string,
     @Arg("email") email: string,
     @Arg("name", { nullable: true }) name?: string,

@@ -99,19 +99,19 @@ export interface IAuth0Event {
 export class Auth0EventHandler {
   public handleEvent(evt: IAuth0Event) {
     const { event: eventType, user } = evt;
-    const { user_id, name } = user;
+    const { user_id, email, name, nickname, picture } = user;
     console.log("eventType = ", eventType);
     console.log("user_id = ", user_id);
     console.log("name = ", name);
+    console.log("nickname = ", nickname);
+    console.log("picture = ", picture);
     const resolver = new UserResolver();
-    if (eventType === "create") {
-      resolver.createUser(
-        user.user_id,
-        user.email,
-        user.name,
-        user.nickname,
-        user.picture,
-      );
-    }
+    resolver.createOrUpdateUser(
+      user_id,
+      email,
+      name,
+      nickname,
+      picture,
+    );
   }
 }
