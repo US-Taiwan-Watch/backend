@@ -25,11 +25,17 @@ export class UserResolver extends TableProvider(UserTable) {
   @Mutation(() => Boolean, { nullable: true })
   async createUser(
     @Arg("user_id") id: string,
-    @Arg("email") email: string
+    @Arg("email") email: string,
+    @Arg("name", { nullable: true }) name?: string,
+    @Arg("nickname", { nullable: true }) nickname?: string,
+    @Arg("picture", { nullable: true }) picture?: string,
   ): Promise<boolean> {
     const user = <User>{
       id,
       email: _.isEmpty(email) ? undefined : email,
+      name,
+      nickname,
+      picture,
     };
     const tbl = await this.table();
     await tbl.createOrReplaceUser(user);

@@ -105,7 +105,13 @@ export class Auth0EventHandler {
     console.log("name = ", name);
     const resolver = new UserResolver();
     if (eventType === "create") {
-      resolver.createUser(user.user_id, user.email);
+      resolver.createUser(
+        user.user_id,
+        user.email,
+        user.name,
+        user.nickname,
+        user.picture,
+      );
     }
   }
 }
