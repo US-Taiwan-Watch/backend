@@ -29,7 +29,7 @@ router.post('/post-image', async (req, res) => {
       image.data,
     );
     logger.log(`Uploaded ${filename}`)
-    res.send(filename);
+    res.send(`https://static.ustw.watch/public-image/posts/${filename}`);
   } catch (err) {
     logger.log(err);
     res.status(500).send(err);
