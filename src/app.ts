@@ -19,6 +19,7 @@ import cors from "cors";
 import { ApolloServerPluginInlineTrace } from "apollo-server-core";
 import { authChecker } from "./util/auth-helper";
 import auth0RuleWebhookRouter from "./auth0/webhook";
+import uploadRouter from "./routers/upload-router";
 import { appInsightsClient } from "./util/app-insights";
 import WS from "ws";
 import { useServer } from "graphql-ws/lib/use/ws";
@@ -88,6 +89,7 @@ async function bootstrap() {
   app.use(cors());
 
   app.use("/auth0-rule", auth0RuleWebhookRouter);
+  app.use("/upload", uploadRouter);
 
   // Create server
   const httpServer: http.Server = http.createServer((req, res) => {

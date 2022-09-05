@@ -39,6 +39,17 @@ export abstract class AzureStorageManager {
     return uploadBlobResponse.lastModified;
   }
 
+  public static async uploadBlobData(container: Container, blobName: string, mimeType: string, data: Buffer) {
+    const containerClient = blobServiceClient.getContainerClient(container);
+
+    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+
+    const uploadBlobResponse = await blockBlobClient.uploadData(data, {
+      blobHTTPHeaders: { blobContentType: mimeType }
+    });
+    return uploadBlobResponse.lastModified;
+  }
+
   private static getMimeType(contentType: ContentType): string {
     switch (contentType) {
       case 'xml':
