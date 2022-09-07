@@ -19,6 +19,18 @@ export class ArticleResolver extends TableProvider(ArticleTable) {
         return await tbl.getArticle(id);
     }
 
+    @Query(() => Article, { nullable: true })
+    public async articleBySlug(
+        @Arg('slug') slug: string,
+    ): Promise<Article | null> {
+        const tbl = await this.table();
+        let article = await tbl.getArticleBySlug(slug);
+        if (!article) {
+            article = await this.article(slug);
+        }
+        return article;
+    }
+
     @Query(() => [Article], { nullable: true })
     public async articles(
         @Arg('ids', () => [String]) ids: string[],
