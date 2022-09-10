@@ -197,7 +197,7 @@ class MemberBioGuideSyncer extends EntitySyncer<Member> {
   }
 
   private buildMemberFromBioguideResult(bioguideData: any): Member {
-    let bioguideMember = new Member(bioguideData['usCongressBioId']);
+    const bioguideMember = new Member(bioguideData['usCongressBioId']);
 
     if (bioguideData['givenName']) {
       bioguideMember.firstName = bioguideData['givenName'];
@@ -216,7 +216,7 @@ class MemberBioGuideSyncer extends EntitySyncer<Member> {
     }
 
     if (bioguideData['jobPositions'].length > 0) {
-      let jobs = bioguideData['jobPositions'];
+      const jobs = bioguideData['jobPositions'];
 
       // init congress role array
       bioguideMember.congressRoles = [];
