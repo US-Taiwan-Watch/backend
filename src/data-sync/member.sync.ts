@@ -6,7 +6,15 @@ import { ProPublicaHelper } from "./sources/propublica";
 import { UnitedStatesHelper } from "./sources/unitedstates";
 
 
-type MemberSrc = 'ProPublica' | 'unitedStates' | 'UserData';
+type MemberSrc = 'BioGuide' | 'ProPublica' | 'unitedStates' | 'UserData';
+
+function isDataSyncSource(source: MemberSrc): boolean {
+  if (source === 'ProPublica' || source === 'unitedStates' || source === 'BioGuide') {
+    return true;
+  } else {
+    return false;
+  }
+}
 
 export class MemberSyncer extends EntitySyncer<Member> {
   public static async getAllMembers(): Promise<Member[]> {
@@ -30,18 +38,45 @@ export class MemberSyncer extends EntitySyncer<Member> {
     new MemberDataUpdateSyncer(this.entity, this.toUpdate).sync();
 
     // Query data from Bioguide
-    // await new MemberBioGuideSyncer(this.entity).sync().then(
+    await new MemberBioGuideSyncer(this.entity).sync().then(
+      (result) => {
+        if (result === false) {
+          // do nothing for the case we skip the update for failling too many times
+        } else if (this.entity.bioguideMember) {
+          this.entity.bioguideMember.updateTimestamp = Date.now();
 
-    // ).catch(
-    //   e => {
-    //     console.log(`Cannot sync member ${this.entity.id} from BioGuide (Error ${e})`);
-    //   }
-    // )
+          // clear fail count as success
+          if (this.entity.bioguideMember.failCount) {
+            this.entity.bioguideMember.failCount = 0;
+          }
+        } else {
+          console.log(`Cannot sync member ${this.entity.id} from BioGuide`);
+          console.log("No bioguideMember in the result")
+        }
+      }
+    ).catch(
+      e => {
+        console.log(`Cannot sync member ${this.entity.id} from BioGuide`);
+        console.log(e);
+
+        if (!this.entity.bioguideMember) {
+          this.entity.bioguideMember = new Member(this.entity.id);
+        }
+
+        if (this.entity.bioguideMember.failCount) {
+          this.entity.bioguideMember.failCount++;
+        } else {
+          this.entity.bioguideMember.failCount = 1;
+        }
+      }
+    )
 
     // Query data from ProPublica
     await new MemberProPublicaSyncer(this.entity).sync().then(
-      () => {
-        if (this.entity.propublicaMember) {
+      (result) => {
+        if (result === false) {
+          // do nothing for the case we skip the update for failling too many times
+        } else if (this.entity.propublicaMember) {
           this.entity.propublicaMember.updateTimestamp = Date.now();
 
           // clear fail count as success
@@ -79,8 +114,10 @@ export class MemberSyncer extends EntitySyncer<Member> {
 
     // Query data from the United States database
     await new MemberUnitedStateSyncer(this.entity).sync().then(
-      () => {
-        if (this.entity.unitedstatesMember) {
+      (result) => {
+        if (result === false) {
+          // do nothing for the case we skip the update for failling too many times
+        } else if (this.entity.unitedstatesMember) {
           this.entity.unitedstatesMember.updateTimestamp = Date.now();
 
           // clear fail count as success
@@ -134,29 +171,142 @@ class MemberDataUpdateSyncer extends EntitySyncer<Member> {
 
 class MemberBioGuideSyncer extends EntitySyncer<Member> {
   protected async syncImpl(): Promise<boolean> {
+    if (
+      (this.entity.bioguideMember) &&
+      (!this.entity.bioguideMember.updateTimestamp || this.entity.bioguideMember.updateTimestamp === 0) &&
+      (this.entity.bioguideMember.failCount && this.entity.bioguideMember.failCount >= 3)
+    ) {
+      // sequtially failed too many times without any successful trial => considering bioguide has no data for this member
+      return false;
+    }
+
     const bioguideResult = await BioguideHelper.getMember(this.entity.id);
-    console.log(JSON.stringify(bioguideResult, null, 4));
-    // const bioguideMember = this.buildMemberFromBioguideResult()
+    const bioguideMember = this.buildMemberFromBioguideResult(bioguideResult['data']);
+
+    // console.log("BIOGUIDE MEMBER: ");
+    // console.log(JSON.stringify(bioguideMember, null, 4));
+
+    if (this.entity.bioguideMember) {
+      this.entity.bioguideMember = mergeMember("BioGuide", this.entity.bioguideMember, bioguideMember);
+    } else {
+      this.entity.bioguideMember = bioguideMember;
+      console.log(`[Member][BioGuide] ${this.entity.id} data added`);
+    }
 
     return true;
   }
 
+  private buildMemberFromBioguideResult(bioguideData: any): Member {
+    let bioguideMember = new Member(bioguideData['usCongressBioId']);
 
+    if (bioguideData['givenName']) {
+      bioguideMember.firstName = bioguideData['givenName'];
+    }
+
+    if (bioguideData['middleName']) {
+      bioguideMember.middleName = bioguideData['middleName'];
+    }
+
+    if (bioguideData['familyName']) {
+      bioguideMember.lastName = bioguideData['familyName'];
+    }
+
+    if (bioguideData['birthDate']) {
+      bioguideMember.birthday = bioguideData['birthDate'];
+    }
+
+    if (bioguideData['jobPositions'].length > 0) {
+      let jobs = bioguideData['jobPositions'];
+
+      // init congress role array
+      bioguideMember.congressRoles = [];
+
+      for (let job_idx = 0; job_idx < jobs.length; job_idx++) {
+        const job = jobs[job_idx]['job'];
+        const jobData = jobs[job_idx]['congressAffiliation'];
+        const partyList = jobData['partyAffiliation'] || [{ "party": { "name": "No Party Data" } }];
+
+        if (
+          job['name'] !== "Senator" &&
+          job['name'] !== "Representative" &&
+          job['name'] !== "Delegate"
+        ) {
+          continue;
+        }
+
+        if (jobData['congress']['congressType'] !== "USCongress") {
+          // skip the records for Continental/Confederation congresses
+          continue;
+        }
+
+        partyList.forEach((partyData: any) => {
+          let start = jobData['congress']['startDate'];
+          let end = jobData['congress']['endDate'];
+          let partyName = partyData['party']['name'];
+
+          if (jobs[job_idx]['startDate']) {
+            start = jobs[job_idx]['startDate'];
+          }
+
+          if (jobs[job_idx]['endDate']) {
+            end = jobs[job_idx]['endDate'];
+          }
+
+          if (partyData['startDate']) {
+            start = partyData['startDate'];
+          }
+
+          if (partyData['endDate']) {
+            end = partyData['endDate'];
+          }
+
+          if (!partyName || partyName === "NA") {
+            partyName = "No Party Data";
+          }
+
+          if (job['name'] === "Senator") {
+            bioguideMember.congressRoles?.push({
+              congressNumbers: [Number(jobData['congress']['congressNumber'])],
+              chamber: 's',
+              startDate: start || "0000-00-00",
+              endDate: end,
+              party: partyName,
+              state: jobData['represents']['regionCode']
+            });
+          } else if (job['name'] === "Representative" || job['name'] === "Delegate") {
+            bioguideMember.congressRoles?.push({
+              congressNumbers: [Number(jobData['congress']['congressNumber'])],
+              chamber: 'h',
+              startDate: start || "0000-00-00",
+              endDate: end,
+              party: partyName,
+              state: jobData['represents']['regionCode']
+            })
+          }
+        });
+      }
+    }
+
+    return bioguideMember;
+  }
 }
 
 class MemberProPublicaSyncer extends EntitySyncer<Member> {
   protected async syncImpl(): Promise<boolean> {
     if (
       (this.entity.propublicaMember) &&
-      (!this.entity.propublicaMember.updateTimestamp) &&
+      (!this.entity.propublicaMember.updateTimestamp || this.entity.propublicaMember.updateTimestamp === 0) &&
       (this.entity.propublicaMember.failCount && this.entity.propublicaMember.failCount >= 3)
     ) {
       // sequtially failed too many times without any successful trial => considering ProPublica has no data for this member
-      return true;
+      return false;
     }
 
     const propublicaResult = await ProPublicaHelper.get(`https://api.propublica.org/congress/v1/members/${this.entity.id}.json`);
     const proPublicaMember = this.buildMemberFromPropublicaResult(propublicaResult[0]);
+
+    // console.log("PROPUBLICA MEMBER: ");
+    // console.log(JSON.stringify(proPublicaMember, null, 4));
 
     if (this.entity.propublicaMember) {
       this.entity.propublicaMember = mergeMember("ProPublica", this.entity.propublicaMember, proPublicaMember);
@@ -242,7 +392,7 @@ class MemberProPublicaSyncer extends EntitySyncer<Member> {
           propublicaMember.congressRoles.push({
             congressNumbers: [Number(role['congress'])],
             chamber: 's',
-            startDate: role['start_date'],
+            startDate: role['start_date'] || "0000-00-00",
             endDate: role['end_date'],
             party: role['party'],
             state: role['state'],
@@ -253,11 +403,21 @@ class MemberProPublicaSyncer extends EntitySyncer<Member> {
             propublicaMember.congressRoles.push({
               congressNumbers: [Number(role['congress'])],
               chamber: 'h',
-              startDate: role['start_date'],
+              startDate: role['start_date'] || "0000-00-00",
               endDate: role['end_date'],
               party: role['party'],
               state: role['state'],
               district: Number(role['district'])
+            });
+          } else if (role['title'] === "Delegate") {
+            propublicaMember.congressRoles.push({
+              congressNumbers: [Number(role['congress'])],
+              chamber: 'h',
+              startDate: role['start_date'] || "0000-00-00",
+              endDate: role['end_date'],
+              party: role['party'],
+              state: role['state'],
+              district: Number(role['district']) || 0
             });
           }
         }
@@ -274,11 +434,11 @@ class MemberUnitedStateSyncer extends EntitySyncer<Member> {
   protected async syncImpl(): Promise<boolean> {
     if (
       (this.entity.unitedstatesMember) &&
-      (!this.entity.unitedstatesMember.updateTimestamp) &&
+      (!this.entity.unitedstatesMember.updateTimestamp || this.entity.unitedstatesMember.updateTimestamp === 0) &&
       (this.entity.unitedstatesMember.failCount && this.entity.unitedstatesMember.failCount >= 3)
     ) {
       // sequtially failed too many times without any successful trial => considering the united states database has no data for this member
-      return true;
+      return false;
     }
 
     const unitedStatesAllMemberResult = await UnitedStatesHelper.getAllMemberData();
@@ -286,6 +446,9 @@ class MemberUnitedStateSyncer extends EntitySyncer<Member> {
 
     if (unitedStatesResult) {
       const unitedStatesMember = this.buildMemberFromUnitedStatesResult(unitedStatesResult);
+
+      // console.log("UNITED STATES MEMBER: ");
+      // console.log(JSON.stringify(unitedStatesMember, null, 4));
 
       if (this.entity.unitedstatesMember) {
         this.entity.unitedstatesMember = mergeMember("unitedStates", this.entity.unitedstatesMember, unitedStatesMember);
@@ -350,7 +513,7 @@ class MemberUnitedStateSyncer extends EntitySyncer<Member> {
           unitedStatesMember.congressRoles.push({
             congressNumbers: [],   // have no congress number info
             chamber: 's',
-            startDate: term.start,
+            startDate: term.start || "0000-00-00",
             endDate: term.end,
             party: term.party,
             state: term.state,
@@ -360,7 +523,7 @@ class MemberUnitedStateSyncer extends EntitySyncer<Member> {
           unitedStatesMember.congressRoles.push({
             congressNumbers: [],   // have no congress number info
             chamber: 'h',
-            startDate: term.start,
+            startDate: term.start || "0000-00-00",
             endDate: term.end,
             party: term.party,
             state: term.state,
@@ -446,6 +609,7 @@ function mergeMember(source: MemberSrc, targetMember: Member, srcMember: Member)
   }
 
   let allUsedCounts = new Map();
+  let unUpdatedRoles = (targetMember.congressRoles) ? [...Array(targetMember.congressRoles.length).keys()] : [];  // role indices
 
   srcMember.congressRoles?.forEach(srcRole => {
     let action: 'Append' | 'Update' | 'None' = 'None';
@@ -453,11 +617,11 @@ function mergeMember(source: MemberSrc, targetMember: Member, srcMember: Member)
     let roleFieldNote = "";
 
     // Handle congress roles from different sources
-    if (source === 'ProPublica' || source === 'unitedStates') {
+    if (isDataSyncSource(source)) {
       // check the same term (job period) by the start date
       // Note: use start date because some member may change their party or job within one congress => records
 
-      roleFieldNote = `from: ${srcRole.startDate}`;
+      roleFieldNote = `from: ${srcRole.startDate} #0`;
 
       if (targetMember.congressRoles) {
         let dupTargetIndices: number[] = [];
@@ -479,6 +643,8 @@ function mergeMember(source: MemberSrc, targetMember: Member, srcMember: Member)
           if (allUsedCounts.has(srcRole.startDate)) {
             // more than one record has the same startDate => update the next (if exists)
             let usedCount = allUsedCounts.get(srcRole.startDate);
+            roleFieldNote.replace('#0', `#${usedCount}`);
+
             if (usedCount < dupTargetIndices.length) {
               action = 'Update';
               updateTargetRoleIdx = dupTargetIndices[usedCount];
@@ -499,6 +665,7 @@ function mergeMember(source: MemberSrc, targetMember: Member, srcMember: Member)
     }
 
     if (action === 'Append') {
+      roleFieldNote.replace(' #0', '');
       console.log(`[Member][${source}] ${targetMember.id} congressRole[${roleFieldNote}] added`);
 
       if (!targetMember.congressRoles) {
@@ -545,8 +712,23 @@ function mergeMember(source: MemberSrc, targetMember: Member, srcMember: Member)
         `congressRole[${roleFieldNote}].senatorClass`, targetRole.senatorClass, srcRole.senatorClass)) {
         targetRole.senatorClass = srcRole.senatorClass;
       }
+
+      // the role of index has been updated, removed from unUpdated list
+      unUpdatedRoles = unUpdatedRoles.filter(idx => idx !== updateTargetRoleIdx);
     }
   })
+
+  // For source sync, removed the roles didn't updated this time (the data has been removed from the data source)
+  if (isDataSyncSource(source) && unUpdatedRoles !== []) {
+    unUpdatedRoles.reverse().forEach(unUpdatedIdx => {
+      if (targetMember.congressRoles && targetMember.congressRoles.length > unUpdatedIdx) {
+        const roleFieldNote = `from: ${targetMember.congressRoles[unUpdatedIdx].startDate} #${unUpdatedIdx}`;
+
+        console.log(`[Member][${source}] ${targetMember.id} congressRole[${roleFieldNote}] deleted`);
+        targetMember.congressRoles.splice(unUpdatedIdx, 1)
+      }
+    })
+  }
 
   return targetMember;
 }
