@@ -4,6 +4,7 @@ import { EntitySyncer, } from "./entity.sync";
 import { BioguideHelper } from "./sources/bioguide";
 import { ProPublicaHelper } from "./sources/propublica";
 import { UnitedStatesHelper } from "./sources/unitedstates";
+import { MemberProPicDownloader } from "../storage/member-pro-pic-downloader";
 
 
 type MemberSrc = 'BioGuide' | 'ProPublica' | 'unitedStates' | 'UserData';
@@ -146,6 +147,30 @@ export class MemberSyncer extends EntitySyncer<Member> {
       });
 
     // update pic
+    if (
+      (!this.entity.profilePictureUri) &&
+      ((!this.entity.getPictureFailCount) || (this.entity.getPictureFailCount < 3))
+    ) {
+      await new MemberProPicDownloader(this.entity.id).downloadAndUpload().then(result => {
+        if (result === true) {
+          // download and upload succeeded => update the picture URI
+          this.entity.profilePictureUri
+            = `https://ustwstorage.blob.core.windows.net/public-image/profile_pictures/${this.entity.id}.jpg`;
+
+          console.log(`[Member][BioGuide] ${this.entity.id} profile picture downloaded`);
+        } else {
+          // download and upload failed
+          console.log(`Cannot download member ${this.entity.id}'s profile picture from Bioguide`);
+
+          if (this.entity.getPictureFailCount) {
+            this.entity.getPictureFailCount++;
+          } else {
+            this.entity.getPictureFailCount = 1;
+          }
+        }
+      });
+    }
+
     return true;
   }
 }
