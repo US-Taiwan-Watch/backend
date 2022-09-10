@@ -51,14 +51,14 @@ export class BillResolver extends TableProvider(BillTable) {
 
   public async downloadAllBillVersions(): Promise<Bill[]> {
     const tbl = await this.table();
-    let bills = await tbl.getBillsThatNeedDownload();
+    const bills = await tbl.getBillsThatNeedDownload();
     await Promise.allSettled(bills.map(b => this.downloadBillVersions(b, false)));
     return bills;
   }
 
   public async syncNewBills(fields?: (keyof Bill)[]): Promise<Bill[]> {
     const tbl = await this.table();
-    let bills = await tbl.getBillsThatNeedSync();
+    const bills = await tbl.getBillsThatNeedSync();
     return await this.syncBills(bills, false, fields);
   }
 
@@ -68,14 +68,14 @@ export class BillResolver extends TableProvider(BillTable) {
 
   public async syncBillsForCongress(congress: number, fields?: (keyof Bill)[]): Promise<Bill[]> {
     const tbl = await this.table();
-    let bills = await tbl.getBillsByCongress(congress);
+    const bills = await tbl.getBillsByCongress(congress);
     return await this.syncBills(bills, false, fields);
   }
 
   // For one-time use
   public async syncAllBills(fields?: (keyof Bill)[]): Promise<Bill[]> {
     const tbl = await this.table();
-    let bills = await tbl.getAllBills();
+    const bills = await tbl.getAllBills();
     return await this.syncBills(bills, false, fields);
   }
 

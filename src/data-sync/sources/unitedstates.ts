@@ -1,6 +1,6 @@
 import { RequestHelper, RequestSource } from "./request-helper";
 
-let CACHE_TIME = 1000 * 3600 * 24;   // 1 day
+const CACHE_TIME = 1000 * 3600 * 24;   // 1 day
 
 export abstract class UnitedStatesHelper {
   static lastUpdateTime = 0;

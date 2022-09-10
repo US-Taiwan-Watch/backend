@@ -7,8 +7,8 @@ export abstract class CongressUtils {
   public static getCongress(dateString: string): number {
     const date = new Date(dateString);
     let year = date.getFullYear();
-    let month = date.getMonth();
-    let day = date.getDay();
+    const month = date.getMonth();
+    const day = date.getDay();
     if (month === 1 && day < 3) {
       year -= 1;
     }

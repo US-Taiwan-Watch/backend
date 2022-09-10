@@ -94,7 +94,7 @@ export class MemberSyncer extends EntitySyncer<Member> {
           console.log(`Cannot sync member ${this.entity.id} from Propublica (${e.errors[0].error})`);
         } else if (e.status) {
           console.log(`Cannot sync member ${this.entity.id} from Propublica (Error ${e.status})`);
-        } else if (Number(e) != NaN && Number.isInteger(Number(e))) {
+        } else if (!isNaN(e) && Number.isInteger(Number(e))) {
           console.log(`Cannot sync member ${this.entity.id} from Propublica (Error ${Number(e)})`);
         } else {
           console.log(`Cannot sync member ${this.entity.id} from Propublica`);
@@ -319,7 +319,7 @@ class MemberProPublicaSyncer extends EntitySyncer<Member> {
   }
 
   private buildMemberFromPropublicaResult(propublicaData: any): Member {
-    let propublicaMember = new Member(propublicaData['id']);
+    const propublicaMember = new Member(propublicaData['id']);
 
     if (propublicaData['first_name']) {
       propublicaMember.firstName = propublicaData['first_name'];
@@ -464,7 +464,7 @@ class MemberUnitedStateSyncer extends EntitySyncer<Member> {
   }
 
   private buildMemberFromUnitedStatesResult(uniteStatesData: any): Member {
-    let unitedStatesMember = new Member(uniteStatesData.id.bioguide);
+    const unitedStatesMember = new Member(uniteStatesData.id.bioguide);
 
     if (uniteStatesData.name.first) {
       unitedStatesMember.firstName = uniteStatesData.name.first;
@@ -608,7 +608,7 @@ function mergeMember(source: MemberSrc, targetMember: Member, srcMember: Member)
     targetMember.revokedFields = srcMember.revokedFields;
   }
 
-  let allUsedCounts = new Map();
+  const allUsedCounts = new Map();
   let unUpdatedRoles = (targetMember.congressRoles) ? [...Array(targetMember.congressRoles.length).keys()] : [];  // role indices
 
   srcMember.congressRoles?.forEach(srcRole => {
@@ -624,7 +624,7 @@ function mergeMember(source: MemberSrc, targetMember: Member, srcMember: Member)
       roleFieldNote = `from: ${srcRole.startDate} #0`;
 
       if (targetMember.congressRoles) {
-        let dupTargetIndices: number[] = [];
+        const dupTargetIndices: number[] = [];
 
         targetMember.congressRoles.findIndex(
           (targetRole, currIndex) => {
@@ -642,7 +642,7 @@ function mergeMember(source: MemberSrc, targetMember: Member, srcMember: Member)
         } else {
           if (allUsedCounts.has(srcRole.startDate)) {
             // more than one record has the same startDate => update the next (if exists)
-            let usedCount = allUsedCounts.get(srcRole.startDate);
+            const usedCount = allUsedCounts.get(srcRole.startDate);
             roleFieldNote.replace('#0', `#${usedCount}`);
 
             if (usedCount < dupTargetIndices.length) {
@@ -676,7 +676,7 @@ function mergeMember(source: MemberSrc, targetMember: Member, srcMember: Member)
       }
 
     } else if (action === 'Update' && targetMember.congressRoles && updateTargetRoleIdx !== -1) {
-      let targetRole = targetMember.congressRoles[updateTargetRoleIdx];
+      const targetRole = targetMember.congressRoles[updateTargetRoleIdx];
 
       if (isNeedUpdate(targetMember.id, source,
         `congressRole[${roleFieldNote}].chamber`, targetRole.chamber, srcRole.chamber)) {

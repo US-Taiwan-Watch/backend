@@ -79,7 +79,7 @@ export class BillSyncer extends EntitySyncer<Bill> {
 
   protected async syncTrackers() {
     const $ = await CongressGovHelper.getBill(this.entity);
-    let progress = $('ol.bill_progress > li').toArray();
+    const progress = $('ol.bill_progress > li').toArray();
     if (progress.length === 0) {
       return;
     }

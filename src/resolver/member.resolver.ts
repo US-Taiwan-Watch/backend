@@ -73,7 +73,7 @@ export class MemberResolver extends TableProvider(MemberTable) {
     return member;
   }
 
-  private async syncMembers(members: Member[], isFromDB: Boolean): Promise<Member[]> {
+  private async syncMembers(members: Member[], isFromDB: boolean): Promise<Member[]> {
     // Get existing members from DB
     if (isFromDB) {
       const tbl = await this.table();

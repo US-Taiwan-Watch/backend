@@ -5,7 +5,7 @@ import { Member } from "../../common/models";
 // yarn ts-node ./scripts/testing/member-update-one.ts
 
 if (require.main === module) {
-  let update_data: Member = {
+  const update_data: Member = {
     id: "S000622",
     firstName: "FAKE FIRSTNAME",
     firstName_zh: "假ㄉ",
