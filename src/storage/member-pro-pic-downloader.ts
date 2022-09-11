@@ -6,6 +6,8 @@ export class MemberProPicDownloader extends FileDownloader<string> {
   container = Container.PUBLIC_IMAGE;
   source = RequestSource.BIO_GUIDE;
 
+  // this.key - bioguide ID string
+
   protected getUrl(): string {
     return `https://bioguide.congress.gov/bioguide/photo/${this.key[0]}/${this.key}.jpg`;
   }
