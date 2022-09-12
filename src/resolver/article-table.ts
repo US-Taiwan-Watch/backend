@@ -19,7 +19,7 @@ export class ArticleTable extends MongoDBTableBase("articles") {
         return this.getItem<Article>('_id', id, attrNamesToGet);
     }
 
-    public getArticleBySlug(slug: string, ...attrNamesToGet: (keyof Article)[]): Promise<Article | null> {
+    public getPublicArticle(slug: string, ...attrNamesToGet: (keyof Article)[]): Promise<Article | null> {
         return this.getItem<Article>('slug', slug, attrNamesToGet);
     }
 

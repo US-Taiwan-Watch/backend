@@ -20,11 +20,11 @@ export class ArticleResolver extends TableProvider(ArticleTable) {
     }
 
     @Query(() => Article, { nullable: true })
-    public async articleBySlug(
+    public async publicArticle(
         @Arg('slug') slug: string,
     ): Promise<Article | null> {
         const tbl = await this.table();
-        let article = await tbl.getArticleBySlug(slug);
+        let article = await tbl.getPublicArticle(slug);
         if (!article) {
             article = await this.article(slug);
         }
