@@ -3,6 +3,7 @@ import { Resolver, Query, Ctx, Arg, Authorized, Mutation } from "type-graphql";
 import { Auth0RoleName } from "../../common/models";
 import { User } from "../../common/models/user.interface";
 import { IApolloContext } from "../@types/common.interface";
+import { Auth0Management } from "../auth0/auth0-management";
 import { TableProvider } from "../mongodb/mongodb-manager";
 import { UserTable } from "./user-table";
 
@@ -40,5 +41,23 @@ export class UserResolver extends TableProvider(UserTable) {
     const tbl = await this.table();
     await tbl.createOrReplaceUser(user);
     return true;
+  }
+
+  @Authorized<Auth0RoleName>([Auth0RoleName.Admin, Auth0RoleName.Editor])
+  @Query(() => [User])
+  async editors(
+  ): Promise<User[]> {
+    async function userRoles(user: User) {
+      const roles = await Auth0Management.api.getRoles(user.id);
+      return { user, roles };
+    }
+
+    const tbl = await this.table();
+    const users = await tbl.getAllUsers();
+    const usersWithRoles = await Promise.all(users.map(user => userRoles(user)));
+
+    // FIXME: change to editor
+    return usersWithRoles.filter(ur => ur.roles.includes(Auth0RoleName.Admin))
+      .map(ur => ({ ...ur.user, name: ur.user.name || ur.user.email }))
   }
 }

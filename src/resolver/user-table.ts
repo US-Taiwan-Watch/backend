@@ -11,6 +11,10 @@ export class UserTable extends MongoDBTableBase("user") {
     return this.getItem<User>("_id", id);
   }
 
+  public getAllUsers(): Promise<User[]> {
+    return this.getAllItems<User>();
+  }
+
   public getUserByIdx(idx: string[]) {
     return _.isEmpty(idx)
       ? Promise.resolve([])
