@@ -1,5 +1,6 @@
 import { Resolver, Query, Arg, Args, Mutation } from "type-graphql";
 import { Article, ArticleStatus } from "../../common/models";
+import { DenormalizedArticle } from "../graphql/article.model";
 import { TableProvider } from "../mongodb/mongodb-manager";
 import { ArticleTable } from "./article-table";
 
@@ -19,16 +20,16 @@ export class ArticleResolver extends TableProvider(ArticleTable) {
         return await tbl.getArticle(id);
     }
 
-    @Query(() => Article, { nullable: true })
+    @Query(() => DenormalizedArticle, { nullable: true })
     public async publicArticle(
         @Arg('slug') slug: string,
-    ): Promise<Article | null> {
+    ): Promise<DenormalizedArticle | null> {
         const tbl = await this.table();
         let article = await tbl.getPublicArticle(slug);
         if (!article) {
             article = await this.article(slug);
         }
-        return article;
+        return DenormalizedArticle.from(article);
     }
 
     @Query(() => [Article], { nullable: true })
