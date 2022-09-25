@@ -161,6 +161,30 @@ export class Auth0Management {
     return true;
   }
 
+  public async changeNickname(userId: string, nickname: string) {
+    const token = await this.getToken();
+    try {
+      await RestClient.update(
+        `${this.mangApiEndpoint}/users/${userId}`,
+        {
+          nickname,
+        },
+        {
+          additionalHeaders: {
+            authorization: `Bearer ${token}`,
+            "cache-control": "no-cache",
+          },
+        }
+      );
+      console.log(`changeName(${userId}) - reset cache...`);
+      RedisClient.client.del([getCacheKey("AUTH0_USER", userId)]);
+      console.log(`changeName(${userId}) - reset cache... done`);
+    } catch (err) {
+      console.log(`changeName(${userId}) - error ${err}`);
+    }
+    return true;
+  }
+
   public async changeEmail(userId: string, email: string) {
     const token = await this.getToken();
     try {
