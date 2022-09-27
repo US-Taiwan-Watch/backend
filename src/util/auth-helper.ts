@@ -18,9 +18,9 @@ export const authChecker: AuthChecker<IApolloContext, Auth0RoleName> = async (
   }
   const adminRsvr = new AdminResolver();
   const myRoles = (await adminRsvr.myRoles(context)) ?? [];
-  return !_.isEmpty(rolesTargets) && !_.isEmpty(myRoles)
-    ? _.some(rolesTargets.map((target) => myRoles.includes(target)))
-    : myRoles.includes(Auth0RoleName.Admin);
+  return !_.isEmpty(rolesTargets)
+    ? _.some(rolesTargets.map(target => myRoles.includes(target)))
+    : !!context.currentUser;
 };
 
 export interface VerifyEmailTokenInput {
