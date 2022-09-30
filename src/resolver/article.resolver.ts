@@ -6,7 +6,7 @@ import {
   FieldResolver,
   Root,
 } from "type-graphql";
-import { Article, User } from "../../common/models";
+import { Article, ArticleType, User } from "../../common/models";
 import { TableProvider } from "../mongodb/mongodb-manager";
 import { ArticleTable } from "./article-table";
 import { UserResolver } from "./user.resolver";
@@ -19,6 +19,11 @@ export class ArticleResolver extends TableProvider(ArticleTable) {
     return (
       article.authors?.map(id => editors.find(user => user.id === id)!) || []
     );
+  }
+
+  @FieldResolver()
+  public type(@Root() article: Article): ArticleType {
+    return article.type || ArticleType.POST;
   }
 
   @Query(() => [Article], { nullable: false })
@@ -35,7 +40,7 @@ export class ArticleResolver extends TableProvider(ArticleTable) {
 
   @Query(() => Article, { nullable: true })
   public async publicArticle(
-    @Arg("slug") slug: string
+    @Arg("slug") slug: string,
   ): Promise<Article | null> {
     const tbl = await this.table();
     let article = await tbl.getPublicArticle(slug);
@@ -47,7 +52,7 @@ export class ArticleResolver extends TableProvider(ArticleTable) {
 
   @Query(() => [Article], { nullable: true })
   public async articles(
-    @Arg("ids", () => [String]) ids: string[]
+    @Arg("ids", () => [String]) ids: string[],
   ): Promise<Article[] | null> {
     const tbl = await this.table();
     return await tbl.getArticles(ids);
@@ -72,8 +77,8 @@ export class ArticleResolver extends TableProvider(ArticleTable) {
     @Arg("isPublished", { nullable: true }) isPublished?: boolean,
     @Arg("authors", () => [String], { nullable: true }) authors?: string[],
     @Arg("imageSource", { nullable: true }) imageSource?: string,
-    @Arg("tags", () => [String], { nullable: true }) tags?: string[]
-    // @Arg("type", { nullable: true }) type?: ArticleType
+    @Arg("tags", () => [String], { nullable: true }) tags?: string[],
+    @Arg("type", () => ArticleType, { nullable: true }) type?: ArticleType,
   ): Promise<Article | null> {
     const tbl = await this.table();
     const article = new Article(
@@ -84,8 +89,8 @@ export class ArticleResolver extends TableProvider(ArticleTable) {
       isPublished,
       authors,
       imageSource,
-      tags
-      //   type
+      tags,
+      type,
     );
     article.createdTime = Date.now().valueOf();
     article.lastModifiedTime = article.createdTime;
@@ -103,8 +108,8 @@ export class ArticleResolver extends TableProvider(ArticleTable) {
     @Arg("isPublished", { nullable: true }) isPublished?: boolean,
     @Arg("authors", () => [String], { nullable: true }) authors?: string[],
     @Arg("imageSource", { nullable: true }) imageSource?: string,
-    @Arg("tags", () => [String], { nullable: true }) tags?: string[]
-    // @Arg("type", { nullable: true }) type?: ArticleType
+    @Arg("tags", () => [String], { nullable: true }) tags?: string[],
+    @Arg("type", () => ArticleType, { nullable: true }) type?: ArticleType,
   ): Promise<Article | null> {
     const article = <Article>{
       id,
@@ -116,8 +121,10 @@ export class ArticleResolver extends TableProvider(ArticleTable) {
       authors,
       imageSource,
       tags,
-      //   type,
     };
+    if (type) {
+      article.type = type;
+    }
     article.lastModifiedTime = Date.now().valueOf();
     if (isPublished) {
       article.pusblishTime = Date.now().valueOf();
