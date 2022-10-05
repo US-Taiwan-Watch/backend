@@ -23,7 +23,7 @@ export class ArticleResolver extends TableProvider(ArticleTable) {
 
   @FieldResolver()
   public type(@Root() article: Article): ArticleType {
-    return article.type || ArticleType.POST;
+    return article.type || ArticleType.ARTICLE;
   }
 
   @Query(() => [Article], { nullable: false })

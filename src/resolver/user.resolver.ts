@@ -1,50 +1,16 @@
 import { ApolloError } from "apollo-server";
 import _ from "lodash";
-import {
-  Resolver,
-  Query,
-  Ctx,
-  Arg,
-  Authorized,
-  Mutation,
-  FieldResolver,
-  Root,
-} from "type-graphql";
+import { Resolver, Query, Ctx, Arg, Authorized, Mutation } from "type-graphql";
 import { Auth0RoleName } from "../../common/models";
 import { User } from "../../common/models/user.interface";
 import { IApolloContext } from "../@types/common.interface";
 import { Auth0Management } from "../auth0/auth0-management";
 import { TableProvider } from "../mongodb/mongodb-manager";
-import { AdminResolver } from "./admin.resolver";
 import { UserTable } from "./user-table";
 
 @Resolver(User)
 export class UserResolver extends TableProvider(UserTable) {
   // Non-Admin operations
-
-  private static async authorize(ctx: IApolloContext, user: User) {
-    if (ctx.currentUser && ctx.currentUser.sub === user.id) {
-      return;
-    }
-    const isAdmin = await new AdminResolver().isAdmin(ctx);
-    if (isAdmin) {
-      return;
-    }
-    throw new ApolloError("Attempted to access fields without permissions");
-  }
-
-  @FieldResolver()
-  async email(@Ctx() ctx: IApolloContext, @Root() user: User) {
-    await UserResolver.authorize(ctx, user);
-    return user.email;
-  }
-
-  @FieldResolver()
-  async id(@Ctx() ctx: IApolloContext, @Root() user: User) {
-    await UserResolver.authorize(ctx, user);
-    return user.id;
-  }
-
   @Query(() => User, { nullable: true })
   async imUser(@Ctx() ctx: IApolloContext): Promise<User | null> {
     const userId = ctx.currentUser && ctx.currentUser.sub;
@@ -63,7 +29,7 @@ export class UserResolver extends TableProvider(UserTable) {
     @Arg("email") email: string,
     @Arg("name", { nullable: true }) name?: string,
     @Arg("nickname", { nullable: true }) nickname?: string,
-    @Arg("picture", { nullable: true }) picture?: string
+    @Arg("picture", { nullable: true }) picture?: string,
   ): Promise<boolean> {
     const user = <User>{
       id,
@@ -88,7 +54,7 @@ export class UserResolver extends TableProvider(UserTable) {
     const tbl = await this.table();
     const users = await tbl.getAllUsers();
     const usersWithRoles = await Promise.all(
-      users.map(user => userRoles(user))
+      users.map(user => userRoles(user)),
     );
 
     // FIXME: change to editor
@@ -103,7 +69,7 @@ export class UserResolver extends TableProvider(UserTable) {
     @Ctx() ctx: IApolloContext,
     @Arg("name", { nullable: true }) name?: string,
     @Arg("nickname", { nullable: true }) nickname?: string,
-    @Arg("picture", { nullable: true }) picture?: string
+    @Arg("picture", { nullable: true }) picture?: string,
   ): Promise<User> {
     const userId = ctx.currentUser.sub;
     const actions = [];
@@ -115,7 +81,7 @@ export class UserResolver extends TableProvider(UserTable) {
           if (suc) {
             userInfo = { ...userInfo, name };
           }
-        })
+        }),
       );
     }
     if (nickname) {
@@ -124,7 +90,7 @@ export class UserResolver extends TableProvider(UserTable) {
           if (suc) {
             userInfo = { ...userInfo, nickname };
           }
-        })
+        }),
       );
     }
     if (picture) {
@@ -133,7 +99,7 @@ export class UserResolver extends TableProvider(UserTable) {
           if (suc) {
             userInfo = { ...userInfo, picture };
           }
-        })
+        }),
       );
     }
     await Promise.all(actions);
