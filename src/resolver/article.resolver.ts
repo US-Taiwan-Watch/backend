@@ -118,6 +118,7 @@ export class ArticleResolver extends TableProvider(ArticleTable) {
     @Arg("imageSource", { nullable: true }) imageSource?: string,
     @Arg("tags", () => [String], { nullable: true }) tags?: string[],
     @Arg("type", () => ArticleType, { nullable: true }) type?: ArticleType,
+    @Arg("publishedTime", { nullable: true }) publishedTime?: number,
   ): Promise<Article | null> {
     const tbl = await this.table();
     const originalArticle = await tbl.getArticle(id);
@@ -140,8 +141,12 @@ export class ArticleResolver extends TableProvider(ArticleTable) {
     if (isPublished !== undefined) {
       article.isPublished = isPublished;
       if (!originalArticle?.isPublished && isPublished) {
-        article.pusblishTime = Date.now().valueOf();
+        article.publishedTime = Date.now().valueOf();
       }
+    }
+
+    if (publishedTime) {
+      article.publishedTime = publishedTime;
     }
 
     if (authors !== undefined) {
