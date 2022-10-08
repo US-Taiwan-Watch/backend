@@ -34,15 +34,12 @@ export class ArticleResolver extends TableProvider(ArticleTable) {
     return article.type || ArticleType.ARTICLE;
   }
 
-  @Query(() => [Article], { nullable: false })
+  @Query(() => [Article])
   public async getAllArticles(@Ctx() ctx: IApolloContext): Promise<Article[]> {
     const tbl = await this.table();
     const articles = await tbl.getAllArticles();
     const canEdit = await authCheckHelper(ctx, ARTICLE_AUTHORIZED_ROLES);
-    if (canEdit) {
-      return await tbl.getAllArticles();
-    }
-    return articles.filter(a => a.isPublished);
+    return articles.filter(a => !a.deleted && (canEdit || a.isPublished));
   }
 
   @Query(() => Article, { nullable: true })
@@ -55,7 +52,7 @@ export class ArticleResolver extends TableProvider(ArticleTable) {
     if (!article) {
       article = await this.getArticle(slug);
     }
-    if (!article?.isPublished) {
+    if (!article?.isPublished || article.deleted) {
       const canEdit = await authCheckHelper(ctx, ARTICLE_AUTHORIZED_ROLES);
       if (!canEdit) {
         return null;
@@ -170,10 +167,10 @@ export class ArticleResolver extends TableProvider(ArticleTable) {
   }
 
   @Authorized<Auth0RoleName>(ARTICLE_AUTHORIZED_ROLES)
-  @Mutation(() => Boolean, { nullable: true })
+  @Mutation(() => Boolean)
   public async deleteArticle(@Arg("id") id: string) {
     const tbl = await this.table();
-    const result = await tbl.deleteArticle(id);
-    return result.deletedCount > 0;
+    const result = await tbl.updateArticle(id, { deleted: true });
+    return result.modifiedCount > 0;
   }
 }
