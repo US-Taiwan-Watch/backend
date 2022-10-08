@@ -15,10 +15,13 @@ import { UserResolver } from "./user.resolver";
 export class ArticleResolver extends TableProvider(ArticleTable) {
   @FieldResolver()
   public async authorInfos(@Root() article: Article): Promise<User[]> {
-    const editors = await new UserResolver().editors();
-    return (
-      article.authors?.map(id => editors.find(user => user.id === id)!) || []
-    );
+    if (!article.authors) {
+      return [];
+    }
+    return (await new UserResolver().getUsers(article.authors)).map(user => ({
+      ...user,
+      name: user.name || user.email,
+    }));
   }
 
   @FieldResolver()

@@ -43,6 +43,20 @@ export class UserResolver extends TableProvider(UserTable) {
     return true;
   }
 
+  @Query(() => User)
+  async getUser(@Arg("user_id") id: string): Promise<User | null> {
+    const tbl = await this.table();
+    return await tbl.getUserById(id);
+  }
+
+  @Query(() => [User])
+  async getUsers(
+    @Arg("user_id", () => [String]) idx: string[],
+  ): Promise<User[]> {
+    const tbl = await this.table();
+    return await tbl.getUserByIdx(idx);
+  }
+
   @Authorized<Auth0RoleName>([Auth0RoleName.Admin, Auth0RoleName.Editor])
   @Query(() => [User])
   async editors(): Promise<User[]> {
@@ -57,9 +71,8 @@ export class UserResolver extends TableProvider(UserTable) {
       users.map(user => userRoles(user)),
     );
 
-    // FIXME: change to editor
     return usersWithRoles
-      .filter(ur => ur.roles.includes(Auth0RoleName.Admin))
+      .filter(ur => ur.roles.includes(Auth0RoleName.Editor))
       .map(ur => ({ ...ur.user, name: ur.user.name || ur.user.email }));
   }
 
