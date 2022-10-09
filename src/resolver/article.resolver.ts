@@ -8,13 +8,20 @@ import {
   Ctx,
   Authorized,
 } from "type-graphql";
-import { Article, ArticleType, User, Auth0RoleName, ARTICLE_AUTHORIZED_ROLES } from "../../common/models";
+import {
+  Article,
+  ArticleType,
+  User,
+  Auth0RoleName,
+  ARTICLE_AUTHORIZED_ROLES,
+  I18NText,
+  I18NTextInput,
+} from "../../common/models";
 import { TableProvider } from "../mongodb/mongodb-manager";
 import { IApolloContext } from "../@types/common.interface";
 import { ArticleTable } from "./article-table";
 import { UserResolver } from "./user.resolver";
 import { authCheckHelper } from "../util/auth-helper";
-
 
 @Resolver(Article)
 export class ArticleResolver extends TableProvider(ArticleTable) {
@@ -74,7 +81,7 @@ export class ArticleResolver extends TableProvider(ArticleTable) {
   @Mutation(() => Article, { nullable: true })
   public async addArticle(
     @Ctx() ctx: IApolloContext,
-    @Arg("title", { nullable: true }) title?: string,
+    @Arg("title", { nullable: true }) title?: I18NTextInput,
     @Arg("content", { nullable: true }) content?: string,
     @Arg("slug", { nullable: true }) slug?: string,
     @Arg("preview", { nullable: true }) preview?: string,
@@ -87,7 +94,7 @@ export class ArticleResolver extends TableProvider(ArticleTable) {
     const tbl = await this.table();
     const userId = ctx.currentUser && ctx.currentUser.sub;
     const article = new Article(
-      title,
+      new I18NText(title),
       content,
       slug,
       preview,
@@ -109,7 +116,7 @@ export class ArticleResolver extends TableProvider(ArticleTable) {
   public async updateArticleWithId(
     @Ctx() ctx: IApolloContext,
     @Arg("id") id: string,
-    @Arg("title", { nullable: true }) title?: string,
+    @Arg("title", { nullable: true }) title?: I18NTextInput,
     @Arg("content", { nullable: true }) content?: string,
     @Arg("slug", { nullable: true }) slug?: string,
     @Arg("preview", { nullable: true }) preview?: string,
@@ -125,6 +132,10 @@ export class ArticleResolver extends TableProvider(ArticleTable) {
     const article = <Article>{
       id,
     };
+
+    if (title) {
+      article.title = <I18NText>{ ...originalArticle?.title, ...title };
+    }
 
     if (content !== undefined) {
       article.content = content;
