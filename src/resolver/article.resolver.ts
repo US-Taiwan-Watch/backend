@@ -42,7 +42,10 @@ export class ArticleResolver extends TableProvider(ArticleTable) {
   }
 
   @Query(() => [Article])
-  public async getAllArticles(@Ctx() ctx: IApolloContext): Promise<Article[]> {
+  public async getAllArticles(
+    @Ctx() ctx: IApolloContext,
+    @Arg("lang", { nullable: true }) _lang?: string,
+  ): Promise<Article[]> {
     const tbl = await this.table();
     const articles = await tbl.getAllArticles();
     const canEdit = await authCheckHelper(ctx, ARTICLE_AUTHORIZED_ROLES);
@@ -53,6 +56,7 @@ export class ArticleResolver extends TableProvider(ArticleTable) {
   public async getPublicArticle(
     @Ctx() ctx: IApolloContext,
     @Arg("slug") slug: string,
+    @Arg("lang", { nullable: true }) _lang?: string,
   ): Promise<Article | null> {
     const tbl = await this.table();
     let article = await tbl.getArticleBySlug(slug);
