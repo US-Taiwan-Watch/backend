@@ -1,13 +1,13 @@
-import { Resolver, Query, Arg, Args } from "type-graphql";
-import { Bill, BillType } from "../../common/models";
+import { Resolver, Query, Arg, Args, Root, FieldResolver } from "type-graphql";
+import { Bill, BillType, Member } from "../../common/models";
 import { BillSyncer } from "../data-sync/bill.sync";
 import { TableProvider } from "../mongodb/mongodb-manager";
 import { BillVersionDownloader } from "../storage/bill-version-downloader";
 import { CongressUtils } from "../util/congress-utils";
 import { Logger } from "../util/logger";
 import { BillTable } from "./bill-table";
-import { PaginatedBills, Pagination, PaginationArgs } from "../util/pagination";
-import { DenormalizedBill } from "../graphql/bill.model";
+import { PaginatedBills, PaginationArgs } from "../util/pagination";
+import { MemberResolver } from "./member.resolver";
 
 @Resolver(Bill)
 export class BillResolver extends TableProvider(BillTable) {
@@ -15,33 +15,60 @@ export class BillResolver extends TableProvider(BillTable) {
 
   constructor() {
     super();
-    this.logger = new Logger('BillResolver')
+    this.logger = new Logger("BillResolver");
   }
   // TODO: false for debugging. Should be true while in real use
   private static shouldSave() {
     return true;
   }
 
-  @Query(() => PaginatedBills, { nullable: false })
-  public async bills(@Args() pageInfo: PaginationArgs): Promise<PaginatedBills> {
-    const tbl = await this.table();
-    const bills = await tbl.getAllBills();
-    return new PaginatedBills(bills.map(b => new DenormalizedBill(b)), pageInfo);
+  @FieldResolver()
+  async sponsor(@Root() bill: Bill) {
+    if (!bill.sponsorId) {
+      return null;
+    }
+    return await new MemberResolver().member(bill.sponsorId);
   }
 
-  @Query(() => DenormalizedBill, { nullable: true })
-  public async bill(
-    @Arg('id') id: string,
-  ): Promise<DenormalizedBill | null> {
+  @FieldResolver()
+  cosponsorsCount(@Root() bill: Bill): number | undefined {
+    return bill.cosponsorInfos?.length;
+  }
+
+  @FieldResolver()
+  async cosponsors(@Root() bill: Bill): Promise<Member[] | null> {
+    if (!bill.cosponsorInfos) {
+      return null;
+    }
+    const cosponsors = await new MemberResolver().members(
+      bill.cosponsorInfos.map(ci => ci.memberId)
+    );
+    return bill.cosponsorInfos.map(co => {
+      const found = cosponsors.find(coo => coo.id === co.memberId);
+      return found ? found : { id: co.memberId };
+    });
+  }
+
+  @Query(() => PaginatedBills, { nullable: false })
+  public async bills(
+    @Args() pageInfo: PaginationArgs
+  ): Promise<PaginatedBills> {
+    const tbl = await this.table();
+    const bills = await tbl.getAllBills();
+    return new PaginatedBills(bills, pageInfo);
+  }
+
+  @Query(() => Bill, { nullable: true })
+  public async bill(@Arg("id") id: string): Promise<Bill | null> {
     const tbl = await this.table();
     const bill = await tbl.getBill(id);
-    return DenormalizedBill.from(bill);
+    return bill;
   }
 
   public async addBill(
     congress: number,
     billType: BillType,
-    billNumber: number,
+    billNumber: number
   ): Promise<Bill | null> {
     const tbl = await this.table();
     const bill = Bill.fromKeys(congress, billType, billNumber);
@@ -52,7 +79,9 @@ export class BillResolver extends TableProvider(BillTable) {
   public async downloadAllBillVersions(): Promise<Bill[]> {
     const tbl = await this.table();
     const bills = await tbl.getBillsThatNeedDownload();
-    await Promise.allSettled(bills.map(b => this.downloadBillVersions(b, false)));
+    await Promise.allSettled(
+      bills.map(b => this.downloadBillVersions(b, false))
+    );
     return bills;
   }
 
@@ -66,7 +95,10 @@ export class BillResolver extends TableProvider(BillTable) {
     return this.syncBillsForCongress(CongressUtils.getCurrentCongress());
   }
 
-  public async syncBillsForCongress(congress: number, fields?: (keyof Bill)[]): Promise<Bill[]> {
+  public async syncBillsForCongress(
+    congress: number,
+    fields?: (keyof Bill)[]
+  ): Promise<Bill[]> {
     const tbl = await this.table();
     const bills = await tbl.getBillsByCongress(congress);
     return await this.syncBills(bills, false, fields);
@@ -86,16 +118,22 @@ export class BillResolver extends TableProvider(BillTable) {
     return this.syncBill(Bill.fromId(id), true, fields);
   }
 
-  private async syncBill(bill: Bill, compareExisting: boolean, fields?: (keyof Bill)[]): Promise<Bill> {
+  private async syncBill(
+    bill: Bill,
+    compareExisting: boolean,
+    fields?: (keyof Bill)[]
+  ): Promise<Bill> {
     if (compareExisting) {
-      bill = await this.bill(bill.id) || bill;
+      bill = (await this.bill(bill.id)) || bill;
     }
     try {
       const suc = await new BillSyncer(bill, fields).sync();
-      bill.needsSync = !suc || (
-        bill.congress === CongressUtils.getCurrentCongress() &&
-        bill.trackers?.find(t => t.stepName === 'Became Law' && t.selected) === undefined
-      );
+      bill.needsSync =
+        !suc ||
+        (bill.congress === CongressUtils.getCurrentCongress() &&
+          bill.trackers?.find(
+            t => t.stepName === "Became Law" && t.selected
+          ) === undefined);
       if (BillResolver.shouldSave()) {
         const tbl = await this.table();
         await tbl.createOrReplaceBill(bill);
@@ -110,48 +148,62 @@ export class BillResolver extends TableProvider(BillTable) {
     return bill;
   }
 
-  private async syncBills(bills: Bill[], compareExisting: boolean, fields?: (keyof Bill)[]): Promise<Bill[]> {
-    this.logger.log(`Syncing ${bills.length} bills: ${bills.map(b => b.id).join(', ')}`);
+  private async syncBills(
+    bills: Bill[],
+    compareExisting: boolean,
+    fields?: (keyof Bill)[]
+  ): Promise<Bill[]> {
+    this.logger.log(
+      `Syncing ${bills.length} bills: ${bills.map(b => b.id).join(", ")}`
+    );
     if (compareExisting) {
       // Get existing bills from DB
       const tbl = await this.table();
       const existingBills = await tbl.getBills(bills.map(m => m.id));
       // Merge fields from updated over existing ones
-      bills = bills.map(ub => ({ ...existingBills.find(eb => eb.id === ub.id), ...ub }));
+      bills = bills.map(ub => ({
+        ...existingBills.find(eb => eb.id === ub.id),
+        ...ub,
+      }));
     }
     // Fetch extra fields individually
-    bills = await Promise.all(bills.map(bill =>
-      // Add some fields
-      this.syncBill(bill, false, fields)
-    ));
+    bills = await Promise.all(
+      bills.map(bill =>
+        // Add some fields
+        this.syncBill(bill, false, fields)
+      )
+    );
     return bills;
   }
 
   public async downloadBillVersions(bill: Bill, compareExisting: boolean) {
     if (compareExisting) {
-      bill = await this.bill(bill.id) || bill;
+      bill = (await this.bill(bill.id)) || bill;
     }
     const contentTypes = BillVersionDownloader.getContentTypes();
-    const all = bill.versions?.map(v =>
-      contentTypes
-        .filter(t => !v.downloaded || !(t in v.downloaded))
-        .map(type =>
-          new BillVersionDownloader({
-            billId: bill.id,
-            versionCode: v.code,
-            contentType: type,
-            publ: v.id,
-          }).downloadAndUpload().then(suc => {
-            if (!suc) {
-              return;
-            }
-            v.downloaded = { ...v.downloaded, [type]: true };
-          })
-        )
-    ).flat();
+    const all = bill.versions
+      ?.map(v =>
+        contentTypes
+          .filter(t => !v.downloaded || !(t in v.downloaded))
+          .map(type =>
+            new BillVersionDownloader({
+              billId: bill.id,
+              versionCode: v.code,
+              contentType: type,
+              publ: v.id,
+            })
+              .downloadAndUpload()
+              .then(suc => {
+                if (!suc) {
+                  return;
+                }
+                v.downloaded = { ...v.downloaded, [type]: true };
+              })
+          )
+      )
+      .flat();
     await Promise.allSettled(all || []);
     const tbl = await this.table();
     await tbl.createOrReplaceBill(bill);
   }
-
 }

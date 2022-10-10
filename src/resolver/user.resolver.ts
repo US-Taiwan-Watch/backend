@@ -11,7 +11,6 @@ import { UserTable } from "./user-table";
 @Resolver(User)
 export class UserResolver extends TableProvider(UserTable) {
   // Non-Admin operations
-
   @Query(() => User, { nullable: true })
   async imUser(@Ctx() ctx: IApolloContext): Promise<User | null> {
     const userId = ctx.currentUser && ctx.currentUser.sub;
@@ -30,7 +29,7 @@ export class UserResolver extends TableProvider(UserTable) {
     @Arg("email") email: string,
     @Arg("name", { nullable: true }) name?: string,
     @Arg("nickname", { nullable: true }) nickname?: string,
-    @Arg("picture", { nullable: true }) picture?: string
+    @Arg("picture", { nullable: true }) picture?: string,
   ): Promise<boolean> {
     const user = <User>{
       id,
@@ -44,6 +43,20 @@ export class UserResolver extends TableProvider(UserTable) {
     return true;
   }
 
+  @Query(() => User)
+  async getUser(@Arg("user_id") id: string): Promise<User | null> {
+    const tbl = await this.table();
+    return await tbl.getUserById(id);
+  }
+
+  @Query(() => [User])
+  async getUsers(
+    @Arg("user_id", () => [String]) idx: string[],
+  ): Promise<User[]> {
+    const tbl = await this.table();
+    return await tbl.getUserByIdx(idx);
+  }
+
   @Authorized<Auth0RoleName>([Auth0RoleName.Admin, Auth0RoleName.Editor])
   @Query(() => [User])
   async editors(): Promise<User[]> {
@@ -55,12 +68,11 @@ export class UserResolver extends TableProvider(UserTable) {
     const tbl = await this.table();
     const users = await tbl.getAllUsers();
     const usersWithRoles = await Promise.all(
-      users.map(user => userRoles(user))
+      users.map(user => userRoles(user)),
     );
 
-    // FIXME: change to editor
     return usersWithRoles
-      .filter(ur => ur.roles.includes(Auth0RoleName.Admin))
+      .filter(ur => ur.roles.includes(Auth0RoleName.Editor))
       .map(ur => ({ ...ur.user, name: ur.user.name || ur.user.email }));
   }
 
@@ -70,11 +82,8 @@ export class UserResolver extends TableProvider(UserTable) {
     @Ctx() ctx: IApolloContext,
     @Arg("name", { nullable: true }) name?: string,
     @Arg("nickname", { nullable: true }) nickname?: string,
-    @Arg("picture", { nullable: true }) picture?: string
+    @Arg("picture", { nullable: true }) picture?: string,
   ): Promise<User> {
-    if (!ctx.currentUser || !ctx.currentUser.sub) {
-      throw new ApolloError("Unauthorized");
-    }
     const userId = ctx.currentUser.sub;
     const actions = [];
     let userInfo: User = { id: userId };
@@ -85,7 +94,7 @@ export class UserResolver extends TableProvider(UserTable) {
           if (suc) {
             userInfo = { ...userInfo, name };
           }
-        })
+        }),
       );
     }
     if (nickname) {
@@ -94,7 +103,7 @@ export class UserResolver extends TableProvider(UserTable) {
           if (suc) {
             userInfo = { ...userInfo, nickname };
           }
-        })
+        }),
       );
     }
     if (picture) {
@@ -103,7 +112,7 @@ export class UserResolver extends TableProvider(UserTable) {
           if (suc) {
             userInfo = { ...userInfo, picture };
           }
-        })
+        }),
       );
     }
     await Promise.all(actions);
