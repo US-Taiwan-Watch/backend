@@ -40,9 +40,9 @@ export class ArticleTable extends MongoDBTableBase("articles") {
     const existing = await this.getArticle(article.id);
     if (existing) {
       const { id, ...updateArticle } = article;
-      this.updateArticle(article.id, updateArticle);
+      await this.updateArticle(article.id, updateArticle);
     } else {
-      this.addArticle(article);
+      await this.addArticle(article);
     }
   }
 
