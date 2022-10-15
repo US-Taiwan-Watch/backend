@@ -88,7 +88,7 @@ export class ArticleResolver extends TableProvider(ArticleTable) {
     @Arg("title", { nullable: true }) title?: I18NTextInput,
     @Arg("content", { nullable: true }) content?: string,
     @Arg("slug", { nullable: true }) slug?: string,
-    @Arg("preview", { nullable: true }) preview?: string,
+    @Arg("preview", { nullable: true }) preview?: I18NTextInput,
     @Arg("isPublished", { nullable: true }) isPublished?: boolean,
     @Arg("authors", () => [String], { nullable: true }) authors?: string[],
     @Arg("imageSource", { nullable: true }) imageSource?: string,
@@ -101,7 +101,7 @@ export class ArticleResolver extends TableProvider(ArticleTable) {
       new I18NText(title),
       content,
       slug,
-      preview,
+      new I18NText(preview),
       isPublished,
       authors,
       imageSource,
@@ -123,7 +123,7 @@ export class ArticleResolver extends TableProvider(ArticleTable) {
     @Arg("title", { nullable: true }) title?: I18NTextInput,
     @Arg("content", { nullable: true }) content?: string,
     @Arg("slug", { nullable: true }) slug?: string,
-    @Arg("preview", { nullable: true }) preview?: string,
+    @Arg("preview", { nullable: true }) preview?: I18NTextInput,
     @Arg("isPublished", { nullable: true }) isPublished?: boolean,
     @Arg("authors", () => [String], { nullable: true }) authors?: string[],
     @Arg("imageSource", { nullable: true }) imageSource?: string,
@@ -149,8 +149,9 @@ export class ArticleResolver extends TableProvider(ArticleTable) {
       article.slug = slug;
     }
 
-    if (preview !== undefined) {
-      article.preview = preview;
+
+    if (title) {
+      article.preview = <I18NText>{ ...originalArticle?.preview, ...preview };
     }
 
     if (isPublished !== undefined) {
