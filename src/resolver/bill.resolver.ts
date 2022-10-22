@@ -1,4 +1,4 @@
-import { Resolver, Query, Arg, Args } from "type-graphql";
+import { Resolver, Query, Arg, Args, Mutation } from "type-graphql";
 import { Bill, BillType } from "../../common/models";
 import { BillSyncer } from "../data-sync/bill.sync";
 import { TableProvider } from "../mongodb/mongodb-manager";
@@ -8,7 +8,7 @@ import { Logger } from "../util/logger";
 import { BillTable } from "./bill-table";
 import { PaginatedBills, Pagination, PaginationArgs } from "../util/pagination";
 import { DenormalizedBill } from "../graphql/bill.model";
-
+import { I18NText } from "../../common/models/i18n.interface";
 @Resolver(Bill)
 export class BillResolver extends TableProvider(BillTable) {
   logger: Logger;
@@ -37,14 +37,22 @@ export class BillResolver extends TableProvider(BillTable) {
     const bill = await tbl.getBill(id);
     return DenormalizedBill.from(bill);
   }
-
+  
+  @Mutation(() => Bill, { nullable: true })
   public async addBill(
     congress: number,
     billType: BillType,
     billNumber: number,
+    @Arg("summary", { nullable: true }) summary?: I18NText,
+    @Arg("introduceDate", { nullable: true }) introduceDate?: string,
   ): Promise<Bill | null> {
     const tbl = await this.table();
-    const bill = Bill.fromKeys(congress, billType, billNumber);
+    let bill = Bill.fromKeys(congress, billType, billNumber);
+    const optionField = Bill.editOptionalKeys(summary, introduceDate)
+    bill = {
+      ...bill,
+      ...optionField,
+    }
     await tbl.createOrReplaceBill(bill);
     return this.bill(bill.id);
   }
