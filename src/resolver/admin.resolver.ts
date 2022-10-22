@@ -30,4 +30,10 @@ export class AdminResolver {
     return null;
   }
 
+  async addRole(
+    userId: string,
+    role: Auth0RoleName,
+  ): Promise<Auth0RoleName[] | undefined> {
+    return Auth0Management.api.addRole(userId, role);
+  }
 }

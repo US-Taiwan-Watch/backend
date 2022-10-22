@@ -11,16 +11,21 @@ export const isTargetS2S = (currentUser: IApolloContext["currentUser"]) =>
 
 export const authChecker: AuthChecker<IApolloContext, Auth0RoleName> = async (
   { context },
-  rolesTargets: Auth0RoleName[]
+  rolesTargets: Auth0RoleName[],
+): Promise<boolean | never> => authCheckHelper(context, rolesTargets);
+
+export const authCheckHelper = async (
+  context: IApolloContext,
+  rolesTargets: Auth0RoleName[],
 ): Promise<boolean | never> => {
   if (isTargetS2S(context.currentUser)) {
     return rolesTargets.includes(Auth0RoleName.S2S);
   }
   const adminRsvr = new AdminResolver();
   const myRoles = (await adminRsvr.myRoles(context)) ?? [];
-  return !_.isEmpty(rolesTargets) && !_.isEmpty(myRoles)
-    ? _.some(rolesTargets.map((target) => myRoles.includes(target)))
-    : myRoles.includes(Auth0RoleName.Admin);
+  return !_.isEmpty(rolesTargets)
+    ? _.some(rolesTargets.map(target => myRoles.includes(target)))
+    : !!context.currentUser;
 };
 
 export interface VerifyEmailTokenInput {

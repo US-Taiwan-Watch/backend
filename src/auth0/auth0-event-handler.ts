@@ -53,6 +53,8 @@ const user = {
 
 import { UserResolver } from "../resolver/user.resolver";
 import * as _ from "lodash";
+import { AdminResolver } from "../resolver/admin.resolver";
+import { Auth0RoleName } from "../../common/models";
 
 export type Connection =
   | "Username-Password-Authentication"
@@ -83,6 +85,7 @@ export interface IAuth0User {
   family_name: string;
   given_name: string;
   email: string;
+  email_verified: boolean;
   picture: string;
   created_at: string;
   updated_at: string;
@@ -99,19 +102,16 @@ export interface IAuth0Event {
 export class Auth0EventHandler {
   public handleEvent(evt: IAuth0Event) {
     const { event: eventType, user } = evt;
-    const { user_id, email, name, nickname, picture } = user;
+    const { user_id, email, name, nickname, picture, email_verified } = user;
     console.log("eventType = ", eventType);
     console.log("user_id = ", user_id);
     console.log("name = ", name);
     console.log("nickname = ", nickname);
     console.log("picture = ", picture);
     const resolver = new UserResolver();
-    resolver.createOrUpdateUser(
-      user_id,
-      email,
-      name,
-      nickname,
-      picture,
-    );
+    resolver.createOrUpdateUser(user_id, email, name, nickname, picture);
+    if (!!email_verified && email.endsWith("@ustw.watch")) {
+      new AdminResolver().addRole(user_id, Auth0RoleName.Editor);
+    }
   }
 }
