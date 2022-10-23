@@ -16,36 +16,56 @@ export class PaginationArgs {
 
   @Field(() => Number, { nullable: true })
   limit?: number;
+
+  @Field(() => [String], { nullable: true })
+  sortFields: string[] = [];
+
+  @Field(() => [Number], { nullable: true })
+  sortDirections: number[] = [];
 }
 
-@ObjectType({ isAbstract: true })
-export abstract class PaginatedResponseBase<TItem> {
-  constructor(items: TItem[], pageInfo: PaginationArgs) {
-    const start = pageInfo.offset == null ? 0 : pageInfo.offset;
-    const end = pageInfo.limit == null ? undefined : start + pageInfo.limit;
-    this.itemLists = items.slice(start, end);
-    this.hasMore = end !== undefined && end < items.length;
-    this.total = items.length;
-  }
-
-  itemLists!: TItem[];
-
-  @Field(type => Int)
-  total!: number;
-
-  @Field()
-  hasMore!: boolean;
-}
-
-export function PaginatedResponse<TItem>(
-  itemsFieldValue: ClassType<TItem> | string | number | boolean
+export function PaginatedResponse<TItem extends { [key: string]: any }>(
+  itemsFieldValue: ClassType<TItem> | string | number | boolean,
 ) {
   @ObjectType({ isAbstract: true })
-  abstract class PaginatedResponseClass extends PaginatedResponseBase<TItem> {
-    @Field(type => [itemsFieldValue])
-    items(): TItem[] {
-      return this.itemLists;
+  abstract class PaginatedResponseClass {
+    constructor(allItems: TItem[], pageInfo: PaginationArgs) {
+      const start = pageInfo.offset == null ? 0 : pageInfo.offset;
+      const end = pageInfo.limit == null ? undefined : start + pageInfo.limit;
+
+      this.items = allItems;
+      if (
+        pageInfo.sortFields.length > 0 &&
+        pageInfo.sortDirections.length > 0
+      ) {
+        this.items = this.items.sort((a, b) => {
+          for (const i in pageInfo.sortFields) {
+            const field = pageInfo.sortFields[i];
+            const aa: any = a[field] || "";
+            const bb: any = b[field] || "";
+            if (aa === bb) {
+              continue;
+            }
+            const direction = pageInfo.sortDirections[i] || -1;
+            return aa > bb ? direction : -direction;
+          }
+          return 0;
+        });
+      }
+      this.items = this.items.slice(start, end);
+
+      this.hasMore = end !== undefined && end < allItems.length;
+      this.total = allItems.length;
     }
+
+    @Field(() => Int)
+    total!: number;
+
+    @Field()
+    hasMore!: boolean;
+
+    @Field(() => [itemsFieldValue])
+    items!: TItem[];
   }
   return PaginatedResponseClass;
 }

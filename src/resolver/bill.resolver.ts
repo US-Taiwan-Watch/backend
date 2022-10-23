@@ -1,25 +1,14 @@
-<<<<<<< HEAD
-import { Resolver, Query, Arg, Args, Mutation } from "type-graphql";
-import { Bill, BillType } from "../../common/models";
-=======
-import { Resolver, Query, Arg, Args, Root, FieldResolver } from "type-graphql";
-import { Bill, BillType, Member } from "../../common/models";
->>>>>>> f650a6be4408f2b7e4209b445336ba91511518d5
+import { Resolver, Query, Arg, Args, Root, FieldResolver, Mutation } from "type-graphql";
+import { Bill, BillType, I18NText, I18NTextInput, Member } from "../../common/models";
 import { BillSyncer } from "../data-sync/bill.sync";
 import { TableProvider } from "../mongodb/mongodb-manager";
 import { BillVersionDownloader } from "../storage/bill-version-downloader";
 import { CongressUtils } from "../util/congress-utils";
 import { Logger } from "../util/logger";
-import { BillTable } from "./bill-table";
-<<<<<<< HEAD
-import { PaginatedBills, Pagination, PaginationArgs } from "../util/pagination";
-import { DenormalizedBill } from "../graphql/bill.model";
-import { I18NText } from "../../common/models/i18n.interface";
-=======
 import { PaginatedBills, PaginationArgs } from "../util/pagination";
+import { BillTable } from "./bill-table";
 import { MemberResolver } from "./member.resolver";
 
->>>>>>> f650a6be4408f2b7e4209b445336ba91511518d5
 @Resolver(Bill)
 export class BillResolver extends TableProvider(BillTable) {
   logger: Logger;
@@ -62,7 +51,7 @@ export class BillResolver extends TableProvider(BillTable) {
 
   @Query(() => PaginatedBills, { nullable: false })
   public async bills(
-    @Args() pageInfo: PaginationArgs
+    @Args() pageInfo: PaginationArgs,
   ): Promise<PaginatedBills> {
     const tbl = await this.table();
     const bills = await tbl.getAllBills();
@@ -81,16 +70,10 @@ export class BillResolver extends TableProvider(BillTable) {
     congress: number,
     billType: BillType,
     billNumber: number,
-    @Arg("summary", { nullable: true }) summary?: I18NText,
-    @Arg("introduceDate", { nullable: true }) introduceDate?: string,
+    // @Arg("summary", { nullable: true }) summary?: I18NTextInput,
   ): Promise<Bill | null> {
     const tbl = await this.table();
-    let bill = Bill.fromKeys(congress, billType, billNumber);
-    const optionField = Bill.editOptionalKeys(summary, introduceDate)
-    bill = {
-      ...bill,
-      ...optionField,
-    }
+    const bill = Bill.fromKeys(congress, billType, billNumber);
     await tbl.createOrReplaceBill(bill);
     return this.bill(bill.id);
   }
