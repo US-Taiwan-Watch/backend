@@ -1,5 +1,5 @@
 import { Bill, TextVersionCode } from "../../../common/models";
-import { parseStringPromise } from 'xml2js';
+import { parseStringPromise } from "xml2js";
 import { RequestHelper, RequestSource } from "./request-helper";
 
 export abstract class GovInfoHelper {
@@ -8,36 +8,45 @@ export abstract class GovInfoHelper {
   }
 
   public static async getBillVersions(bill: Bill): Promise<any[]> {
-    const url = `https://api.govinfo.gov/related/BILLSTATUS-${this.getBillId(bill)}/BILLS`;
+    const url = `https://api.govinfo.gov/related/BILLSTATUS-${this.getBillId(
+      bill,
+    )}/BILLS`;
     return await this.get(url);
   }
 
   public static async getBillPublicLaw(bill: Bill): Promise<any[]> {
-    const url = `https://api.govinfo.gov/related/BILLSTATUS-${this.getBillId(bill)}/PLAW`;
+    const url = `https://api.govinfo.gov/related/BILLSTATUS-${this.getBillId(
+      bill,
+    )}/PLAW`;
     return await this.get(url);
   }
 
   public static async getBillStatus(bill: Bill): Promise<any> {
-    const url = `https://www.govinfo.gov/bulkdata/BILLSTATUS/${bill.congress}/${bill.billType}/BILLSTATUS-${this.getBillId(bill)}.xml`;
+    const url = `https://www.govinfo.gov/bulkdata/BILLSTATUS/${bill.congress}/${
+      bill.billType
+    }/BILLSTATUS-${this.getBillId(bill)}.xml`;
     return this.getXML(url);
   }
 
   public static async get(url: string): Promise<any> {
     const result = await RequestHelper.from(RequestSource.GOV_INFO).get(url, {
       qs: {
-        api_key: process.env.GOVINFO_API_KEY
-      }
-    })
-    return JSON.parse(result).results;
+        api_key: process.env.GOVINFO_API_KEY,
+      },
+    });
+    const json = JSON.parse(result);
+    if (json.results) {
+      return json.results;
+    }
+    throw `Failed to get ${url}: ${json.message}`;
   }
 
   public static async getXML(url: string): Promise<any> {
     const result = await RequestHelper.from(RequestSource.GOV_INFO).get(url, {
       qs: {
-        api_key: process.env.GOVINFO_API_KEY
-      }
-    })
+        api_key: process.env.GOVINFO_API_KEY,
+      },
+    });
     return await parseStringPromise(result);
   }
-
 }

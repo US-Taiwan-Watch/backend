@@ -1,11 +1,11 @@
 import { Bill } from "../../common/models";
 import { Logger } from "../util/logger";
-import { EntitySyncer, } from "./entity.sync";
+import { EntitySyncer } from "./entity.sync";
 import { CongressGovHelper } from "./sources/congress-gov";
 import { GovInfoHelper } from "./sources/govinfo";
 import { ProPublicaHelper } from "./sources/propublica";
 
-const logger = new Logger('BillSyncer');
+const logger = new Logger("BillSyncer");
 
 export class BillSyncer extends EntitySyncer<Bill> {
   syncMethods = [
@@ -19,35 +19,44 @@ export class BillSyncer extends EntitySyncer<Bill> {
   ];
 
   public async syncImpl() {
-    const results = await Promise.allSettled(this.syncMethods.map(m => m.call(this)));
+    const results = await Promise.allSettled(
+      this.syncMethods.map(m => m.call(this)),
+    );
     let succeed = true;
+    const successMethods: string[] = [];
     results.forEach((res, i) => {
-      if (res.status == 'fulfilled') {
+      if (res.status == "fulfilled") {
+        successMethods.push(this.syncMethods[i].name);
         return;
       }
-      logger.log(`Failed in ${this.syncMethods[i].name} for ${this.entity.id}: ${res.reason}`);
+      logger.log(
+        `Failed in ${this.syncMethods[i].name} for ${this.entity.id}: ${res.reason}`,
+      );
       succeed = false;
     });
+    logger.log(
+      `Run ${successMethods.join(", ")} for ${this.entity.id} successfully`,
+    );
     return succeed;
   }
 
   protected async syncVersions() {
     const [versions, pubLaw] = await Promise.all([
       GovInfoHelper.getBillVersions(this.entity),
-      GovInfoHelper.getBillPublicLaw(this.entity)
+      GovInfoHelper.getBillPublicLaw(this.entity),
     ]);
     const newVersions = [
       ...versions.map(v => ({
         code: v.billVersion,
         date: v.dateIssued,
-        name: v.billVersionLabel
+        name: v.billVersionLabel,
       })),
       ...pubLaw.map(v => ({
-        code: 'pl',
+        code: "pl",
         date: v.dateIssued,
         name: v.citation,
-        id: v.packageId.split('-')[1],
-      }))
+        id: v.packageId.split("-")[1],
+      })),
     ];
 
     this.entity.versions = newVersions.map(nv => {
@@ -79,13 +88,14 @@ export class BillSyncer extends EntitySyncer<Bill> {
 
   protected async syncTrackers() {
     const $ = await CongressGovHelper.getBill(this.entity);
-    const progress = $('ol.bill_progress > li').toArray();
+    const progress = $("ol.bill_progress > li").toArray();
+    console.log($);
     if (progress.length === 0) {
       return;
     }
     this.entity.trackers = progress.map((p: any) => ({
       stepName: $(p).contents().first().text(),
-      selected: $(p).hasClass('selected')
+      selected: $(p).hasClass("selected"),
     }));
   }
 }

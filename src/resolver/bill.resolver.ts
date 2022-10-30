@@ -1,5 +1,23 @@
-import { Resolver, Query, Arg, Args, Root, FieldResolver, Mutation } from "type-graphql";
-import { Bill, BillType, I18NText, I18NTextInput, Member } from "../../common/models";
+import {
+  Resolver,
+  Query,
+  Arg,
+  Args,
+  Root,
+  FieldResolver,
+  Mutation,
+  Ctx,
+  Authorized,
+} from "type-graphql";
+import {
+  Auth0RoleName,
+  Bill,
+  BillInput,
+  BILL_AUTHORIZED_ROLES,
+  I18NText,
+  Member,
+} from "../../common/models";
+import { IApolloContext } from "../@types/common.interface";
 import { BillSyncer } from "../data-sync/bill.sync";
 import { TableProvider } from "../mongodb/mongodb-manager";
 import { BillVersionDownloader } from "../storage/bill-version-downloader";
@@ -41,7 +59,7 @@ export class BillResolver extends TableProvider(BillTable) {
       return null;
     }
     const cosponsors = await new MemberResolver().members(
-      bill.cosponsorInfos.map(ci => ci.memberId)
+      bill.cosponsorInfos.map(ci => ci.memberId),
     );
     return bill.cosponsorInfos.map(co => {
       const found = cosponsors.find(coo => coo.id === co.memberId);
@@ -64,16 +82,43 @@ export class BillResolver extends TableProvider(BillTable) {
     const bill = await tbl.getBill(id);
     return bill;
   }
-  
+
+  @Authorized<Auth0RoleName>(BILL_AUTHORIZED_ROLES)
   @Mutation(() => Bill, { nullable: true })
   public async addBill(
-    congress: number,
-    billType: BillType,
-    billNumber: number,
-    // @Arg("summary", { nullable: true }) summary?: I18NTextInput,
+    @Ctx() ctx: IApolloContext,
+    @Arg("bill") billInput: BillInput,
   ): Promise<Bill | null> {
     const tbl = await this.table();
-    const bill = Bill.fromKeys(congress, billType, billNumber);
+    const bill = Bill.fromKeys(
+      billInput.congress,
+      billInput.billType,
+      billInput.billNumber,
+    );
+    const existingBill = await this.bill(bill.id);
+    if (existingBill) {
+      throw Error(`Bill ${bill.id} exists`);
+    }
+    bill.title = <I18NText>billInput.title;
+    bill.summary = <I18NText>billInput.summary;
+    await tbl.createOrReplaceBill(bill);
+    return this.bill(bill.id);
+  }
+
+  @Authorized<Auth0RoleName>(BILL_AUTHORIZED_ROLES)
+  @Mutation(() => Bill, { nullable: true })
+  public async updateBill(
+    @Ctx() ctx: IApolloContext,
+    @Arg("bill") billInput: BillInput,
+  ): Promise<Bill | null> {
+    const tbl = await this.table();
+    const bill = Bill.fromKeys(
+      billInput.congress,
+      billInput.billType,
+      billInput.billNumber,
+    );
+    bill.title = <I18NText>billInput.title;
+    bill.summary = <I18NText>billInput.summary;
     await tbl.createOrReplaceBill(bill);
     return this.bill(bill.id);
   }
@@ -82,7 +127,7 @@ export class BillResolver extends TableProvider(BillTable) {
     const tbl = await this.table();
     const bills = await tbl.getBillsThatNeedDownload();
     await Promise.allSettled(
-      bills.map(b => this.downloadBillVersions(b, false))
+      bills.map(b => this.downloadBillVersions(b, false)),
     );
     return bills;
   }
@@ -99,7 +144,7 @@ export class BillResolver extends TableProvider(BillTable) {
 
   public async syncBillsForCongress(
     congress: number,
-    fields?: (keyof Bill)[]
+    fields?: (keyof Bill)[],
   ): Promise<Bill[]> {
     const tbl = await this.table();
     const bills = await tbl.getBillsByCongress(congress);
@@ -113,9 +158,11 @@ export class BillResolver extends TableProvider(BillTable) {
     return await this.syncBills(bills, false, fields);
   }
 
+  @Authorized<Auth0RoleName>(BILL_AUTHORIZED_ROLES)
+  @Mutation(() => Bill, { name: "syncBill", nullable: true })
   public async syncBillWithId(
-    id: string,
-    fields?: (keyof Bill)[]
+    @Arg("billId") id: string,
+    fields?: (keyof Bill)[],
   ): Promise<Bill | null> {
     return this.syncBill(Bill.fromId(id), true, fields);
   }
@@ -123,7 +170,7 @@ export class BillResolver extends TableProvider(BillTable) {
   private async syncBill(
     bill: Bill,
     compareExisting: boolean,
-    fields?: (keyof Bill)[]
+    fields?: (keyof Bill)[],
   ): Promise<Bill> {
     if (compareExisting) {
       bill = (await this.bill(bill.id)) || bill;
@@ -134,7 +181,7 @@ export class BillResolver extends TableProvider(BillTable) {
         !suc ||
         (bill.congress === CongressUtils.getCurrentCongress() &&
           bill.trackers?.find(
-            t => t.stepName === "Became Law" && t.selected
+            t => t.stepName === "Became Law" && t.selected,
           ) === undefined);
       if (BillResolver.shouldSave()) {
         const tbl = await this.table();
@@ -153,10 +200,10 @@ export class BillResolver extends TableProvider(BillTable) {
   private async syncBills(
     bills: Bill[],
     compareExisting: boolean,
-    fields?: (keyof Bill)[]
+    fields?: (keyof Bill)[],
   ): Promise<Bill[]> {
     this.logger.log(
-      `Syncing ${bills.length} bills: ${bills.map(b => b.id).join(", ")}`
+      `Syncing ${bills.length} bills: ${bills.map(b => b.id).join(", ")}`,
     );
     if (compareExisting) {
       // Get existing bills from DB
@@ -172,8 +219,8 @@ export class BillResolver extends TableProvider(BillTable) {
     bills = await Promise.all(
       bills.map(bill =>
         // Add some fields
-        this.syncBill(bill, false, fields)
-      )
+        this.syncBill(bill, false, fields),
+      ),
     );
     return bills;
   }
@@ -200,8 +247,8 @@ export class BillResolver extends TableProvider(BillTable) {
                   return;
                 }
                 v.downloaded = { ...v.downloaded, [type]: true };
-              })
-          )
+              }),
+          ),
       )
       .flat();
     await Promise.allSettled(all || []);
