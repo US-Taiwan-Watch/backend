@@ -1,4 +1,5 @@
 import { Bill } from "../../common/models";
+import { RedisClient } from "../redis/redis-client";
 import { Logger } from "../util/logger";
 import { EntitySyncer } from "./entity.sync";
 import { CongressGovHelper } from "./sources/congress-gov";
@@ -7,36 +8,91 @@ import { ProPublicaHelper } from "./sources/propublica";
 
 const logger = new Logger("BillSyncer");
 
+enum BillSyncStep {
+  // GovInfo
+  VERSIONS = "versions",
+  // Propublica
+  COSPONSORS = "cosponsors",
+  ACTIONS = "actions",
+  // CongressGov
+  TRACKERS = "trackers",
+}
+
+export const getBillSyncingCacheKey = (billId: string, step?: string) =>
+  step ? `sync-${billId}-${step}` : `sync-${billId}`;
+
 export class BillSyncer extends EntitySyncer<Bill> {
-  syncMethods = [
-    // GovInfo
-    this.syncVersions,
-    // Propublica
-    this.syncCosponsors,
-    this.syncActions,
-    // CongressGov
-    this.syncTrackers,
-  ];
+  // TODO: sync basic info?
+  protected static syncSteps = {
+    [BillSyncStep.VERSIONS]: "Versions",
+    [BillSyncStep.COSPONSORS]: "Sponsor and Cosponsors",
+    [BillSyncStep.ACTIONS]: "Actions",
+    [BillSyncStep.TRACKERS]: "Trackers",
+  };
+
+  public async syncStep(step: BillSyncStep) {
+    const cacheKey = getBillSyncingCacheKey(this.entity.id, step);
+    let method: Promise<void>;
+    switch (step) {
+      case BillSyncStep.VERSIONS:
+        method = this.syncVersions();
+        break;
+      case BillSyncStep.TRACKERS:
+        method = this.syncTrackers();
+        break;
+      case BillSyncStep.COSPONSORS:
+        method = this.syncCosponsors();
+        break;
+      case BillSyncStep.ACTIONS:
+        method = this.syncActions();
+        break;
+    }
+    try {
+      RedisClient.set(cacheKey, "syncing", RedisClient.CacheTime.HALF_HOUR);
+      await method;
+      this.entity.fieldsLastSynced = {
+        ...this.entity.fieldsLastSynced,
+        [step]: new Date().getTime(),
+      };
+    } finally {
+      RedisClient.client.del(cacheKey);
+    }
+  }
 
   public async syncImpl() {
+    let runningSteps = Object.values(BillSyncStep);
+    if (Array.isArray(this.toUpdate) && this.toUpdate.length > 0) {
+      runningSteps = this.toUpdate
+        .map(field => field as BillSyncStep)
+        .filter(f => runningSteps.includes(f));
+    }
+
+    const cacheKey = getBillSyncingCacheKey(this.entity.id);
+    RedisClient.set(cacheKey, "syncing", RedisClient.CacheTime.HALF_HOUR);
     const results = await Promise.allSettled(
-      this.syncMethods.map(m => m.call(this)),
+      runningSteps.map(field => this.syncStep(field)),
     );
+    RedisClient.client.del(cacheKey);
     let succeed = true;
-    const successMethods: string[] = [];
+    const successSteps: string[] = [];
     results.forEach((res, i) => {
       if (res.status == "fulfilled") {
-        successMethods.push(this.syncMethods[i].name);
+        successSteps.push(runningSteps[i]);
         return;
       }
       logger.log(
-        `Failed in ${this.syncMethods[i].name} for ${this.entity.id}: ${res.reason}`,
+        `Failed to sync ${runningSteps[i]} for ${this.entity.id}: ${res.reason}`,
       );
       succeed = false;
     });
-    logger.log(
-      `Run ${successMethods.join(", ")} for ${this.entity.id} successfully`,
-    );
+    if (successSteps.length > 0) {
+      logger.log(
+        `Synced ${successSteps.join(", ")} for ${this.entity.id} successfully`,
+      );
+    }
+    if (succeed) {
+      this.entity.lastSynced = new Date().getTime();
+    }
     return succeed;
   }
 

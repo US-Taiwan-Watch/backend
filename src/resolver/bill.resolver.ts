@@ -18,8 +18,9 @@ import {
   Member,
 } from "../../common/models";
 import { IApolloContext } from "../@types/common.interface";
-import { BillSyncer } from "../data-sync/bill.sync";
+import { BillSyncer, getBillSyncingCacheKey } from "../data-sync/bill.sync";
 import { TableProvider } from "../mongodb/mongodb-manager";
+import { RedisClient } from "../redis/redis-client";
 import { BillVersionDownloader } from "../storage/bill-version-downloader";
 import { CongressUtils } from "../util/congress-utils";
 import { Logger } from "../util/logger";
@@ -65,6 +66,14 @@ export class BillResolver extends TableProvider(BillTable) {
       const found = cosponsors.find(coo => coo.id === co.memberId);
       return found ? found : { id: co.memberId };
     });
+  }
+
+  @FieldResolver()
+  async isSyncing(@Root() bill: Bill): Promise<boolean> {
+    const cacheKey = getBillSyncingCacheKey(bill.id);
+    const isSyncing = await RedisClient.get(cacheKey);
+    console.log(isSyncing);
+    return !!isSyncing;
   }
 
   @Query(() => PaginatedBills, { nullable: false })
