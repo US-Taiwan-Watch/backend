@@ -23,4 +23,27 @@ export abstract class CongressGovHelper {
     );
     return result;
   }
+
+  private static getBillId(bill: Bill): string {
+    return `${bill.congress}/${bill.billType}/${bill.billNumber}`;
+  }
+
+  public static async getBillBasicInfo(bill: Bill): Promise<any> {
+    const url = `https://api.congress.gov/v3/bill/${this.getBillId(bill)}`;
+    return await this.getJSON(url);
+  }
+
+  public static async getJSON(url: string): Promise<any> {
+    const result = await RequestHelper.from(RequestSource.CONGRESS_GOV).get(
+      url,
+      {
+        qs: {
+          api_key: "nCWpJiwFcpxjlSxmgjd9AqeNKeAjZT6FegkkiuKm",
+          format: "json",
+        },
+      },
+    );
+    const json = JSON.parse(result);
+    return json;
+  }
 }

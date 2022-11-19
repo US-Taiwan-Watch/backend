@@ -1,4 +1,4 @@
-import { Bill } from "../../common/models";
+import { Bill, I18NText } from "../../common/models";
 import { RedisClient } from "../redis/redis-client";
 import { Logger } from "../util/logger";
 import { EntitySyncer } from "./entity.sync";
@@ -16,6 +16,7 @@ enum BillSyncStep {
   ACTIONS = "actions",
   // CongressGov
   TRACKERS = "trackers",
+  TITLE = "title",
 }
 
 export const getBillSyncingCacheKey = (billId: string, step?: string) =>
@@ -34,6 +35,9 @@ export class BillSyncer extends EntitySyncer<Bill> {
     const cacheKey = getBillSyncingCacheKey(this.entity.id, step);
     let method: Promise<void>;
     switch (step) {
+      case BillSyncStep.TITLE:
+        method = this.syncBasicInfo();
+        break;
       case BillSyncStep.VERSIONS:
         method = this.syncVersions();
         break;
@@ -94,6 +98,12 @@ export class BillSyncer extends EntitySyncer<Bill> {
       this.entity.lastSynced = new Date().getTime();
     }
     return succeed;
+  }
+
+  protected async syncBasicInfo() {
+    const info = await CongressGovHelper.getBillBasicInfo(this.entity);
+    this.entity.title = I18NText.create(info.bill.title, this.entity.title?.zh);
+    this.entity.introducedDate = info.bill.introducedDate;
   }
 
   protected async syncVersions() {
