@@ -32,7 +32,7 @@ export abstract class MongoDBTable {
       this.getTable<WithId<T>>()
         .replaceOne({ _id: copyObj._id } as any, copyObj, { upsert: true })
         .then(() => resolve(copyObj))
-        .catch((err) => reject(err));
+        .catch(err => reject(err));
     });
   }
 
@@ -41,13 +41,13 @@ export abstract class MongoDBTable {
     return this.getTable<T>()
       .find({}, prjFields)
       .toArray()
-      .then((res) => this.addBackIdField(res as T[]));
+      .then(res => this.addBackIdField(res as T[]));
   }
 
   protected getItem<T, KeyType = string>(
     keyName: string,
     keyValue: KeyType,
-    attrNamesToGet?: (keyof T)[]
+    attrNamesToGet?: (keyof T)[],
   ): Promise<T | null> {
     const query: any = {};
     query[keyName] = keyValue;
@@ -57,7 +57,7 @@ export abstract class MongoDBTable {
   protected getItems<T, KeyType = string>(
     keyName: string,
     keyValues: KeyType[],
-    attrNamesToGet?: (keyof T)[]
+    attrNamesToGet?: (keyof T)[],
   ): Promise<T[]> {
     const prjFields = this.composeProjectFields<T>(attrNamesToGet);
     const makeQuery = (chunk: any): Promise<T[]> => {
@@ -66,20 +66,20 @@ export abstract class MongoDBTable {
       return this.getTable<T>()
         .find(query, prjFields)
         .toArray()
-        .then((res) => this.addBackIdField(res) as T[]);
+        .then(res => this.addBackIdField(res) as T[]);
     };
 
     const chunks = _.chunk(keyValues, MongoDBTable.AZURE_MAX_QUERY_ITEMS);
     const promises: Promise<T[]>[] = [];
-    _.each(chunks, (chunk) => promises.push(makeQuery(chunk)));
-    return Promise.all(promises).then((results) => _.flatten(results));
+    _.each(chunks, chunk => promises.push(makeQuery(chunk)));
+    return Promise.all(promises).then(results => _.flatten(results));
   }
 
   // CMS
   public getItemByMultiKeys<T, KeyType = any>(
     keyNames: string[],
     keyValues: KeyType[],
-    attrNamesToGet?: (keyof T)[]
+    attrNamesToGet?: (keyof T)[],
   ): Promise<T | null> {
     const query: any = {};
     keyNames.map((keyName, index) => {
@@ -88,9 +88,21 @@ export abstract class MongoDBTable {
     return this.queryItemOne<T>(query, attrNamesToGet);
   }
 
+  public getItemsByMultiKeys<T, KeyType = any>(
+    keyNames: string[],
+    keyValues: KeyType[],
+    attrNamesToGet?: (keyof T)[],
+  ): Promise<T[]> {
+    const query: any = {};
+    keyNames.map((keyName, index) => {
+      query[keyName] = keyValues[index];
+    });
+    return this.queryItemsWorking<T>(query, attrNamesToGet);
+  }
+
   public getItemByArrayContains<T, KeyType = string>(
     arrayPropPath: string,
-    keyValue: KeyType[]
+    keyValue: KeyType[],
   ): Promise<T[] | null> {
     const query: any = {};
     query[arrayPropPath] = {
@@ -101,7 +113,7 @@ export abstract class MongoDBTable {
 
   public getItemByElementMatch<T, KeyType = string>(
     keyName: string,
-    keyValue: KeyType
+    keyValue: KeyType,
   ): Promise<T[] | null> {
     const query: any = {};
     query[keyName] = {
@@ -112,7 +124,7 @@ export abstract class MongoDBTable {
 
   public updateItemByCustomQuery<T>(
     find: object,
-    query: object
+    query: object,
   ): Promise<mongodb.UpdateResult> {
     return this.getTable<T>().updateOne(find, query);
   }
@@ -121,13 +133,13 @@ export abstract class MongoDBTable {
 
   protected queryItemsWorking<T>(
     query: any,
-    attrNamesToGet?: (keyof T)[]
+    attrNamesToGet?: (keyof T)[],
   ): Promise<T[]> {
     const prjFields = this.composeProjectFields<T>(attrNamesToGet);
     return this.getTable<T>()
       .find(query, prjFields)
       .toArray()
-      .then((res) => this.addBackIdField(res) as T[]);
+      .then(res => this.addBackIdField(res) as T[]);
   }
 
   public async queryItems<T>(
@@ -135,7 +147,7 @@ export abstract class MongoDBTable {
     attrNamesToGet?: (keyof T)[],
     sort?: any,
     limit?: number,
-    throwsError = false
+    throwsError = false,
   ): Promise<T[]> {
     const prjFields = this.composeProjectFields<T>(attrNamesToGet);
     // For some unknown reason, the skip()-and-limit() based pagination
@@ -155,7 +167,7 @@ export abstract class MongoDBTable {
         .limit(numItems);
       return cursor
         .toArray()
-        .then((res) => this.addBackIdField(res as WithId<T>[]));
+        .then(res => this.addBackIdField(res as WithId<T>[]));
     };
 
     const NUM_RETRIES = 3;
@@ -170,7 +182,7 @@ export abstract class MongoDBTable {
         const numItems = limit && limit < pageSize ? limit : pageSize;
         console.log(
           `[MongoDBTable::queryItems()] getting ` +
-          `${numItems} items, maxId=${maxId}`
+            `${numItems} items, maxId=${maxId}`,
         );
         const batch = await runQuery(maxId, numItems);
         console.log(`[MongoDBTable::queryItems()] got ${batch.length} items`);
@@ -194,7 +206,7 @@ export abstract class MongoDBTable {
         if (retryCount >= NUM_RETRIES) {
           console.log(
             `[MongoDBTable::queryItems()] DB Error after ` +
-            `${NUM_RETRIES} retries: ${JSON.stringify(err, null, 2)}`
+              `${NUM_RETRIES} retries: ${JSON.stringify(err, null, 2)}`,
           );
           if (throwsError) {
             throw err;
@@ -204,21 +216,21 @@ export abstract class MongoDBTable {
         ++retryCount;
         console.log(
           `[MongoDBTable::queryItems()] DB Error = ` +
-          `${err}.\nRetry ${retryCount} ...`
+            `${err}.\nRetry ${retryCount} ...`,
         );
-        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
       }
     }
   }
 
   protected queryItemOne<T>(
     query: any,
-    attrNamesToGet?: (keyof T)[]
+    attrNamesToGet?: (keyof T)[],
   ): Promise<T | null> {
     const prjFields = this.composeProjectFields<T>(attrNamesToGet);
     return this.getTable<T>()
       .findOne(query, prjFields)
-      .then((res) => (res ? this.addBackIdField(res as T) : null));
+      .then(res => (res ? this.addBackIdField(res as T) : null));
   }
 
   protected getItemsHavingAttributes<T>(
@@ -226,12 +238,12 @@ export abstract class MongoDBTable {
     ...attrNamesToGet: (keyof T)[]
   ): Promise<T[]> {
     const query: any = {};
-    _.each(keys, (key) => (query[<string>key] = { $exists: true }));
+    _.each(keys, key => (query[<string>key] = { $exists: true }));
     const prjFields = this.composeProjectFields<T>(attrNamesToGet);
     return this.getTable<T>()
       .find(query, prjFields)
       .toArray()
-      .then((res) => this.addBackIdField(res as T[]));
+      .then(res => this.addBackIdField(res as T[]));
   }
 
   protected getItemsNotHavingAttributes<T>(
@@ -239,21 +251,21 @@ export abstract class MongoDBTable {
     ...attrNamesToGet: (keyof T)[]
   ): Promise<T[]> {
     const query: any = {};
-    _.each(keys, (key) => (query[<string>key] = { $exists: false }));
+    _.each(keys, key => (query[<string>key] = { $exists: false }));
     const prjFields = this.composeProjectFields<T>(attrNamesToGet);
     return this.getTable<T>()
       .find(query, prjFields)
       .toArray()
-      .then((res) => this.addBackIdField(res as T[]));
+      .then(res => this.addBackIdField(res as T[]));
   }
 
   public async forEachBatch<T>(
     callback: (batch: T[]) => Promise<boolean | void>,
-    attrNamesToGet?: (keyof T)[]
+    attrNamesToGet?: (keyof T)[],
   ): Promise<void> {
     const pageSize = Math.min(
       this.suggestPageSize,
-      MongoDBTable.AZURE_MAX_QUERY_ITEMS
+      MongoDBTable.AZURE_MAX_QUERY_ITEMS,
     );
     let pageId = 0;
     const prjFields = this.composeProjectFields<T>(attrNamesToGet);
@@ -282,8 +294,8 @@ export abstract class MongoDBTable {
           `[MongoDBManager::forEachBatch()] Unexpected error = ${JSON.stringify(
             e,
             null,
-            2
-          )}`
+            2,
+          )}`,
         );
         Promise.resolve();
       }
@@ -292,7 +304,7 @@ export abstract class MongoDBTable {
   }
 
   public async addItems<T>(newItem: WithId<Partial<T>>[]): Promise<T[]> {
-    _.each(newItem, (item) => {
+    _.each(newItem, item => {
       if (!item["_id"]) {
         item["_id"] = uuid();
       }
@@ -305,7 +317,7 @@ export abstract class MongoDBTable {
 
   public updateItemByObjectId<T>(
     objectId: string,
-    updateItem: Partial<T>
+    updateItem: Partial<T>,
   ): Promise<mongodb.UpdateResult> {
     const query = { $set: updateItem };
     return this.getTable<T>().updateOne({ _id: objectId } as WithId<T>, query);
@@ -317,23 +329,23 @@ export abstract class MongoDBTable {
 
   public deleteAttributesFromItem<T, KeyType = string>(
     objectId: KeyType,
-    attrName: (keyof T)[]
+    attrName: (keyof T)[],
   ): Promise<mongodb.UpdateResult> {
     const unset = _.transform<keyof T, { [key in keyof T]?: "" }>(
       attrName,
       (res, val, key) => (res[val] = ""),
-      {}
+      {},
     );
     const query: any = { $unset: unset };
     return this.getTable<T>().updateOne({ _id: objectId }, query);
   }
 
   protected composeProjectFields<T>(
-    attrNamesToGet?: (keyof T)[]
+    attrNamesToGet?: (keyof T)[],
   ): MongoDBProjectQueryType {
     const r: MongoDBProjectQueryType = {};
     if (attrNamesToGet) {
-      _.each(attrNamesToGet, (key) => (r[<string>key] = 1));
+      _.each(attrNamesToGet, key => (r[<string>key] = 1));
     }
     if (_.includes(<string[]>attrNamesToGet, "id")) {
       r["_id"] = 1;
@@ -360,7 +372,7 @@ export abstract class MongoDBTable {
 
   protected composeQueryOfSingleOrMultipleValues<T>(
     key: string,
-    val: T | T[]
+    val: T | T[],
   ): any {
     const query: any = {};
 
@@ -392,7 +404,7 @@ export class MongoDBManager {
   }
 
   public static async instance(
-    ...TblClasses: { new(db: mongodb.Db): MongoDBTable }[]
+    ...TblClasses: { new (db: mongodb.Db): MongoDBTable }[]
   ): Promise<MongoDBManager> {
     if (!MongoDBManager._instance) {
       MongoDBManager._instance = new MongoDBManager();
@@ -402,9 +414,9 @@ export class MongoDBManager {
     if (TblClasses) {
       const tables = [
         ..._.values(MongoDBManager._instance.tables),
-        ..._.map(TblClasses, (Clz) => new Clz(db)),
+        ..._.map(TblClasses, Clz => new Clz(db)),
       ];
-      MongoDBManager._instance.tables = _.keyBy(tables, (tbl) => tbl.tableName);
+      MongoDBManager._instance.tables = _.keyBy(tables, tbl => tbl.tableName);
     }
     return MongoDBManager._instance;
   }
@@ -415,10 +427,10 @@ export class MongoDBManager {
 
   public insertObjects<
     T = any,
-    R extends Required<WithId<T>> = Required<WithId<T>>
+    R extends Required<WithId<T>> = Required<WithId<T>>,
   >(tableName: string, objs: T[]): Promise<mongodb.InsertManyResult<R>> {
     const fLog = this.logger.in("insertObjects");
-    return this.getCollection(tableName).then((collection) => {
+    return this.getCollection(tableName).then(collection => {
       fLog.log(`[INSERT] TABLE = ${tableName}, OBJS = ${objs.length}`);
       return new Promise<mongodb.InsertManyResult<R>>(
         // eslint-disable-next-line no-async-promise-executor
@@ -432,22 +444,22 @@ export class MongoDBManager {
               reject(err);
             }
           }
-        }
+        },
       );
     });
   }
 
   public getTable<T extends MongoDBTable>(TblClass: {
-    new(db: mongodb.Db): T;
+    new (db: mongodb.Db): T;
   }): T {
-    const tbl = _.find(this.tables, (t) => t instanceof TblClass);
+    const tbl = _.find(this.tables, t => t instanceof TblClass);
     // console.log(`tbl.tableName = ${tbl && tbl.tableName}`);
     return <T>(tbl as MongoDBTable);
   }
 
   public getCollection(name: string): Promise<mongodb.Collection<any>> {
-    return this.db!.collections().then((collections) => {
-      const collection = _.find(collections, (x) => x.collectionName === name);
+    return this.db!.collections().then(collections => {
+      const collection = _.find(collections, x => x.collectionName === name);
       if (collection) {
         return collection;
       } else {
@@ -472,12 +484,12 @@ export class MongoDBManager {
       const dbUrl = MongoDBManager.getUrl();
       fLog.log(`DB_URL = ${dbUrl}`);
       return mongodb.MongoClient.connect(dbUrl)
-        .then((client) => {
+        .then(client => {
           const db = client.db(config.db_config.db);
           fLog.log(`DB connected`);
           this.db = db;
         })
-        .catch((err) => {
+        .catch(err => {
           fLog.log(`DB connect error = ${JSON.stringify(err, null, 2)}`);
           throw err;
         });
@@ -527,7 +539,7 @@ export function MongoDBTableBase(tableName: string, suggestPageSize?: number) {
 }
 
 export function TableProvider<TableType extends MongoDBTable>(TableClass: {
-  new(db: mongodb.Db): TableType;
+  new (db: mongodb.Db): TableType;
 }) {
   class X {
     private static _db: MongoDBManager;

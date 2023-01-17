@@ -13,6 +13,7 @@ import {
   Auth0RoleName,
   Bill,
   BillInput,
+  BillQueryInput,
   BILL_AUTHORIZED_ROLES,
   I18NText,
   Member,
@@ -79,9 +80,17 @@ export class BillResolver extends TableProvider(BillTable) {
   @Query(() => PaginatedBills, { nullable: false })
   public async bills(
     @Args() pageInfo: PaginationArgs,
+    @Arg("query", { nullable: true }) queryInput?: BillQueryInput,
   ): Promise<PaginatedBills> {
     const tbl = await this.table();
-    const bills = await tbl.getAllBills();
+    let bills: Bill[];
+
+    if (queryInput && queryInput.keywords.length > 0) {
+      bills = await tbl.searchBills(queryInput.keywords);
+    } else {
+      bills = await tbl.getAllBills();
+    }
+
     return new PaginatedBills(bills, pageInfo);
   }
 
@@ -108,10 +117,19 @@ export class BillResolver extends TableProvider(BillTable) {
     if (existingBill) {
       throw Error(`Bill ${bill.id} exists`);
     }
+    bill.createdTime = Date.now().valueOf();
     bill.title = <I18NText>billInput.title;
     bill.summary = <I18NText>billInput.summary;
     await tbl.createOrReplaceBill(bill);
     return this.bill(bill.id);
+  }
+
+  @Authorized<Auth0RoleName>(BILL_AUTHORIZED_ROLES)
+  @Mutation(() => Boolean)
+  public async deleteBill(@Arg("id") id: string) {
+    const tbl = await this.table();
+    const result = await tbl.updateBill(id, { deleted: true });
+    return result.modifiedCount > 0;
   }
 
   @Authorized<Auth0RoleName>(BILL_AUTHORIZED_ROLES)

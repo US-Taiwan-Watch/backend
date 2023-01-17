@@ -8,20 +8,63 @@ export class BillTable extends MongoDBTableBase("bills") {
   }
 
   public async getAllBills(): Promise<Bill[]> {
-    return await this.getAllItems<Bill>();
+    return await this.getItemsByMultiKeys<Bill>(["deleted"], [{ $ne: true }]);
+  }
+
+  public async searchBills(keywords: string[]): Promise<Bill[]> {
+    const fields = [
+      "congressStr",
+      "billType",
+      "billNumberStr",
+      "introducedDate",
+      "title.en",
+      "title.zh",
+      "summary.en",
+      "summary.zh",
+    ];
+
+    return this.getTable()
+      .aggregate([
+        {
+          $addFields: {
+            congressStr: {
+              $toString: "$congress",
+            },
+            billNumberStr: {
+              $toString: "$billNumber",
+            },
+          },
+        },
+        {
+          $match: {
+            deleted: { $ne: true },
+            $and: keywords.map(k => ({
+              $or: fields.map(field => ({
+                [field]: { $regex: new RegExp(k, "i") },
+              })),
+            })),
+          },
+        },
+      ])
+      .toArray()
+      .then(res => this.addBackIdField(res) as Bill[]);
   }
 
   public getBill(
     id: string,
     ...attrNamesToGet: (keyof Bill)[]
   ): Promise<Bill | null> {
-    return this.getItem('_id', id, attrNamesToGet);
+    return this.getItemByMultiKeys(
+      ["_id", "deleted"],
+      [id, { $ne: true }],
+      attrNamesToGet,
+    );
   }
 
   public async getBillsByCongress(...congresses: number[]): Promise<Bill[]> {
     return await this.queryItemsWorking({
-      'congress': { $in: congresses },
-      'versions.code': { $ne: 'pl' }
+      congress: { $in: congresses },
+      "versions.code": { $ne: "pl" },
     });
   }
 
@@ -32,19 +75,22 @@ export class BillTable extends MongoDBTableBase("bills") {
         { "versions.downloaded.txt": undefined },
         { "versions.downloaded.pdf": undefined },
         { "versions.downloaded.xml": undefined },
-      ]
+      ],
     });
   }
 
   public async getBillsThatNeedSync(): Promise<Bill[]> {
     return await this.queryItemsWorking({
-      'needsSync': { $ne: false },
-      'manualSync': { $ne: true }
+      needsSync: { $ne: false },
+      manualSync: { $ne: true },
     });
   }
 
-  public async getBills(ids: string[], ...attrNamesToGet: (keyof Bill)[]): Promise<Bill[]> {
-    return await this.getItems<Bill>('_id', ids, attrNamesToGet);
+  public async getBills(
+    ids: string[],
+    ...attrNamesToGet: (keyof Bill)[]
+  ): Promise<Bill[]> {
+    return await this.getItems<Bill>("_id", ids, attrNamesToGet);
   }
 
   public updateBill(id: string, update: Partial<Bill>) {
@@ -55,10 +101,9 @@ export class BillTable extends MongoDBTableBase("bills") {
     const existing = await this.getBill(bill.id);
     if (existing) {
       const { id, ...updateBill } = bill;
-      this.updateBill(bill.id, updateBill);
+      await this.updateBill(bill.id, updateBill);
     } else {
-      this.addBill(bill);
+      await this.addBill(bill);
     }
   }
-
 }
