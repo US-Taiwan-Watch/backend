@@ -1,5 +1,5 @@
 import { intersection } from "lodash";
-import { Member, MemberRole } from "../../common/models";
+import { Member, MemberRole, GenderType, PartyRecord } from "../../common/models";
 import { EntitySyncer, } from "./entity.sync";
 import { BioguideHelper } from "./sources/bioguide";
 import { ProPublicaHelper } from "./sources/propublica";
@@ -7,14 +7,23 @@ import { UnitedStatesHelper } from "./sources/unitedstates";
 import { MemberProPicDownloader } from "../storage/member-pro-pic-downloader";
 
 
-type MemberSrc = 'BioGuide' | 'ProPublica' | 'unitedStates' | 'UserData';
+type MemberSrc = 'BioGuide' | 'ProPublica' | 'UnitedStates' | 'UserData';
 
 function isDataSyncSource(source: MemberSrc): boolean {
-  if (source === 'ProPublica' || source === 'unitedStates' || source === 'BioGuide') {
+  if (source === 'ProPublica' || source === 'UnitedStates' || source === 'BioGuide') {
     return true;
   } else {
     return false;
   }
+}
+
+function getGender(genderStr: string): GenderType | undefined {
+  if (genderStr === "M")
+    return 'male';
+  else if (genderStr === "F")
+    return 'female';
+  else
+    return undefined;
 }
 
 export class MemberSyncer extends EntitySyncer<Member> {
@@ -264,51 +273,48 @@ class MemberBioGuideSyncer extends EntitySyncer<Member> {
           continue;
         }
 
-        partyList.forEach((partyData: any) => {
-          let start = jobData['congress']['startDate'];
-          let end = jobData['congress']['endDate'];
+        const job_start =
+          jobs[job_idx]['startDate'] || jobData['congress']['startDate'] || "0000-00-00";
+
+        const job_end =
+          jobs[job_idx]['endDate'] || jobData['congress']['endDate'];
+
+        let parties: Array<PartyRecord> = [];
+
+        for (let party_idx = 0; party_idx < partyList.length; party_idx++) {
+          const partyData = partyList[party_idx];
+
           let partyName = partyData['party']['name'];
-
-          if (jobs[job_idx]['startDate']) {
-            start = jobs[job_idx]['startDate'];
-          }
-
-          if (jobs[job_idx]['endDate']) {
-            end = jobs[job_idx]['endDate'];
-          }
-
-          if (partyData['startDate']) {
-            start = partyData['startDate'];
-          }
-
-          if (partyData['endDate']) {
-            end = partyData['endDate'];
-          }
-
           if (!partyName || partyName === "NA") {
             partyName = "No Party Data";
           }
 
-          if (job['name'] === "Senator") {
-            bioguideMember.congressRoles?.push({
-              congressNumbers: [Number(jobData['congress']['congressNumber'])],
-              chamber: 's',
-              startDate: start || "0000-00-00",
-              endDate: end,
-              party: partyName,
-              state: jobData['represents']['regionCode']
-            });
-          } else if (job['name'] === "Representative" || job['name'] === "Delegate") {
-            bioguideMember.congressRoles?.push({
-              congressNumbers: [Number(jobData['congress']['congressNumber'])],
-              chamber: 'h',
-              startDate: start || "0000-00-00",
-              endDate: end,
-              party: partyName,
-              state: jobData['represents']['regionCode']
-            })
-          }
-        });
+          parties.push({
+            party: partyName,
+            startDate: partyData['startDate'] || job_start,
+            endDate: partyData['endDate'] || job_end
+          });
+        }
+
+        if (job['name'] === "Senator") {
+          bioguideMember.congressRoles?.push({
+            congressNumbers: [Number(jobData['congress']['congressNumber'])],
+            chamber: 's',
+            startDate: job_start,
+            endDate: job_end,
+            parties: parties,
+            state: jobData['represents']['regionCode']
+          });
+        } else if (job['name'] === "Representative" || job['name'] === "Delegate") {
+          bioguideMember.congressRoles?.push({
+            congressNumbers: [Number(jobData['congress']['congressNumber'])],
+            chamber: 'h',
+            startDate: job_start,
+            endDate: job_end,
+            parties: parties,
+            state: jobData['represents']['regionCode']
+          });
+        }
       }
     }
 
@@ -362,14 +368,8 @@ class MemberProPublicaSyncer extends EntitySyncer<Member> {
       propublicaMember.nameSuffix = propublicaData['suffix'];
     }
 
-    if (propublicaData['gender']) {
-      const gender = propublicaData['gender'];
-
-      if (gender === "M") {
-        propublicaMember.gender = "male";
-      } else if (gender === "F") {
-        propublicaMember.gender = "female";
-      }
+    if (propublicaData['gender'] && getGender(propublicaData['gender'])) {
+      propublicaMember.gender = getGender(propublicaData['gender']);
     }
 
     if (propublicaData['date_of_birth']) {
@@ -412,38 +412,96 @@ class MemberProPublicaSyncer extends EntitySyncer<Member> {
 
       for (let role_idx = 0; role_idx < roles.length; role_idx++) {
         const role = roles[role_idx];
+        let tempMemRole: MemberRole | undefined = undefined;
+
+        const start = role['start_date'] || "0000-00-00";
+        const end = role['end_date'];
 
         if (role['chamber'] === "Senate") {
-          propublicaMember.congressRoles.push({
+          tempMemRole = {
             congressNumbers: [Number(role['congress'])],
             chamber: 's',
-            startDate: role['start_date'] || "0000-00-00",
-            endDate: role['end_date'],
-            party: role['party'],
+            startDate: start,
+            endDate: end,
+            parties: [{ party: role['party'] || "No Party Data", startDate: start, endDate: end }],
             state: role['state'],
             senatorClass: Number(role['senate_class'])
-          });
+          };
         } else if (role['chamber'] === "House") {
           if (role['title'] === "Representative") {
-            propublicaMember.congressRoles.push({
+            tempMemRole = {
               congressNumbers: [Number(role['congress'])],
               chamber: 'h',
-              startDate: role['start_date'] || "0000-00-00",
-              endDate: role['end_date'],
-              party: role['party'],
+              startDate: start,
+              endDate: end,
+              parties: [{ party: role['party'] || "No Party Data", startDate: start, endDate: end }],
               state: role['state'],
               district: Number(role['district'])
-            });
+            };
           } else if (role['title'] === "Delegate") {
-            propublicaMember.congressRoles.push({
+            tempMemRole = {
               congressNumbers: [Number(role['congress'])],
               chamber: 'h',
-              startDate: role['start_date'] || "0000-00-00",
-              endDate: role['end_date'],
-              party: role['party'],
+              startDate: start,
+              endDate: end,
+              parties: [{ party: role['party'] || "No Party Data", startDate: start, endDate: end }],
               state: role['state'],
               district: Number(role['district']) || 0
-            });
+            };
+          }
+        }
+
+        if (tempMemRole) {
+          const sameRoleIdx = propublicaMember.congressRoles.findIndex((memRole) => {
+            if (!tempMemRole) return false
+
+            if (memRole.congressNumbers.join() !== tempMemRole.congressNumbers.join()) {
+              return false;
+            }
+
+            if (memRole.chamber !== tempMemRole.chamber) {
+              return false;
+            }
+
+            if (memRole.state !== tempMemRole.state) {
+              return false;
+            }
+
+            if (memRole.senatorClass !== tempMemRole.senatorClass) {
+              return false;
+            }
+
+            if (memRole.district !== tempMemRole.district) {
+              return false;
+            }
+
+            return true;    // return true if only pary and start/end are different
+          });
+
+          if (sameRoleIdx !== -1) {
+            // party changed, update party information and the start/end date
+            const sameRole = propublicaMember.congressRoles[sameRoleIdx];
+
+            sameRole.parties.push(
+              ...tempMemRole.parties
+            )
+
+            if (
+              tempMemRole.startDate && tempMemRole.startDate !== "0000-00-00" &&
+              tempMemRole.startDate.localeCompare(sameRole.startDate) < 0
+            ) {
+              sameRole.startDate = tempMemRole.startDate;
+            }
+
+            if (
+              tempMemRole.endDate &&
+              tempMemRole.endDate.localeCompare(sameRole.endDate) > 0
+            ) {
+              sameRole.endDate = tempMemRole.endDate;
+            }
+          } else {
+            // no the same role can be found => append the new role
+            propublicaMember.congressRoles.push(tempMemRole);
           }
         }
       }
@@ -453,6 +511,9 @@ class MemberProPublicaSyncer extends EntitySyncer<Member> {
   }
 
   // TODO: party & state mapping from propublica to member type
+  // R -> Republican
+  // I -> Independent
+  // D -> Democrat
 }
 
 class MemberUnitedStateSyncer extends EntitySyncer<Member> {
@@ -476,7 +537,7 @@ class MemberUnitedStateSyncer extends EntitySyncer<Member> {
       // console.log(JSON.stringify(unitedStatesMember, null, 4));
 
       if (this.entity.unitedstatesMember) {
-        this.entity.unitedstatesMember = mergeMember("unitedStates", this.entity.unitedstatesMember, unitedStatesMember);
+        this.entity.unitedstatesMember = mergeMember("UnitedStates", this.entity.unitedstatesMember, unitedStatesMember);
       } else {
         this.entity.unitedstatesMember = unitedStatesMember;
         console.log(`[Member][unitedStates] ${this.entity.id} data added`);
@@ -511,14 +572,8 @@ class MemberUnitedStateSyncer extends EntitySyncer<Member> {
       unitedStatesMember.nickname = uniteStatesData.name.nickname;
     }
 
-    if (uniteStatesData.bio.gender) {
-      const gender = uniteStatesData.bio.gender;
-
-      if (gender === "M") {
-        unitedStatesMember.gender = "male";
-      } else if (gender === "F") {
-        unitedStatesMember.gender = "female";
-      }
+    if (uniteStatesData.bio.gender && getGender(uniteStatesData.bio.gender)) {
+      unitedStatesMember.gender = getGender(uniteStatesData.bio.gender);
     }
 
     if (uniteStatesData.bio.birthday) {
@@ -533,27 +588,53 @@ class MemberUnitedStateSyncer extends EntitySyncer<Member> {
 
       for (let term_idx = 0; term_idx < terms.length; term_idx++) {
         const term = terms[term_idx];
+        let new_role: MemberRole | undefined = undefined;
 
         if (term.type === "sen") {
-          unitedStatesMember.congressRoles.push({
+          new_role = {
             congressNumbers: [],   // have no congress number info
             chamber: 's',
             startDate: term.start || "0000-00-00",
             endDate: term.end,
-            party: term.party,
+            parties: [],
             state: term.state,
             senatorClass: Number(term.class)
-          });
+          };
         } else if (term.type === "rep") {
-          unitedStatesMember.congressRoles.push({
+          new_role = {
             congressNumbers: [],   // have no congress number info
             chamber: 'h',
             startDate: term.start || "0000-00-00",
             endDate: term.end,
-            party: term.party,
+            parties: [],
             state: term.state,
             district: Number(term.district)
-          });
+          };
+        }
+
+        // Party change record exists
+        if (new_role) {
+          if (term.party_affiliations) {
+            // more than one party record
+            for (let party_idx = 0; party_idx < term.party_affiliations.length; party_idx++) {
+              new_role.parties.push({
+                party: term.party_affiliations[party_idx].party || "No Party Data",
+                startDate: term.party_affiliations[party_idx].start,
+                endDate: term.party_affiliations[party_idx].end
+              });
+            }
+          } else {
+            // normal party
+            new_role.parties.push({
+              party: term.party || "No Party Data",
+              startDate: new_role.startDate,
+              endDate: new_role.endDate
+            });
+          }
+        }
+
+        if (new_role) {
+          unitedStatesMember.congressRoles.push(new_role);
         }
       }
     }
@@ -562,8 +643,25 @@ class MemberUnitedStateSyncer extends EntitySyncer<Member> {
   }
 }
 
+function stringifyParties(parties: PartyRecord[]): string {
+  if (!parties) {
+    return "";
+  }
+
+  let stringifiedDataList: string[] = [];
+  parties.forEach(party => {
+    stringifiedDataList.push(`${party.party} (${party.startDate} - ${party.endDate || 'undefined'})`);
+  });
+
+  if (stringifiedDataList.length > 0) {
+    return stringifiedDataList.join(" / ");
+  } else {
+    return "";
+  }
+}
+
 function mergeMember(source: MemberSrc, targetMember: Member, srcMember: Member): Member {
-  // srcMember -merge-> targetMember
+  // srcMember -merge/integrate-> targetMember
 
   if (isNeedUpdate(targetMember.id, source, "firstName", targetMember.firstName, srcMember.firstName)) {
     targetMember.firstName = srcMember.firstName;
@@ -646,7 +744,7 @@ function mergeMember(source: MemberSrc, targetMember: Member, srcMember: Member)
       // check the same term (job period) by the start date
       // Note: use start date because some member may change their party or job within one congress => records
 
-      roleFieldNote = `from: ${srcRole.startDate} #0`;
+      roleFieldNote = `from: ${srcRole.startDate}`;
 
       if (targetMember.congressRoles) {
         const dupTargetIndices: number[] = [];
@@ -668,7 +766,6 @@ function mergeMember(source: MemberSrc, targetMember: Member, srcMember: Member)
           if (allUsedCounts.has(srcRole.startDate)) {
             // more than one record has the same startDate => update the next (if exists)
             const usedCount = allUsedCounts.get(srcRole.startDate);
-            roleFieldNote.replace('#0', `#${usedCount}`);
 
             if (usedCount < dupTargetIndices.length) {
               action = 'Update';
@@ -690,7 +787,6 @@ function mergeMember(source: MemberSrc, targetMember: Member, srcMember: Member)
     }
 
     if (action === 'Append') {
-      roleFieldNote.replace(' #0', '');
       console.log(`[Member][${source}] ${targetMember.id} congressRole[${roleFieldNote}] added`);
 
       if (!targetMember.congressRoles) {
@@ -718,9 +814,15 @@ function mergeMember(source: MemberSrc, targetMember: Member, srcMember: Member)
         targetRole.endDate = srcRole.endDate;
       }
 
+      // phased out
       if (isNeedUpdate(targetMember.id, source,
         `congressRole[${roleFieldNote}].party`, targetRole.party, srcRole.party)) {
-        targetRole.party = srcRole.party;
+          targetRole.party = srcRole.party;
+      }
+
+      if (isNeedUpdate(targetMember.id, source,
+        `congressRole[${roleFieldNote}].parties`, stringifyParties(targetRole.parties), stringifyParties(srcRole.parties), true)) {
+        targetRole.parties = srcRole.parties;
       }
 
       if (isNeedUpdate(targetMember.id, source,
@@ -747,7 +849,7 @@ function mergeMember(source: MemberSrc, targetMember: Member, srcMember: Member)
   if (isDataSyncSource(source) && unUpdatedRoles !== []) {
     unUpdatedRoles.reverse().forEach(unUpdatedIdx => {
       if (targetMember.congressRoles && targetMember.congressRoles.length > unUpdatedIdx) {
-        const roleFieldNote = `from: ${targetMember.congressRoles[unUpdatedIdx].startDate} #${unUpdatedIdx}`;
+        const roleFieldNote = `from: ${targetMember.congressRoles[unUpdatedIdx].startDate}`;
 
         console.log(`[Member][${source}] ${targetMember.id} congressRole[${roleFieldNote}] deleted`);
         targetMember.congressRoles.splice(unUpdatedIdx, 1)
@@ -758,7 +860,7 @@ function mergeMember(source: MemberSrc, targetMember: Member, srcMember: Member)
   return targetMember;
 }
 
-function isNeedUpdate(memeberId: string, source: MemberSrc, field: string, oldData: any, newData: any): boolean {
+function isNeedUpdate(memeberId: string, source: MemberSrc, field: string, oldData: any, newData: any, needNewLine: boolean = false): boolean {
   // for User source, only update when newData is valid
   if (source == 'UserData' && !newData) {
     return false;
@@ -775,15 +877,21 @@ function isNeedUpdate(memeberId: string, source: MemberSrc, field: string, oldDa
   }
 
   if (oldData !== newData) {
+    let logPrefix = "";
+    if (needNewLine)
+      logPrefix = `[Member][${source}] ${memeberId} ${field}:\n `;
+    else
+      logPrefix = `[Member][${source}] ${memeberId} ${field}:`;
+
     if (oldData && newData) {
       // data modified
-      console.log(`[Member][${source}] ${memeberId} ${field}: ${oldData} -> ${newData}`);
+      console.log(`${logPrefix} ${oldData} -> ${newData}`);
     } else if (oldData && !newData) {
       // data removed
-      console.log(`[Member][${source}] ${memeberId} ${field}: ${oldData} removed`);
+      console.log(`${logPrefix} ${oldData} removed`);
     } else if (!oldData && newData) {
       // data added
-      console.log(`[Member][${source}] ${memeberId} ${field}: ${newData} added`);
+      console.log(`${logPrefix} ${newData} added`);
     }
   }
 
