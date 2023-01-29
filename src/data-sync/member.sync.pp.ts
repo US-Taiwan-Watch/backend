@@ -104,7 +104,7 @@ export class MemberProPublicaSyncer extends EntitySyncer<Member> {
             chamber: 's',
             startDate: start,
             endDate: end,
-            parties: [{ party: role['party'] || "No Party Data", startDate: start, endDate: end }],
+            parties: [{ party: getFullPartyName(role['party']) || "No Party Data", startDate: start, endDate: end }],
             state: role['state'],
             senatorClass: Number(role['senate_class'])
           };
@@ -115,7 +115,7 @@ export class MemberProPublicaSyncer extends EntitySyncer<Member> {
               chamber: 'h',
               startDate: start,
               endDate: end,
-              parties: [{ party: role['party'] || "No Party Data", startDate: start, endDate: end }],
+              parties: [{ party: getFullPartyName(role['party']) || "No Party Data", startDate: start, endDate: end }],
               state: role['state'],
               district: Number(role['district'])
             };
@@ -125,7 +125,7 @@ export class MemberProPublicaSyncer extends EntitySyncer<Member> {
               chamber: 'h',
               startDate: start,
               endDate: end,
-              parties: [{ party: role['party'] || "No Party Data", startDate: start, endDate: end }],
+              parties: [{ party: getFullPartyName(role['party']) || "No Party Data", startDate: start, endDate: end }],
               state: role['state'],
               district: Number(role['district']) || 0
             };
@@ -190,9 +190,4 @@ export class MemberProPublicaSyncer extends EntitySyncer<Member> {
 
     return propublicaMember;
   }
-
-  // TODO: party & state mapping from propublica to member type
-  // R -> Republican
-  // I -> Independent
-  // D -> Democrat
 }

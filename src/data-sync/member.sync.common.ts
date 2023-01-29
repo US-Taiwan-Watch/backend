@@ -28,8 +28,11 @@ export function getFullPartyName(partyName: string): MemberRoleParty {
     case "D":
       fullPartyName = 'Democrat'; break;
     case "I":
+    case "ID":
       fullPartyName = 'Independent'; break;
     default:
+      if (partyName)
+        console.log(`No party mapping for "${partyName}"`);
       fullPartyName = 'No Party Data'; break;
   }
 
