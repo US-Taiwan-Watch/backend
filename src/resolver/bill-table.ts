@@ -1,5 +1,5 @@
 import { MongoDBTableBase } from "../mongodb/mongodb-manager";
-import { Bill, BillType } from "../../common/models";
+import { Bill, BillSyncStatus, BillType } from "../../common/models";
 import * as _ from "lodash";
 
 export class BillTable extends MongoDBTableBase("bills") {
@@ -63,6 +63,7 @@ export class BillTable extends MongoDBTableBase("bills") {
 
   public async getBillsByCongress(...congresses: number[]): Promise<Bill[]> {
     return await this.queryItemsWorking({
+      deleted: { $ne: true },
       congress: { $in: congresses },
       "versions.code": { $ne: "pl" },
     });
@@ -70,6 +71,7 @@ export class BillTable extends MongoDBTableBase("bills") {
 
   public async getBillsThatNeedDownload(): Promise<Bill[]> {
     return await this.queryItemsWorking({
+      deleted: { $ne: true },
       versions: { $exists: true },
       $or: [
         { "versions.downloaded.txt": undefined },
@@ -81,8 +83,14 @@ export class BillTable extends MongoDBTableBase("bills") {
 
   public async getBillsThatNeedSync(): Promise<Bill[]> {
     return await this.queryItemsWorking({
-      needsSync: { $ne: false },
-      manualSync: { $ne: true },
+      deleted: { $ne: true },
+      status: {
+        $in: [
+          BillSyncStatus.NOT_STARTED,
+          BillSyncStatus.WILL_SYNC,
+          BillSyncStatus.FAILED,
+        ],
+      },
     });
   }
 

@@ -1,3 +1,4 @@
+import e from "express";
 import {
   Resolver,
   Query,
@@ -14,12 +15,14 @@ import {
   Bill,
   BillInput,
   BillQueryInput,
+  BillSyncStatus,
   BILL_AUTHORIZED_ROLES,
   I18NText,
   Member,
 } from "../../common/models";
 import { IApolloContext } from "../@types/common.interface";
 import { BillSyncer, getBillSyncingCacheKey } from "../data-sync/bill.sync";
+import { NotionBillSyncer } from "../data-sync/notion.bill.sync";
 import { TableProvider } from "../mongodb/mongodb-manager";
 import { RedisClient } from "../redis/redis-client";
 import { BillVersionDownloader } from "../storage/bill-version-downloader";
@@ -169,6 +172,13 @@ export class BillResolver extends TableProvider(BillTable) {
     return this.syncBillsForCongress(CongressUtils.getCurrentCongress());
   }
 
+  public async syncBillsToNotion() {
+    const tbl = await this.table();
+    const bills = await tbl.getBillsThatNeedSync();
+    const res = await new NotionBillSyncer().create(bills[0]);
+    console.log(res);
+  }
+
   public async syncBillsForCongress(
     congress: number,
     fields?: (keyof Bill)[],
@@ -204,12 +214,17 @@ export class BillResolver extends TableProvider(BillTable) {
     }
     try {
       const suc = await new BillSyncer(bill, fields).sync();
-      bill.needsSync =
-        !suc ||
-        (bill.congress === CongressUtils.getCurrentCongress() &&
-          bill.trackers?.find(
-            t => t.stepName === "Became Law" && t.selected,
-          ) === undefined);
+      if (!suc) {
+        bill.status = BillSyncStatus.FAILED;
+      } else if (
+        bill.congress === CongressUtils.getCurrentCongress() &&
+        bill.trackers?.find(t => t.stepName === "Became Law" && t.selected) ===
+          undefined
+      ) {
+        bill.status = BillSyncStatus.WILL_SYNC;
+      } else {
+        bill.status = BillSyncStatus.DONE;
+      }
       if (BillResolver.shouldSave()) {
         const tbl = await this.table();
         await tbl.createOrReplaceBill(bill);
