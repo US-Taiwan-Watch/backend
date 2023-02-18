@@ -24,7 +24,7 @@ const requestCoolDown = {
   [RequestSource.CONGRESS_GOV]: 500,
   [RequestSource.GOV_INFO]: 500,
   [RequestSource.PROPUBLICA]: 500,
-  [RequestSource.BIO_GUIDE]: 1000,
+  [RequestSource.BIO_GUIDE]: 500,
   [RequestSource.UNITEDSTATES]: 500,
   [RequestSource.FB]: 500,
   [RequestSource.FB_CDN]: 500,
