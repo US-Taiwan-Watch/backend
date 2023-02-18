@@ -1,23 +1,13 @@
-import { ContentType, RequestSource } from '../data-sync/sources/request-helper';
-import { Container } from './azure-storage-manager';
-import { FileDownloader } from './file-downloader';
+import { RequestSource } from "../data-sync/sources/request-helper";
+import { PublicJPGDownloader } from "./public-jpg-downloader";
 
-export class MemberProPicDownloader extends FileDownloader<string> {
-  container = Container.PUBLIC_IMAGE;
-  source = RequestSource.BIO_GUIDE;
-
+export class MemberProPicDownloader extends PublicJPGDownloader {
   // this.key - bioguide ID string
-
-  protected getUrl(): string {
-    return `https://bioguide.congress.gov/bioguide/photo/${this.key[0]}/${this.key}.jpg`;
+  constructor(key: string) {
+    super(
+      `https://bioguide.congress.gov/bioguide/photo/${key[0]}/${key}.jpg`,
+      `profile_pictures/${key}`,
+      RequestSource.BIO_GUIDE,
+    );
   }
-
-  protected getPath() {
-    return `profile_pictures/${this.key}.jpg`;
-  }
-
-  protected getContentType(): ContentType {
-    return 'jpg';
-  }
-
 }
