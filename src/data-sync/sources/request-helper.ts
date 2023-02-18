@@ -17,6 +17,7 @@ export enum RequestSource {
   BIO_GUIDE = "buiGuide",
   UNITEDSTATES = "theunitedstates.io",
   FB = "facebook",
+  FB_CDN = "fb_cdn",
 }
 
 const requestCoolDown = {
@@ -26,6 +27,7 @@ const requestCoolDown = {
   [RequestSource.BIO_GUIDE]: 1000,
   [RequestSource.UNITEDSTATES]: 500,
   [RequestSource.FB]: 500,
+  [RequestSource.FB_CDN]: 500,
 };
 
 interface RequestTask {

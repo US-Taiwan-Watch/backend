@@ -1,16 +1,17 @@
+import {
+  ContentType,
+  RequestHelper,
+  RequestSource,
+} from "../data-sync/sources/request-helper";
+import { Logger } from "../util/logger";
+import { AzureStorageManager, Container } from "./azure-storage-manager";
 
-import { ReturnDocument } from 'mongodb';
-import { ContentType, RequestHelper, RequestSource } from '../data-sync/sources/request-helper';
-import { Logger } from '../util/logger';
-import { AzureStorageManager, Container } from './azure-storage-manager';
-
-const logger = new Logger('FileDownloader');
+const logger = new Logger("FileDownloader");
 
 export abstract class FileDownloader<T> {
   abstract container: Container;
-  abstract source: RequestSource;
 
-  constructor(protected key: T) { }
+  constructor(protected key: T, private source: RequestSource) {}
 
   protected abstract getUrl(): string;
   protected abstract getPath(): string;
@@ -37,7 +38,10 @@ export abstract class FileDownloader<T> {
   }
 
   public async download(): Promise<Buffer> {
-    return await RequestHelper.from(this.source).getFile(this.getUrl(), this.getContentType());
+    return await RequestHelper.from(this.source).getFile(
+      this.getUrl(),
+      this.getContentType(),
+    );
   }
 
   public async exists(): Promise<boolean> {
@@ -52,7 +56,7 @@ export abstract class FileDownloader<T> {
       this.container,
       this.getPath(),
       this.getContentType(),
-      data);
+      data,
+    );
   }
-
 }
