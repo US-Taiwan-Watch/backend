@@ -1,7 +1,7 @@
 import { Member, MemberRole, MemberRoleParty, PartyRecord } from "../../common/models";
 import { EntitySyncer, } from "./entity.sync";
 import { ProPublicaHelper } from "./sources/propublica";
-import { mergeMember, getGender, getFullPartyName } from "./member.sync.common";
+import { mergeMember, getGender, getFullPartyName, formatDateString } from "./member.sync.common";
 
 export class MemberProPublicaSyncer extends EntitySyncer<Member> {
   protected async syncImpl(): Promise<boolean> {
@@ -95,8 +95,8 @@ export class MemberProPublicaSyncer extends EntitySyncer<Member> {
         const role = roles[role_idx];
         let tempMemRole: MemberRole | undefined = undefined;
 
-        const start = role['start_date'] || "0000-00-00";
-        const end = role['end_date'];
+        const start = formatDateString(role['start_date'] || "", 'Start');
+        const end = formatDateString(role['end_date'] || "", 'End');
 
         if (role['chamber'] === "Senate") {
           tempMemRole = {
@@ -119,7 +119,7 @@ export class MemberProPublicaSyncer extends EntitySyncer<Member> {
               state: role['state'],
               district: Number(role['district'])
             };
-          } else if (role['title'] === "Delegate") {
+          } else if (role['title'] === "Delegate" || role['title'] === "Resident Commissioner") {
             tempMemRole = {
               congressNumbers: [Number(role['congress'])],
               chamber: 'h',
@@ -168,19 +168,19 @@ export class MemberProPublicaSyncer extends EntitySyncer<Member> {
             )
 
             if (
-              tempMemRole.startDate && tempMemRole.startDate !== "0000-00-00" &&
+              tempMemRole.startDate !== "0000-00-00" &&
               tempMemRole.startDate.localeCompare(sameRole.startDate) < 0
             ) {
               sameRole.startDate = tempMemRole.startDate;
             }
 
             if (
-              tempMemRole.endDate &&
+              tempMemRole.endDate !== "9999-99-99" &&
               tempMemRole.endDate.localeCompare(sameRole.endDate) > 0
             ) {
               sameRole.endDate = tempMemRole.endDate;
             }
-          } else {
+         } else {
             // no the same role can be found => append the new role
             propublicaMember.congressRoles.push(tempMemRole);
           }

@@ -1,7 +1,7 @@
 import { Member, MemberRole, MemberRoleParty, PartyRecord } from "../../common/models";
 import { EntitySyncer, } from "./entity.sync";
 import { UnitedStatesHelper } from "./sources/unitedstates";
-import { mergeMember, getGender } from "./member.sync.common";
+import { mergeMember, getGender, formatDateString } from "./member.sync.common";
 
 export class MemberUnitedStateSyncer extends EntitySyncer<Member> {
   protected async syncImpl(): Promise<boolean> {
@@ -81,8 +81,8 @@ export class MemberUnitedStateSyncer extends EntitySyncer<Member> {
           new_role = {
             congressNumbers: [],   // have no congress number info
             chamber: 's',
-            startDate: term.start || "0000-00-00",
-            endDate: term.end,
+            startDate: formatDateString(term.start || "", 'Start'),
+            endDate: formatDateString(term.end || "", 'End'),
             parties: [],
             state: term.state,
             senatorClass: Number(term.class)
@@ -91,8 +91,8 @@ export class MemberUnitedStateSyncer extends EntitySyncer<Member> {
           new_role = {
             congressNumbers: [],   // have no congress number info
             chamber: 'h',
-            startDate: term.start || "0000-00-00",
-            endDate: term.end,
+            startDate: formatDateString(term.start || "", 'Start'),
+            endDate: formatDateString(term.end || "", 'End'),
             parties: [],
             state: term.state,
             district: Number(term.district)
@@ -106,8 +106,8 @@ export class MemberUnitedStateSyncer extends EntitySyncer<Member> {
             for (let party_idx = 0; party_idx < term.party_affiliations.length; party_idx++) {
               new_role.parties.push({
                 party: term.party_affiliations[party_idx].party || "No Party Data",
-                startDate: term.party_affiliations[party_idx].start,
-                endDate: term.party_affiliations[party_idx].end
+                startDate: formatDateString(term.party_affiliations[party_idx].start, 'Start'),
+                endDate: formatDateString(term.party_affiliations[party_idx].end, 'End')
               });
             }
           } else {

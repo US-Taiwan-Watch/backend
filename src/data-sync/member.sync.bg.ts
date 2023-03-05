@@ -1,7 +1,7 @@
 import { Member, MemberRole, MemberRoleParty, PartyRecord } from "../../common/models";
 import { EntitySyncer, } from "./entity.sync";
 import { BioguideHelper } from "./sources/bioguide";
-import { mergeMember } from "./member.sync.common";
+import { mergeMember, formatDateString } from "./member.sync.common";
 
 
 export class MemberBioGuideSyncer extends EntitySyncer<Member> {
@@ -64,7 +64,8 @@ export class MemberBioGuideSyncer extends EntitySyncer<Member> {
         if (
           job['name'] !== "Senator" &&
           job['name'] !== "Representative" &&
-          job['name'] !== "Delegate"
+          job['name'] !== "Delegate" &&
+          job['name'] !== "Resident Commissioner"
         ) {
           continue;
         }
@@ -75,10 +76,10 @@ export class MemberBioGuideSyncer extends EntitySyncer<Member> {
         }
 
         const job_start =
-          jobs[job_idx]['startDate'] || jobData['congress']['startDate'] || "0000-00-00";
+          formatDateString(jobs[job_idx]['startDate'] || jobData['congress']['startDate'] || "", 'Start');
 
         const job_end =
-          jobs[job_idx]['endDate'] || jobData['congress']['endDate'];
+          formatDateString(jobs[job_idx]['endDate'] || jobData['congress']['endDate'] || "", 'End');
 
         let parties: Array<PartyRecord> = [];
 
@@ -92,8 +93,8 @@ export class MemberBioGuideSyncer extends EntitySyncer<Member> {
 
           parties.push({
             party: partyName,
-            startDate: partyData['startDate'] || job_start,
-            endDate: partyData['endDate'] || job_end
+            startDate: formatDateString(partyData['startDate'] || job_start, 'Start'),
+            endDate: formatDateString(partyData['endDate'] || job_end, 'End')
           });
         }
 
@@ -106,7 +107,10 @@ export class MemberBioGuideSyncer extends EntitySyncer<Member> {
             parties: parties,
             state: jobData['represents']['regionCode']
           });
-        } else if (job['name'] === "Representative" || job['name'] === "Delegate") {
+        } else if (
+          job['name'] === "Representative" || job['name'] === "Delegate" ||
+          job['name'] === "Resident Commissioner"
+        ) {
           bioguideMember.congressRoles?.push({
             congressNumbers: [Number(jobData['congress']['congressNumber'])],
             chamber: 'h',
