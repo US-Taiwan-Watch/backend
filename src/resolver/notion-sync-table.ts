@@ -3,21 +3,17 @@ import * as _ from "lodash";
 import { NotionSync } from "../../common/models";
 
 export class NotionSyncTable extends MongoDBTableBase("notion-sync") {
-  public async getLastSyncTime(name: string): Promise<number | undefined> {
-    const item = await this.getItem<NotionSync>("_id", name);
-    return item?.lastSyncTime;
+  public async get(name: string): Promise<NotionSync | null> {
+    return this.getItem<NotionSync>("_id", name);
   }
 
-  public async updateLastSyncTime(name: string) {
-    const obj = { lastSyncTime: new Date().getTime() };
-    const existing = await this.getLastSyncTime(name);
+  public async createOrReplace(sync: NotionSync) {
+    const existing = await this.get(sync.id);
     if (existing) {
-      await this.updateItemByObjectId<NotionSync>(name, obj);
+      const { id, ...update } = sync;
+      await this.updateItemByObjectId<NotionSync>(id, update);
     } else {
-      await this.putItem<NotionSync>({
-        id: name,
-        ...obj,
-      });
+      await this.putItem(sync);
     }
   }
 }

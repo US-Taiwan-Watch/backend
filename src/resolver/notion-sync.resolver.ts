@@ -5,13 +5,17 @@ import { NotionSyncTable } from "./notion-sync-table";
 
 @Resolver()
 export class NotionSyncResolver extends TableProvider(NotionSyncTable) {
-  public async getLastSyncTime(name: string) {
+  public async getLastSync(name: string) {
     const tbl = await this.table();
-    return await tbl.getLastSyncTime(name);
+    return await tbl.get(name);
   }
 
-  public async updateLastSyncTime(name: string) {
+  public async updateLastSyncTime(name: string, databaseId: string) {
     const tbl = await this.table();
-    return await tbl.updateLastSyncTime(name);
+    return await tbl.createOrReplace({
+      id: name,
+      databaseId,
+      lastSyncTime: new Date().getTime(),
+    });
   }
 }

@@ -131,7 +131,7 @@ export abstract class MongoDBTable {
 
   // ============
 
-  protected queryItemsWorking<T>(
+  public queryItemsWorking<T>(
     query: any,
     attrNamesToGet?: (keyof T)[],
   ): Promise<T[]> {
@@ -223,7 +223,7 @@ export abstract class MongoDBTable {
     }
   }
 
-  protected queryItemOne<T>(
+  public queryItemOne<T>(
     query: any,
     attrNamesToGet?: (keyof T)[],
   ): Promise<T | null> {

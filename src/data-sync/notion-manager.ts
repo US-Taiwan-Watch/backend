@@ -76,10 +76,47 @@ export abstract class NotionManager<T extends NotionPage> {
     return this.queryAllPages({
       database_id: this.databaseId,
       filter: {
-        timestamp: "last_edited_time",
-        last_edited_time: { after: new Date(timestamp).toISOString() },
+        and: [
+          {
+            timestamp: "last_edited_time",
+            last_edited_time: { after: new Date(timestamp).toISOString() },
+          },
+          {
+            timestamp: "created_time",
+            created_time: { on_or_before: new Date(timestamp).toISOString() },
+          },
+        ],
       },
     });
+  }
+
+  public async queryCreatedSince(timestamp: number) {
+    return this.queryAllPages({
+      database_id: this.databaseId,
+      filter: {
+        timestamp: "created_time",
+        created_time: { after: new Date(timestamp).toISOString() },
+      },
+    });
+  }
+
+  public async queryUpdatedBefore(timestamp: number) {
+    return this.queryAllPages({
+      database_id: this.databaseId,
+      filter: {
+        timestamp: "last_edited_time",
+        last_edited_time: { on_or_before: new Date(timestamp).toISOString() },
+      },
+    });
+  }
+
+  public async getLastUpdatedTime() {
+    const database = await this.notionClient.databases.retrieve({
+      database_id: this.databaseId,
+    });
+    if ("last_edited_time" in database) {
+      return new Date(database.last_edited_time).getTime();
+    }
   }
 
   public delete(pageId: string) {

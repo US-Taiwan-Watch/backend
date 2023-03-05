@@ -1,6 +1,7 @@
-import _ from "lodash";
+import { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints";
+import _, { update } from "lodash";
 import { Resolver } from "type-graphql";
-import { Tag } from "../../common/models";
+import { I18NText, Tag } from "../../common/models";
 import { NotionTagManager } from "../data-sync/notion-tag-manager";
 import { TableProvider } from "../mongodb/mongodb-manager";
 import { NotionSyncResolver } from "./notion-sync.resolver";
@@ -27,18 +28,71 @@ export class TagResolver extends TableProvider(TagTable) {
         }
       }),
     );
-    await this.updateNotionSyncTime();
+    await this.updateNotionSyncTime(databaseId);
   }
 
-  public async updateNotionSyncTime() {
+  public async updateNotionSyncTime(databaseId: string) {
     const syncResolver = new NotionSyncResolver();
-    await syncResolver.updateLastSyncTime(NotionTagManager.DATABASE_NAME);
+    await syncResolver.updateLastSyncTime(
+      NotionTagManager.DATABASE_NAME,
+      databaseId,
+    );
   }
 
-  // public async syncLatestFromNotion() {
-  //   const notionSyncer = new NotionTagManager();
-  //   notionSyncer.queryAll;
-  // }
+  public async syncFromNotion() {
+    const syncResolver = new NotionSyncResolver();
+    const sync = await syncResolver.getLastSync(NotionTagManager.DATABASE_NAME);
+    if (!sync) {
+      return;
+    }
+    const notionSyncer = new NotionTagManager(sync.databaseId);
+    const lastUpdated = await notionSyncer.getLastUpdatedTime();
+    if (lastUpdated && lastUpdated <= sync.lastSyncTime) {
+      return;
+    }
+    const [tbl, created, updated, rest] = await Promise.all([
+      this.table(),
+      notionSyncer.queryCreatedSince(sync.lastSyncTime),
+      notionSyncer.queryUpdatedSince(sync.lastSyncTime),
+      notionSyncer.queryUpdatedBefore(sync.lastSyncTime),
+    ]);
+    const deleted = await tbl.queryItemsWorking<Tag>({
+      notionPageId: { $nin: rest.concat(updated).map(t => t.id) },
+    });
+
+    console.log(created);
+    console.log(updated);
+    console.log(deleted);
+
+    const jobs: Promise<any>[] = updated.map((t: any) =>
+      tbl.updateItemByCustomQuery<Tag>(
+        { notionPageId: t.id },
+        {
+          $set: {
+            name: I18NText.create(
+              t.properties["Name"].title[0].text.content as string,
+              t.properties["Name (zh)"].rich_text[0].text.content as string,
+            ),
+          },
+        },
+      ),
+    );
+    jobs.push(
+      tbl.addItems<Tag>(
+        created.map((t: any) => ({
+          name: I18NText.create(
+            t.properties["Name"].title[0].text.content as string,
+            t.properties["Name (zh)"].rich_text[0].text.content as string,
+          ),
+          notionPageId: t.id,
+        })),
+      ),
+    );
+    jobs.push(tbl.deleteItems(deleted.map(t => t.id)));
+    jobs.push(this.updateNotionSyncTime(sync.databaseId));
+
+    await Promise.all(jobs);
+  }
 
   public async getTagIdsFromNotionIds(notionIds: string[]): Promise<string[]> {
     const tbl = await this.table();
