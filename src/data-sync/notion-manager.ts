@@ -1,6 +1,9 @@
 import { Client } from "@notionhq/client";
 import { QueryDatabaseParameters } from "@notionhq/client/build/src/api-endpoints";
 import { NotionPage } from "../../common/models";
+import { BillResolver } from "../resolver/bill.resolver";
+import { NotionDatabase } from "../resolver/notion-sync.resolver";
+import { TagResolver } from "../resolver/tag.resolver";
 
 export abstract class NotionManager<T extends NotionPage> {
   public static readonly DATABASE_NAME: string;
