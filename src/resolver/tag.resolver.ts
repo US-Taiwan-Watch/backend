@@ -48,12 +48,14 @@ export class TagResolver extends TableProvider(TagTable) {
     const notionSyncer = new NotionTagManager(sync.databaseId);
     const lastUpdated = await notionSyncer.getLastUpdatedTime();
     if (lastUpdated && lastUpdated <= sync.lastSyncTime) {
+      // Only update notion status but not DB sync time as nothing has been updated
+      notionSyncer.updateSyncStatus();
       return;
     }
     const [tbl, created, updated, rest] = await Promise.all([
       this.table(),
-      notionSyncer.queryCreatedSince(sync.lastSyncTime),
-      notionSyncer.queryUpdatedSince(sync.lastSyncTime),
+      notionSyncer.queryCreatedAfter(sync.lastSyncTime),
+      notionSyncer.queryUpdatedAfter(sync.lastSyncTime),
       notionSyncer.queryUpdatedBefore(sync.lastSyncTime),
     ]);
     const deleted = await tbl.queryItemsWorking<Tag>({
@@ -77,18 +79,22 @@ export class TagResolver extends TableProvider(TagTable) {
         },
       ),
     );
-    jobs.push(
-      tbl.addItems<Tag>(
-        created.map((t: any) => ({
-          name: I18NText.create(
-            t.properties["Name"].title[0].text.content as string,
-            t.properties["Name (zh)"].rich_text[0].text.content as string,
-          ),
-          notionPageId: t.id,
-        })),
-      ),
-    );
-    jobs.push(tbl.deleteItems(deleted.map(t => t.id)));
+    if (created.length > 0) {
+      jobs.push(
+        tbl.addItems<Tag>(
+          created.map((t: any) => ({
+            name: I18NText.create(
+              t.properties["Name"].title[0]?.text?.content as string,
+              t.properties["Name (zh)"].rich_text[0]?.text?.content as string,
+            ),
+            notionPageId: t.id,
+          })),
+        ),
+      );
+    }
+    if (deleted.length > 0) {
+      jobs.push(tbl.deleteItems(deleted.map(t => t.id)));
+    }
     jobs.push(this.updateNotionSyncTime(sync.databaseId));
 
     await Promise.all(jobs);

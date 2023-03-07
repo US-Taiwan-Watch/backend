@@ -72,7 +72,7 @@ export abstract class NotionManager<T extends NotionPage> {
     });
   }
 
-  public async queryUpdatedSince(timestamp: number) {
+  public async queryUpdatedAfter(timestamp: number) {
     return this.queryAllPages({
       database_id: this.databaseId,
       filter: {
@@ -90,13 +90,30 @@ export abstract class NotionManager<T extends NotionPage> {
     });
   }
 
-  public async queryCreatedSince(timestamp: number) {
+  public async queryCreatedAfter(timestamp: number) {
     return this.queryAllPages({
       database_id: this.databaseId,
       filter: {
         timestamp: "created_time",
         created_time: { after: new Date(timestamp).toISOString() },
       },
+    });
+  }
+
+  public async updateSyncStatus() {
+    this.notionClient.databases.update({
+      database_id: this.databaseId,
+      description: [
+        { text: { content: "Last synced at " } },
+        {
+          type: "mention",
+          mention: {
+            date: {
+              start: new Date().toISOString(),
+            },
+          },
+        },
+      ],
     });
   }
 
