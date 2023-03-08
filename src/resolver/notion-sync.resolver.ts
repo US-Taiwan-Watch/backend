@@ -1,11 +1,10 @@
 import _ from "lodash";
 import { Resolver } from "type-graphql";
 import { NotionPage } from "../../common/models";
-import { NotionManager } from "../data-sync/notion-manager";
-import { NotionTagManager } from "../data-sync/notion-tag-manager";
 import { TableProvider } from "../mongodb/mongodb-manager";
 import { NotionSyncTable } from "./notion-sync-table";
 import { SyncWithNotion, TagResolver } from "./tag.resolver";
+import { Logger } from "../util/logger";
 
 export enum NotionDatabase {
   TAGS = "Tags",
@@ -14,16 +13,15 @@ export enum NotionDatabase {
 
 @Resolver()
 export class NotionSyncResolver extends TableProvider(NotionSyncTable) {
-  public static getResolver(name: NotionDatabase): SyncWithNotion<NotionPage> {
+  constructor(private logger = new Logger("NotionSyncResolver")) {
+    super();
+  }
+
+  private static getResolver(name: NotionDatabase): SyncWithNotion<NotionPage> {
     switch (name) {
       case NotionDatabase.TAGS:
         return new TagResolver();
     }
-  }
-
-  public async getLastSync(name: string) {
-    const tbl = await this.table();
-    return await tbl.get(name);
   }
 
   public async updateLastSyncTime(name: string, databaseId: string) {
@@ -35,52 +33,70 @@ export class NotionSyncResolver extends TableProvider(NotionSyncTable) {
     });
   }
 
-  public async syncWithNotion(table: NotionDatabase) {
-    // too complicated. just refresh all
-    const sync = await this.getLastSync(table);
+  public async syncWithNotion(table: NotionDatabase, buffer = 5 * 60 * 1000) {
+    const tbl = await this.table();
+    const sync = await tbl.get(table);
     if (!sync) {
       return;
     }
-    const resolver = NotionSyncResolver.getResolver(table);
-    const notionSyncer = resolver.getNotionManager(sync.databaseId);
-    const lastUpdated = await notionSyncer.getLastUpdatedTime();
-    console.log(new Date(lastUpdated || 0));
-    console.log(new Date(sync.lastSyncTime));
-    if (lastUpdated && lastUpdated <= sync.lastSyncTime) {
-      // Only update notion status but not DB sync time as nothing has been updated
-      notionSyncer.updateSyncStatus();
-      return;
-    }
-    const [created, updated, rest] = await Promise.all([
-      notionSyncer.queryCreatedAfter(sync.lastSyncTime),
-      notionSyncer.queryUpdatedAfter(sync.lastSyncTime),
-      notionSyncer.queryUpdatedBefore(sync.lastSyncTime),
-    ]);
+    const logger = this.logger.in("syncWithNotion");
 
-    const jobs: Promise<any>[] = updated.map((t: any) =>
-      resolver.updateItemFromNotion(t),
+    const resolver = NotionSyncResolver.getResolver(table);
+
+    const notionSyncer = resolver.getNotionManager(sync.databaseId);
+    if (buffer >= 0) {
+      const lastUpdated = await notionSyncer.getLastUpdatedTime();
+      if (lastUpdated && lastUpdated <= sync.lastSyncTime - buffer) {
+        // Only update notion status but not DB sync time as nothing has been updated
+        notionSyncer.updateSyncStatus();
+        logger.log(
+          `Skipped. last edited time: ${new Date(
+            lastUpdated || 0,
+          )} and last sync time: ${new Date(sync.lastSyncTime)}`,
+        );
+        return;
+      }
+    }
+    logger.log("Started");
+    const allTags = await notionSyncer.queryAll();
+
+    const updatedOrCreated =
+      buffer < 0
+        ? allTags
+        : allTags.filter(
+            (t: any) =>
+              new Date(t.last_edited_time).getTime() >
+              sync.lastSyncTime - buffer,
+          );
+
+    const upsertJobs = Promise.all(
+      updatedOrCreated.map(t => resolver.createOrUpdateItemFromNotion(t)),
     );
 
-    // This leads to error, will update later
-    // jobs.push(
-    //   resolver.deleteItemsNotFoundInNotion(rest.concat(updated).map(t => t.id)),
-    // );
+    logger.log("Collection done, start updating database");
+    const [upsertResults, deleted] = await Promise.all([
+      upsertJobs,
+      resolver.deleteItemsNotFoundInNotion(allTags.map(t => t.id)),
+    ]);
 
-    if (created.length > 0) {
-      jobs.push(resolver.addNewItemsFromNotion(created));
-    }
+    console.log(upsertResults);
 
-    // const deleted = await tbl.queryItemsWorking<Tag>({
-    //   notionPageId: { $nin: rest.concat(updated).map(t => t.id) },
-    // });
+    const upsertSummary = upsertResults.reduce(
+      (acc, r) => ({
+        upsertedCount: acc.upsertedCount + r.upsertedCount,
+        modifiedCount: acc.modifiedCount + r.modifiedCount,
+      }),
+      {
+        upsertedCount: 0,
+        modifiedCount: 0,
+      },
+    );
 
-    jobs.push(this.updateLastSyncTime(table, sync.databaseId));
+    logger.log(`Created count: ${upsertSummary.upsertedCount}`);
+    logger.log(`Updated count: ${upsertSummary.modifiedCount}`);
+    logger.log(`Deleted count: ${deleted.length}`);
 
-    console.log(created);
-    console.log(updated);
-
-    await Promise.all(jobs);
-
-    // console.log(deleted);
+    await this.updateLastSyncTime(table, sync.databaseId);
+    await notionSyncer.updateSyncStatus();
   }
 }

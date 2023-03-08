@@ -129,6 +129,13 @@ export abstract class MongoDBTable {
     return this.getTable<T>().updateOne(find, query);
   }
 
+  public upsertItemByCustomQuery<T>(
+    find: object,
+    query: object,
+  ): Promise<mongodb.UpdateResult> {
+    return this.getTable<T>().updateOne(find, query, { upsert: true });
+  }
+
   // ============
 
   public queryItemsWorking<T>(

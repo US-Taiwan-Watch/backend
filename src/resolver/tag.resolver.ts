@@ -1,8 +1,4 @@
-import {
-  PageObjectResponse,
-  PartialPageObjectResponse,
-} from "@notionhq/client/build/src/api-endpoints";
-import _, { update } from "lodash";
+import _ from "lodash";
 import { Resolver } from "type-graphql";
 import { I18NText, NotionPage, Tag } from "../../common/models";
 import { NotionManager } from "../data-sync/notion-manager";
@@ -10,14 +6,15 @@ import { NotionTagManager } from "../data-sync/notion-tag-manager";
 import { TableProvider } from "../mongodb/mongodb-manager";
 import { NotionSyncResolver } from "./notion-sync.resolver";
 import { TagTable } from "./tag-table";
+import { v4 as uuid } from "uuid";
+import { UpdateResult } from "mongodb";
 
 export interface SyncWithNotion<T extends NotionPage> {
   getNotionManager(databaseId: string): NotionManager<T>;
   // getPropertiesForDatabaseCreation(): any;
   // getPropertiesForCreation(_entity: T): Promise<any>;
   // getPropertiesForUpdating(_entity: T): Promise<any>;
-  updateItemFromNotion(t: any): Promise<any>;
-  addNewItemsFromNotion(created: any[]): Promise<any>;
+  createOrUpdateItemFromNotion(t: any): Promise<UpdateResult>;
   deleteItemsNotFoundInNotion(tagIds: string[]): Promise<T[]>;
 }
 
@@ -65,29 +62,19 @@ export class TagResolver
     );
   }
 
-  public async addNewItemsFromNotion(created: any[]) {
+  public async createOrUpdateItemFromNotion(t: any) {
     const tbl = await this.table();
-    return await tbl.addItems<Tag>(
-      created.map((t: any) => ({
-        name: I18NText.create(
-          t.properties["Name"].title[0]?.text?.content as string,
-          t.properties["Name (zh)"].rich_text[0]?.text?.content as string,
-        ),
-        notionPageId: t.id,
-      })),
-    );
-  }
-
-  public async updateItemFromNotion(t: any) {
-    const tbl = await this.table();
-    return await tbl.updateItemByCustomQuery<Tag>(
+    return await tbl.upsertItemByCustomQuery<Tag>(
       { notionPageId: t.id },
       {
         $set: {
           name: I18NText.create(
-            t.properties["Name"].title[0].text.content as string,
-            t.properties["Name (zh)"].rich_text[0].text.content as string,
+            t.properties["Name"].title[0]?.text?.content as string,
+            t.properties["Name (zh)"].rich_text[0]?.text?.content as string,
           ),
+        },
+        $setOnInsert: {
+          _id: uuid(),
         },
       },
     );
