@@ -60,28 +60,33 @@ export class TagResolver
     return await tbl.updateTag(tag.id, { notionPageId: tag.notionPageId });
   }
 
-  public async createOrUpdateLocalItem(t: any) {
+  public async createOrUpdateLocalItems(pageObjects: any[]) {
     const tbl = await this.table();
-    return await tbl.upsertItemByCustomQuery<Tag>(
-      { notionPageId: t.id },
-      {
-        $set: {
-          name: I18NText.create(
-            t.properties["Name"].title[0]?.text?.content as string,
-            t.properties["Name (zh)"].rich_text[0]?.text?.content as string,
-          ),
-        },
-        $setOnInsert: {
-          _id: uuid(),
-        },
-      },
+    return await Promise.all(
+      pageObjects.map(pageObject =>
+        tbl.upsertItemByCustomQuery<Tag>(
+          { notionPageId: pageObject.id },
+          {
+            $set: {
+              name: I18NText.create(
+                pageObject.properties["Name"].title[0]?.text?.content as string,
+                pageObject.properties["Name (zh)"].rich_text[0]?.text
+                  ?.content as string,
+              ),
+            },
+            $setOnInsert: {
+              _id: uuid(),
+            },
+          },
+        ),
+      ),
     );
   }
 
-  public async deleteNotFoundLocalItems(tagIds: string[]) {
+  public async deleteNotFoundLocalItems(notionPageIds: string[]) {
     const tbl = await this.table();
     const deleted = await tbl.queryItemsWorking<Tag>({
-      notionPageId: { $nin: tagIds },
+      notionPageId: { $nin: notionPageIds },
     });
     await tbl.deleteItems(deleted.map(t => t.id));
     return deleted;

@@ -112,13 +112,9 @@ export class NotionSyncResolver extends TableProvider(NotionSyncTable) {
               sync.lastSyncTime - lookBackTime,
           );
 
-    const upsertJobs = Promise.all(
-      updatedOrCreated.map(t => resolver.createOrUpdateLocalItem(t)),
-    );
-
     logger.log("Collection done, start updating database");
     const [upsertResults, deleted] = await Promise.all([
-      upsertJobs,
+      resolver.createOrUpdateLocalItems(updatedOrCreated),
       resolver.deleteNotFoundLocalItems(allTags.map(t => t.id)),
     ]);
 

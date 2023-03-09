@@ -10,9 +10,9 @@ export interface NotionSyncable<T extends NotionPage> {
   getPropertiesForItemCreation(entity: T): Promise<any>;
   getPropertiesForItemUpdating(entity: T): Promise<any>;
   // Local item management
-  createOrUpdateLocalItem(t: any): Promise<UpdateResult>;
-  deleteNotFoundLocalItems(tagIds: string[]): Promise<any[]>;
   updateLinkedLocalItem(entity: T): Promise<UpdateResult>;
+  createOrUpdateLocalItems(pageObjects: any[]): Promise<UpdateResult[]>;
+  deleteNotFoundLocalItems(notionPageIds: string[]): Promise<any[]>;
 }
 
 export class NotionManager<T extends NotionPage> {

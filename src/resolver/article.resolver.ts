@@ -22,9 +22,15 @@ import { IApolloContext } from "../@types/common.interface";
 import { ArticleTable } from "./article-table";
 import { UserResolver } from "./user.resolver";
 import { authCheckHelper } from "../util/auth-helper";
+import { NotionSyncable } from "../data-sync/notion-manager";
+import { UpdateResult } from "mongodb";
+import { v4 as uuid } from "uuid";
 
 @Resolver(Article)
-export class ArticleResolver extends TableProvider(ArticleTable) {
+export class ArticleResolver
+  extends TableProvider(ArticleTable)
+  implements NotionSyncable<Article>
+{
   @FieldResolver()
   public async authorInfos(@Root() article: Article): Promise<User[]> {
     if (!article.authors) {
@@ -149,7 +155,6 @@ export class ArticleResolver extends TableProvider(ArticleTable) {
       article.slug = slug;
     }
 
-
     if (title) {
       article.preview = <I18NText>{ ...originalArticle?.preview, ...preview };
     }
@@ -193,5 +198,46 @@ export class ArticleResolver extends TableProvider(ArticleTable) {
     const tbl = await this.table();
     const result = await tbl.updateArticle(id, { deleted: true });
     return result.modifiedCount > 0;
+  }
+
+  getAllLocalItems(): Promise<Article[]> {
+    throw new Error("Method not implemented.");
+  }
+  getPropertiesForDatabaseCreation() {
+    throw new Error("Method not implemented.");
+  }
+  getPropertiesForItemCreation(_article: Article): Promise<any> {
+    throw new Error("Method not implemented.");
+  }
+  getPropertiesForItemUpdating(_article: Article): Promise<any> {
+    throw new Error("Method not implemented.");
+  }
+  updateLinkedLocalItem(_article: Article): Promise<UpdateResult> {
+    throw new Error("Method not implemented.");
+  }
+  public async createOrUpdateLocalItems(
+    pageObjects: any[],
+  ): Promise<UpdateResult[]> {
+    const tbl = await this.table();
+    return Promise.all(
+      pageObjects.map(pageObject =>
+        tbl.upsertItemByCustomQuery<Article>(
+          { notionPageId: pageObject.id },
+          {
+            $set: {
+              // get data from FB and update to published if has id
+              // Update to draft if no fb id
+            },
+            $setOnInsert: {
+              _id: uuid(),
+            },
+          },
+        ),
+      ),
+    );
+  }
+
+  async deleteNotFoundLocalItems(_: string[]): Promise<any[]> {
+    return [];
   }
 }
