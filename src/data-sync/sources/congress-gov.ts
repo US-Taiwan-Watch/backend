@@ -38,7 +38,7 @@ export abstract class CongressGovHelper {
       url,
       {
         qs: {
-          api_key: "nCWpJiwFcpxjlSxmgjd9AqeNKeAjZT6FegkkiuKm",
+          api_key: process.env.CONGRESS_GOV_API_KEY,
           format: "json",
         },
       },
