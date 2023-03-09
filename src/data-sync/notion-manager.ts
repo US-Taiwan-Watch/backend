@@ -1,12 +1,21 @@
 import { Client } from "@notionhq/client";
 import { QueryDatabaseParameters } from "@notionhq/client/build/src/api-endpoints";
+import { UpdateResult } from "mongodb";
 import { NotionPage } from "../../common/models";
-import { BillResolver } from "../resolver/bill.resolver";
-import { NotionDatabase } from "../resolver/notion-sync.resolver";
-import { TagResolver } from "../resolver/tag.resolver";
 
-export abstract class NotionManager<T extends NotionPage> {
-  public static readonly DATABASE_NAME: string;
+export interface NotionSyncable<T extends NotionPage> {
+  // For Notion item management
+  getAllLocalItems(): Promise<T[]>;
+  getPropertiesForDatabaseCreation(): any;
+  getPropertiesForItemCreation(entity: T): Promise<any>;
+  getPropertiesForItemUpdating(entity: T): Promise<any>;
+  // Local item management
+  createOrUpdateLocalItem(t: any): Promise<UpdateResult>;
+  deleteNotFoundLocalItems(tagIds: string[]): Promise<any[]>;
+  updateLinkedLocalItem(entity: T): Promise<UpdateResult>;
+}
+
+export class NotionManager<T extends NotionPage> {
   private notionClient: Client;
 
   private static getClient() {
@@ -15,7 +24,10 @@ export abstract class NotionManager<T extends NotionPage> {
     });
   }
 
-  constructor(private databaseId: string) {
+  constructor(
+    public readonly databaseId: string,
+    private resolver: NotionSyncable<T>,
+  ) {
     this.notionClient = NotionManager.getClient();
   }
 
@@ -30,30 +42,25 @@ export abstract class NotionManager<T extends NotionPage> {
     }
   }
 
-  protected static getPropertiesForDatabaseCreation(): any {
-    return null;
-  }
-  protected async getPropertiesForCreation(_entity: T): Promise<any> {
-    return null;
-  }
-  protected async getPropertiesForUpdating(_entity: T): Promise<any> {
-    return null;
-  }
-
-  public static async createDatabase(pagdId: string) {
+  public static async createDatabase<T extends NotionPage>(
+    pagdId: string,
+    resolver: NotionSyncable<T>,
+    name: string,
+  ) {
+    console.log(resolver.getPropertiesForDatabaseCreation());
     const res = await this.getClient().databases.create({
       parent: { type: "page_id", page_id: pagdId },
       title: [
         {
           type: "text",
           text: {
-            content: this.DATABASE_NAME,
+            content: name,
           },
         },
       ],
-      properties: this.getPropertiesForDatabaseCreation(),
+      properties: resolver.getPropertiesForDatabaseCreation(),
     });
-    return res.id;
+    return new this(res.id, resolver);
   }
 
   private async queryAllPages(query: QueryDatabaseParameters) {
@@ -149,7 +156,7 @@ export abstract class NotionManager<T extends NotionPage> {
   }
 
   public async create(entity: T): Promise<string | null> {
-    const properties = await this.getPropertiesForCreation(entity);
+    const properties = await this.resolver.getPropertiesForItemCreation(entity);
     if (!properties) {
       return null;
     }
@@ -164,7 +171,7 @@ export abstract class NotionManager<T extends NotionPage> {
   }
 
   public async update(entity: T) {
-    const properties = await this.getPropertiesForUpdating(entity);
+    const properties = await this.resolver.getPropertiesForItemUpdating(entity);
     if (!properties) {
       return null;
     }

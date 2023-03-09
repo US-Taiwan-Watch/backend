@@ -22,7 +22,6 @@ import {
 } from "../../common/models";
 import { IApolloContext } from "../@types/common.interface";
 import { BillSyncer, getBillSyncingCacheKey } from "../data-sync/bill.sync";
-import { NotionBillSyncer } from "../data-sync/notion.bill.sync";
 import { TableProvider } from "../mongodb/mongodb-manager";
 import { RedisClient } from "../redis/redis-client";
 import { BillVersionDownloader } from "../storage/bill-version-downloader";
@@ -172,13 +171,6 @@ export class BillResolver extends TableProvider(BillTable) {
     return this.syncBillsForCongress(CongressUtils.getCurrentCongress());
   }
 
-  public async syncBillsToNotion() {
-    const tbl = await this.table();
-    const bills = await tbl.getBillsThatNeedSync();
-    const res = await new NotionBillSyncer().create(bills[0]);
-    console.log(res);
-  }
-
   public async syncBillsForCongress(
     congress: number,
     fields?: (keyof Bill)[],
@@ -297,4 +289,105 @@ export class BillResolver extends TableProvider(BillTable) {
     const tbl = await this.table();
     await tbl.createOrReplaceBill(bill);
   }
+
+  // protected getPropertiesForCreation(bill: Bill) {
+  //   if (!bill.id) {
+  //     return null;
+  //   }
+  //   return {
+  //     "Congress-type-number": {
+  //       title: [
+  //         {
+  //           text: {
+  //             content: bill.id,
+  //           },
+  //         },
+  //       ],
+  //     },
+  //     "Introduce Date": {
+  //       type: "rich_text",
+  //       rich_text: [
+  //         {
+  //           text: {
+  //             content: bill.introducedDate || "",
+  //           },
+  //         },
+  //       ],
+  //     },
+  //     Congress: {
+  //       select: {
+  //         name: bill.congress.toString(),
+  //       },
+  //     },
+  //     "Bill type": {
+  //       select: {
+  //         name: bill.billType,
+  //       },
+  //     },
+  //     "Bill number": {
+  //       number: bill.billNumber,
+  //     },
+  //     "Title (En)": {
+  //       rich_text: [
+  //         {
+  //           text: {
+  //             content: bill.title?.en || "",
+  //           },
+  //         },
+  //       ],
+  //     },
+  //     "Summary (En)": {
+  //       rich_text: [
+  //         {
+  //           text: {
+  //             content: bill.summary?.en || "",
+  //           },
+  //         },
+  //       ],
+  //     },
+  //     標題: {
+  //       type: "rich_text",
+  //       rich_text: [
+  //         {
+  //           text: {
+  //             content: bill.title?.zh || "",
+  //           },
+  //         },
+  //       ],
+  //     },
+  //     總結: {
+  //       type: "rich_text",
+  //       rich_text: [
+  //         {
+  //           text: {
+  //             content: bill.summary?.zh || "",
+  //           },
+  //         },
+  //       ],
+  //     },
+  //     "Last synced time": {
+  //       date: {
+  //         start: bill.lastSynced
+  //           ? new Date(bill.lastSynced).toISOString()
+  //           : null,
+  //       },
+  //     },
+  //     // TODO
+  //     // Tags: {
+  //     //   relation: [
+  //     //     {
+  //     //       id: "66907eb9-3a19-4cc9-b8b2-d9a67228ae53",
+  //     //     },
+  //     //   ],
+  //     // },
+  //     "Sync status": {
+  //       status: {
+  //         name: bill.status,
+  //       },
+  //     },
+  //     // URL: {
+  //     //   url: 'https://???',
+  //     // },
+  //   };
+  // }
 }
