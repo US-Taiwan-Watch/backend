@@ -6,12 +6,13 @@ import { NotionSyncTable } from "./notion-sync-table";
 import { TagResolver } from "./tag.resolver";
 import { Logger } from "../util/logger";
 import { NotionManager, NotionSyncable } from "../data-sync/notion-manager";
+import { ArticleResolver } from "./article.resolver";
 
 const DEFAULT_LOOK_BACK_MS = 5 * 60 * 1000;
 
 export enum NotionDatabase {
   TAGS = "Tags",
-  // bills = "Bills",
+  ARTICLES = "Articles",
 }
 
 @Resolver()
@@ -26,6 +27,8 @@ export class NotionSyncResolver extends TableProvider(NotionSyncTable) {
     switch (name) {
       case NotionDatabase.TAGS:
         return new TagResolver();
+      case NotionDatabase.ARTICLES:
+        return new ArticleResolver();
     }
   }
 
@@ -42,6 +45,16 @@ export class NotionSyncResolver extends TableProvider(NotionSyncTable) {
       id: name,
       databaseId: notionManager.databaseId,
       lastSyncTime: new Date().getTime(),
+    });
+  }
+
+  // This should only be run once at the beginning
+  public async linkDatabase(databaseName: NotionDatabase, databaseId: string) {
+    const tbl = await this.table();
+    return await tbl.createOrReplace({
+      id: databaseName,
+      databaseId,
+      lastSyncTime: 0,
     });
   }
 

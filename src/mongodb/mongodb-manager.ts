@@ -24,7 +24,7 @@ export abstract class MongoDBTable {
     return this.db.collection<T>(this.tableName);
   }
 
-  protected putItem<T>(obj: T): Promise<T> {
+  public putItem<T>(obj: T): Promise<T> {
     return new Promise((resolve, reject) => {
       const copyObj: WithId<T> = _.cloneDeep(obj);
       copyObj["_id"] = copyObj["id"] || <string>uuid();

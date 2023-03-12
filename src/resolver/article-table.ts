@@ -2,7 +2,7 @@ import { MongoDBTableBase } from "../mongodb/mongodb-manager";
 import { Article } from "../../common/models";
 import * as _ from "lodash";
 
-export class ArticleTable extends MongoDBTableBase("articles") {
+export class ArticleTable extends MongoDBTableBase("articlesMirror") {
   public addArticle(article: Article) {
     return this.putItem(article);
   }

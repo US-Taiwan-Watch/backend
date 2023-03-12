@@ -160,7 +160,9 @@ db.fb_posts2.find({ found_in_dp: true }).forEach(post => {
   const text = message
     .replace(title, "")
     .replace(/^\s+/, "")
-    .replace(/\n/g, "\\n");
+    .replace(/\n/g, "\\n")
+    .replace(/"/g, '\\"')
+    .replace(/\u0008/g, "");
 
   var myValue = post.id;
   var myHash = crypto.createHash("md5").update(myValue).digest("hex");

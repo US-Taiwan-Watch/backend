@@ -11,10 +11,14 @@ import {
 
 if (require.main === module) {
   new NotionSyncResolver()
-    .createEditableMirrorInNotion(
-      NotionDatabase.TAGS,
-      "8de2c33f0d9946fa936e32ed7fc543e2",
-    )
-    // .syncWithNotion(NotionDatabase.TAGS)
+    // .linkDatabase(
+    //   NotionDatabase.ARTICLES,
+    //   "258a769d-05cd-4f5f-b95a-e37286eb3f63",
+    // )
+    // .createEditableMirrorInNotion(
+    //   NotionDatabase.TAGS,
+    //   "8de2c33f0d9946fa936e32ed7fc543e2",
+    // )
+    .syncWithNotion(NotionDatabase.ARTICLES, -1)
     .then(() => console.log("done"));
 }

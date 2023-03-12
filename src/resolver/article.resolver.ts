@@ -25,6 +25,7 @@ import { authCheckHelper } from "../util/auth-helper";
 import { NotionSyncable } from "../data-sync/notion-manager";
 import { UpdateResult } from "mongodb";
 import { v4 as uuid } from "uuid";
+import { FBPostResolver } from "./fb-post.resolver";
 
 @Resolver(Article)
 export class ArticleResolver
@@ -220,20 +221,54 @@ export class ArticleResolver
   ): Promise<UpdateResult[]> {
     const tbl = await this.table();
     return Promise.all(
-      pageObjects.map(pageObject =>
-        tbl.upsertItemByCustomQuery<Article>(
+      pageObjects.map(async pageObject => {
+        if (pageObject.properties["FB Post ID"].rich_text.length > 0) {
+          const postId = pageObject.properties["FB Post ID"].rich_text[0].text
+            .content as string;
+          const post = await new FBPostResolver().crawlPost(postId);
+          const text = post?.message
+            // eslint-disable-next-line no-irregular-whitespace
+            .replace(/​/g, "")
+            .replace(/^\s+/, "")
+            .replace(/\n/g, "\\n");
+
+          if (post) {
+            return await tbl.upsertItemByCustomQuery<Article>(
+              { notionPageId: pageObject.id },
+              {
+                $set: {
+                  title: {
+                    zh: pageObject.properties["標題"].title[0].text.content,
+                  },
+                  content: `{"id":"yqsyyd","version":1,"rows":[{"id":"518dnt","cells":[{"id":"72dy7s","size":12,"plugin":{"id":"ory/editor/core/content/slate","version":1},"dataI18n":{"zh":{"slate":[{"type":"PARAGRAPH/PARAGRAPH","children":[{"text":"${text}"}]}]}},"rows":[],"inline":null}]}]}`,
+                  authors: ["google-oauth2|117639421567357025264"],
+                  imageSource: `https://static.ustw.watch/public-image/posts/${post.id}.jpg`,
+                  type: 1,
+                  createdTime: new Date(post.created_time).getTime(),
+                  lastModifiedTime: new Date(post.updated_time).getTime(),
+                  fbPostId: post.id,
+                  tags: [],
+                  deleted: false,
+                  isPublished: true,
+                  publishedTime: new Date(post.created_time).getTime(),
+                },
+                $setOnInsert: {
+                  _id: uuid(),
+                },
+              },
+            );
+          }
+        }
+        // Update to draft if no fb id
+        return await tbl.updateItemByCustomQuery<Article>(
           { notionPageId: pageObject.id },
           {
             $set: {
-              // get data from FB and update to published if has id
-              // Update to draft if no fb id
-            },
-            $setOnInsert: {
-              _id: uuid(),
+              isPublished: false,
             },
           },
-        ),
-      ),
+        );
+      }),
     );
   }
 
