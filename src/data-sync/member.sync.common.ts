@@ -1,6 +1,7 @@
 import { ChamberType, GenderType, Member, MemberRole, MemberRoleParty, PartyRecord } from "../../common/models";
 
 export type MemberSrc = 'BioGuide' | 'ProPublica' | 'UnitedStates' | 'UserData';
+export type DateType = 'Start' | 'End';
 
 export function isDataSyncSource(source: MemberSrc): boolean {
   if (source === 'ProPublica' || source === 'UnitedStates' || source === 'BioGuide') {
@@ -37,6 +38,22 @@ export function getFullPartyName(partyName: string): MemberRoleParty {
   }
 
   return fullPartyName;
+}
+
+export function formatDateString(dateInput: string, dateType: DateType): string {
+  const dateArray = dateInput.split('-');
+  let dateOutput: string = "";
+  
+  dateOutput +=
+    (dateArray.length >= 1 && dateArray[0])?  (dateArray[0]) : ((dateType === 'Start')? "0000" : "9999");
+
+  dateOutput +=
+    (dateArray.length >= 2 && dateArray[1])?  ('-' + dateArray[1]) : ((dateType === 'Start')? "-00" : "-99");
+
+  dateOutput +=
+    (dateArray.length >= 3 && dateArray[2])?  ('-' + dateArray[2]) : ((dateType === 'Start')? "-00" : "-99");
+
+  return dateOutput;
 }
 
 function stringifyParties(parties: PartyRecord[]): string {
