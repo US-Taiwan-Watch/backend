@@ -98,6 +98,8 @@ export class MemberBioGuideSyncer extends EntitySyncer<Member> {
           });
         }
 
+        // TODO: apply parties' period to job period?
+
         if (job['name'] === "Senator") {
           bioguideMember.congressRoles?.push({
             congressNumbers: [Number(jobData['congress']['congressNumber'])],
