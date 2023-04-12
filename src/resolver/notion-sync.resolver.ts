@@ -6,12 +6,13 @@ import { NotionSyncTable } from "./notion-sync-table";
 import { TagResolver } from "./tag.resolver";
 import { Logger } from "../util/logger";
 import { NotionManager, NotionSyncable } from "../data-sync/notion-manager";
+import { ArticleResolver } from "./article.resolver";
 
 const DEFAULT_LOOK_BACK_MS = 5 * 60 * 1000;
 
 export enum NotionDatabase {
   TAGS = "Tags",
-  // bills = "Bills",
+  ARTICLES = "Articles",
 }
 
 @Resolver()
@@ -26,6 +27,8 @@ export class NotionSyncResolver extends TableProvider(NotionSyncTable) {
     switch (name) {
       case NotionDatabase.TAGS:
         return new TagResolver();
+      case NotionDatabase.ARTICLES:
+        return new ArticleResolver();
     }
   }
 
@@ -42,6 +45,16 @@ export class NotionSyncResolver extends TableProvider(NotionSyncTable) {
       id: name,
       databaseId: notionManager.databaseId,
       lastSyncTime: new Date().getTime(),
+    });
+  }
+
+  // This should only be run once at the beginning
+  public async linkDatabase(databaseName: NotionDatabase, databaseId: string) {
+    const tbl = await this.table();
+    return await tbl.createOrReplace({
+      id: databaseName,
+      databaseId,
+      lastSyncTime: 0,
     });
   }
 
@@ -73,16 +86,25 @@ export class NotionSyncResolver extends TableProvider(NotionSyncTable) {
     await this.updateLastSyncTime(notionSyncer, databaseName);
   }
 
-  public async syncWithNotion(
+  /**
+   * Sync data from Notion
+   *
+   * @public
+   * @async
+   * @param {NotionDatabase} databaseName
+   * @param {number} [lookBackTime=DEFAULT_LOOK_BACK_MS] Sync since how long back from the last sync time. In seconds. -1 means all time
+   * @returns {Promise<void>}
+   */
+  public async syncFromNotion(
     databaseName: NotionDatabase,
     lookBackTime = DEFAULT_LOOK_BACK_MS,
-  ) {
+  ): Promise<void> {
     const tbl = await this.table();
     const sync = await tbl.get(databaseName);
     if (!sync) {
       return;
     }
-    const logger = this.logger.in("syncWithNotion");
+    const logger = this.logger.in("syncFromNotion");
 
     const resolver = NotionSyncResolver.getTableResolver(databaseName);
 
@@ -117,8 +139,6 @@ export class NotionSyncResolver extends TableProvider(NotionSyncTable) {
       resolver.createOrUpdateLocalItems(updatedOrCreated),
       resolver.deleteNotFoundLocalItems(allTags.map(t => t.id)),
     ]);
-
-    console.log(upsertResults);
 
     const upsertSummary = upsertResults.reduce(
       (acc, r) => ({

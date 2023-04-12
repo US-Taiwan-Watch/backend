@@ -42,6 +42,11 @@ export class NotionManager<T extends NotionPage> {
     }
   }
 
+  public static async getPageContents(pageId: string) {
+    return (await this.getClient().blocks.children.list({ block_id: pageId }))
+      .results;
+  }
+
   public static async createDatabase<T extends NotionPage>(
     pagdId: string,
     resolver: NotionSyncable<T>,
