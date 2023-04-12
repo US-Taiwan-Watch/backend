@@ -232,11 +232,13 @@ export class ArticleResolver
             .map((block: any) =>
               block.paragraph.rich_text[0]
                 ? block.paragraph.rich_text[0].text.content
+                    .replace(/\n/g, "\\n")
+                    .replace(/"/g, '\\"')
                 : "",
             )
             .join("\\n");
-          const image = (blocks.find((p: any) => p.image) as any)?.image.file
-            .url;
+          const image = (blocks.find((p: any) => p.image) as any)?.image?.file
+            ?.url;
 
           let imageUrl = null;
           if (image) {
@@ -256,7 +258,9 @@ export class ArticleResolver
             {
               $set: {
                 title: {
-                  zh: properties["標題"].title[0].text.content,
+                  zh: properties["標題"].title
+                    .map((part: any) => part.text.content)
+                    .join(""),
                 },
                 content: `{"id":"yqsyyd","version":1,"rows":[{"id":"518dnt","cells":[{"id":"72dy7s","size":12,"plugin":{"id":"ory/editor/core/content/slate","version":1},"dataI18n":{"zh":{"slate":[{"type":"PARAGRAPH/PARAGRAPH","children":[{"text":"${text}"}]}]}},"rows":[],"inline":null}]}]}`,
                 authors: ["google-oauth2|117639421567357025264"],
@@ -272,7 +276,7 @@ export class ArticleResolver
                 deleted: false,
                 isPublished: true,
                 publishedTime: new Date(
-                  properties["發布時間"].data ||
+                  properties["發布時間"].date.start ||
                     properties["最近編輯時間"].last_edited_time,
                 ).getTime(),
               },
