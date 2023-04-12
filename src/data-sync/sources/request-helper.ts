@@ -16,8 +16,7 @@ export enum RequestSource {
   CONGRESS_GOV = "congress.gov",
   BIO_GUIDE = "buiGuide",
   UNITEDSTATES = "theunitedstates.io",
-  FB = "facebook",
-  FB_CDN = "fb_cdn",
+  UNLIMITED = "unlimited",
 }
 
 const requestCoolDown = {
@@ -26,8 +25,7 @@ const requestCoolDown = {
   [RequestSource.PROPUBLICA]: 500,
   [RequestSource.BIO_GUIDE]: 500,
   [RequestSource.UNITEDSTATES]: 500,
-  [RequestSource.FB]: 500,
-  [RequestSource.FB_CDN]: 500,
+  [RequestSource.UNLIMITED]: -1,
 };
 
 interface RequestTask {
@@ -65,6 +63,9 @@ export class RequestHelper {
   ): Promise<any> {
     const params = { url, ...options };
     if (!COOL_DOWN) {
+      return RequestHelper.getImpl(params);
+    }
+    if (this.source === RequestSource.UNLIMITED) {
       return RequestHelper.getImpl(params);
     }
     const promise = this.pushTask(params, priority);

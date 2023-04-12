@@ -24,7 +24,7 @@ export abstract class FileDownloader<T> {
   public async downloadAndUpload(): Promise<boolean> {
     try {
       if (await this.exists()) {
-        logger.log(`File ${this.getPath()} exists. Do not download.`);
+        logger.log(`File ${this.getPath()} exists. Did not download.`);
         return true;
       }
       // logger.log(`Starts downloading and update file ${this.getPath()}`);

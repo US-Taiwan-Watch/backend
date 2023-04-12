@@ -22,9 +22,17 @@ import { IApolloContext } from "../@types/common.interface";
 import { ArticleTable } from "./article-table";
 import { UserResolver } from "./user.resolver";
 import { authCheckHelper } from "../util/auth-helper";
+import { NotionManager, NotionSyncable } from "../data-sync/notion-manager";
+import { UpdateResult } from "mongodb";
+import { v4 as uuid } from "uuid";
+import { PublicJPGDownloader } from "../storage/public-jpg-downloader";
+import { RequestSource } from "../data-sync/sources/request-helper";
 
 @Resolver(Article)
-export class ArticleResolver extends TableProvider(ArticleTable) {
+export class ArticleResolver
+  extends TableProvider(ArticleTable)
+  implements NotionSyncable<Article>
+{
   @FieldResolver()
   public async authorInfos(@Root() article: Article): Promise<User[]> {
     if (!article.authors) {
@@ -149,7 +157,6 @@ export class ArticleResolver extends TableProvider(ArticleTable) {
       article.slug = slug;
     }
 
-
     if (title) {
       article.preview = <I18NText>{ ...originalArticle?.preview, ...preview };
     }
@@ -193,5 +200,107 @@ export class ArticleResolver extends TableProvider(ArticleTable) {
     const tbl = await this.table();
     const result = await tbl.updateArticle(id, { deleted: true });
     return result.modifiedCount > 0;
+  }
+
+  getAllLocalItems(): Promise<Article[]> {
+    throw new Error("Method not implemented.");
+  }
+  getPropertiesForDatabaseCreation() {
+    throw new Error("Method not implemented.");
+  }
+  getPropertiesForItemCreation(_article: Article): Promise<any> {
+    throw new Error("Method not implemented.");
+  }
+  getPropertiesForItemUpdating(_article: Article): Promise<any> {
+    throw new Error("Method not implemented.");
+  }
+  updateLinkedLocalItem(_article: Article): Promise<UpdateResult> {
+    throw new Error("Method not implemented.");
+  }
+
+  public async createOrUpdateLocalItems(
+    pageObjects: any[],
+  ): Promise<UpdateResult[]> {
+    const tbl = await this.table();
+    return await Promise.all(
+      pageObjects.map(async pageObject => {
+        const properties = pageObject.properties;
+        if (properties["Publish"].checkbox) {
+          const blocks = await NotionManager.getPageContents(pageObject.id);
+          const text = blocks
+            .filter((block: any) => block.paragraph)
+            .map((block: any) =>
+              block.paragraph.rich_text[0]
+                ? block.paragraph.rich_text[0].text.content
+                    .replace(/\n/g, "\\n")
+                    .replace(/"/g, '\\"')
+                : "",
+            )
+            .join("\\n");
+          const image = (blocks.find((p: any) => p.image) as any)?.image?.file
+            ?.url;
+
+          let imageUrl = null;
+          if (image) {
+            const success = await new PublicJPGDownloader(
+              image,
+              `posts/${pageObject.id}`,
+              RequestSource.UNLIMITED,
+            ).downloadAndUpload();
+            if (!success) {
+              throw new Error("upload image failed");
+            }
+            imageUrl = `https://static.ustw.watch/public-image/posts/${pageObject.id}.jpg`;
+          }
+
+          return await tbl.upsertItemByCustomQuery<Article>(
+            { notionPageId: pageObject.id },
+            {
+              $set: {
+                title: {
+                  zh: properties["標題"].title
+                    .map((part: any) => part.text.content)
+                    .join(""),
+                },
+                content: `{"id":"yqsyyd","version":1,"rows":[{"id":"518dnt","cells":[{"id":"72dy7s","size":12,"plugin":{"id":"ory/editor/core/content/slate","version":1},"dataI18n":{"zh":{"slate":[{"type":"PARAGRAPH/PARAGRAPH","children":[{"text":"${text}"}]}]}},"rows":[],"inline":null}]}]}`,
+                authors: ["google-oauth2|117639421567357025264"],
+                imageSource: imageUrl,
+                type: 1,
+                createdTime: new Date(
+                  properties["Created time"].created_time,
+                ).getTime(),
+                lastModifiedTime: new Date(
+                  properties["最近編輯時間"].last_edited_time,
+                ).getTime(),
+                tags: [],
+                deleted: false,
+                isPublished: true,
+                publishedTime: new Date(
+                  properties["發布時間"].date.start ||
+                    properties["最近編輯時間"].last_edited_time,
+                ).getTime(),
+              },
+              $setOnInsert: {
+                _id: uuid(),
+              },
+            },
+          );
+        }
+        // Update to draft if not published
+        return await tbl.updateItemByCustomQuery<Article>(
+          { notionPageId: pageObject.id },
+          {
+            $set: {
+              isPublished: false,
+            },
+          },
+        );
+      }),
+    );
+    return [];
+  }
+
+  async deleteNotFoundLocalItems(_: string[]): Promise<any[]> {
+    return [];
   }
 }
