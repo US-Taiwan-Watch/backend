@@ -26,6 +26,8 @@ import WS from "ws";
 import { useServer } from "graphql-ws/lib/use/ws";
 import { ApolloServerPluginDrainHttpServer } from "apollo-server-core";
 import { AdminResolver } from "./resolver/admin.resolver";
+import { schedule } from "node-cron";
+import { NotionSyncResolver, TableName } from "./resolver/notion-sync.resolver";
 
 async function bootstrap() {
   const jwks = require("jwks-rsa");
@@ -91,6 +93,16 @@ async function bootstrap() {
     authChecker,
     // emitSchemaFile: true,
   });
+
+  // Sync articles every 15 mins. this is not ideal as we have to deploy the code for updating the scheduled job. but it's the easiest way
+  if (process.env.NODE_ENV !== "dev") {
+    schedule("0 */15 * * * *", async () => {
+      const resolver = new NotionSyncResolver();
+      console.log("Start syncing articles");
+      await resolver.syncFromNotion(TableName.ARTICLES);
+      console.log("Finish syncing articles");
+    });
+  }
 
   const app = express();
   app.use(bodyParser.json({ limit: "10mb" }));
