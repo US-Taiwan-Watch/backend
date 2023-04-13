@@ -1,6 +1,6 @@
 import "reflect-metadata";
 import {
-  NotionDatabase,
+  TableName,
   NotionSyncResolver,
 } from "../src/resolver/notion-sync.resolver";
 import { Logger } from "mongodb";
@@ -14,6 +14,6 @@ if (require.main === module) {
   const logger = new Logger("articles-sync");
   logger.info("Start syncing articles");
   new NotionSyncResolver()
-    .syncFromNotion(NotionDatabase.ARTICLES)
+    .syncFromNotion(TableName.ARTICLES)
     .then(() => logger.info("Finish syncing articles"));
 }

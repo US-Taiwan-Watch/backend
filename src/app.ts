@@ -20,6 +20,7 @@ import { ApolloServerPluginInlineTrace } from "apollo-server-core";
 import { authChecker } from "./util/auth-helper";
 import auth0RuleWebhookRouter from "./auth0/webhook";
 import uploadRouter from "./routers/upload-router";
+import syncRouter from "./routers/sync-router";
 import { appInsightsClient } from "./util/app-insights";
 import WS from "ws";
 import { useServer } from "graphql-ws/lib/use/ws";
@@ -62,14 +63,14 @@ async function bootstrap() {
             const expectedIss = config.auth.verifyOptions.issuer ?? [];
             if (expectedIss.indexOf(decode.iss) === -1) {
               reject(
-                `Unexpected Issuer ${decode.iss}. Expected: ${expectedIss}`
+                `Unexpected Issuer ${decode.iss}. Expected: ${expectedIss}`,
               );
             } else {
               console.log(JSON.stringify(decode, null, 2));
               resolve(decode as JWTDecodedObject);
             }
           }
-        }
+        },
       );
     });
 
@@ -77,7 +78,15 @@ async function bootstrap() {
   const schema = buildSchemaSync({
     pubSub: RedisClient.pubsub,
     // resolvers: [__dirname + "/**/*.resolver.{ts,js}"]
-    resolvers: [SubscriptionResolver, MessagingResolver, UserResolver, MemberResolver, BillResolver, AdminResolver, ArticleResolver],
+    resolvers: [
+      SubscriptionResolver,
+      MessagingResolver,
+      UserResolver,
+      MemberResolver,
+      BillResolver,
+      AdminResolver,
+      ArticleResolver,
+    ],
     validate: false,
     authChecker,
     // emitSchemaFile: true,
@@ -90,6 +99,7 @@ async function bootstrap() {
 
   app.use("/auth0-rule", auth0RuleWebhookRouter);
   app.use("/upload", uploadRouter);
+  app.use("/sync", syncRouter);
 
   // Create server
   const httpServer: http.Server = http.createServer((req, res) => {
@@ -147,15 +157,15 @@ async function bootstrap() {
   // Now that our HTTP server is fully set up, actually listen.
   httpServer.listen({ port: config.port }, async () => {
     console.log(
-      `🚀 Query endpoint ready at http://localhost:${config.port}${apollo.graphqlPath}`
+      `🚀 Query endpoint ready at http://localhost:${config.port}${apollo.graphqlPath}`,
     );
     console.log(
-      `🚀 Subscription endpoint ready at ws://localhost:${config.port}${apollo.graphqlPath}`
+      `🚀 Subscription endpoint ready at ws://localhost:${config.port}${apollo.graphqlPath}`,
     );
   });
 }
 
-bootstrap().catch((err) => {
+bootstrap().catch(err => {
   console.log(err);
   console.log(JSON.stringify(err, null, 2));
 });

@@ -10,9 +10,9 @@ import { ArticleResolver } from "./article.resolver";
 
 const DEFAULT_LOOK_BACK_MS = 5 * 60 * 1000;
 
-export enum NotionDatabase {
-  TAGS = "Tags",
-  ARTICLES = "Articles",
+export enum TableName {
+  TAGS = "tags",
+  ARTICLES = "articles",
 }
 
 @Resolver()
@@ -21,13 +21,11 @@ export class NotionSyncResolver extends TableProvider(NotionSyncTable) {
     super();
   }
 
-  private static getTableResolver(
-    name: NotionDatabase,
-  ): NotionSyncable<NotionPage> {
+  private static getTableResolver(name: TableName): NotionSyncable<NotionPage> {
     switch (name) {
-      case NotionDatabase.TAGS:
+      case TableName.TAGS:
         return new TagResolver();
-      case NotionDatabase.ARTICLES:
+      case TableName.ARTICLES:
         return new ArticleResolver();
     }
   }
@@ -49,10 +47,10 @@ export class NotionSyncResolver extends TableProvider(NotionSyncTable) {
   }
 
   // This should only be run once at the beginning
-  public async linkDatabase(databaseName: NotionDatabase, databaseId: string) {
+  public async linkDatabase(tableName: TableName, databaseId: string) {
     const tbl = await this.table();
     return await tbl.createOrReplace({
-      id: databaseName,
+      id: tableName,
       databaseId,
       lastSyncTime: 0,
     });
@@ -60,14 +58,14 @@ export class NotionSyncResolver extends TableProvider(NotionSyncTable) {
 
   // This should only be run once at the beginning
   public async createEditableMirrorInNotion(
-    databaseName: NotionDatabase,
+    tableName: TableName,
     pageId: string,
   ) {
-    const resolver = NotionSyncResolver.getTableResolver(databaseName);
+    const resolver = NotionSyncResolver.getTableResolver(tableName);
     const notionSyncer = await NotionManager.createDatabase(
       pageId,
       resolver,
-      databaseName,
+      tableName,
     );
     const entities = await resolver.getAllLocalItems();
     await Promise.allSettled(
@@ -83,7 +81,7 @@ export class NotionSyncResolver extends TableProvider(NotionSyncTable) {
         }
       }),
     );
-    await this.updateLastSyncTime(notionSyncer, databaseName);
+    await this.updateLastSyncTime(notionSyncer, tableName);
   }
 
   /**
@@ -91,29 +89,29 @@ export class NotionSyncResolver extends TableProvider(NotionSyncTable) {
    *
    * @public
    * @async
-   * @param {NotionDatabase} databaseName
+   * @param {TableName} tableName
    * @param {number} [lookBackTime=DEFAULT_LOOK_BACK_MS] Sync since how long back from the last sync time. In seconds. -1 means all time
    * @returns {Promise<void>}
    */
   public async syncFromNotion(
-    databaseName: NotionDatabase,
+    tableName: TableName,
     lookBackTime = DEFAULT_LOOK_BACK_MS,
   ): Promise<void> {
     const tbl = await this.table();
-    const sync = await tbl.get(databaseName);
+    const sync = await tbl.get(tableName);
     if (!sync) {
       return;
     }
     const logger = this.logger.in("syncFromNotion");
 
-    const resolver = NotionSyncResolver.getTableResolver(databaseName);
+    const resolver = NotionSyncResolver.getTableResolver(tableName);
 
     const notionSyncer = new NotionManager(sync.databaseId, resolver);
     if (lookBackTime >= 0) {
       const lastUpdated = await notionSyncer.getLastUpdatedTime();
       if (lastUpdated && lastUpdated <= sync.lastSyncTime - lookBackTime) {
         // Only update notion status but not DB sync time as nothing has been updated
-        await this.updateLastSyncTime(notionSyncer, databaseName);
+        await this.updateLastSyncTime(notionSyncer, tableName);
         logger.log(
           `Skipped. last edited time: ${new Date(
             lastUpdated || 0,
@@ -155,6 +153,6 @@ export class NotionSyncResolver extends TableProvider(NotionSyncTable) {
     logger.log(`Updated count: ${upsertSummary.modifiedCount}`);
     logger.log(`Deleted count: ${deleted.length}`);
 
-    await this.updateLastSyncTime(notionSyncer, databaseName);
+    await this.updateLastSyncTime(notionSyncer, tableName);
   }
 }
