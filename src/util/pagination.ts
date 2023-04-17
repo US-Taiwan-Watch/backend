@@ -1,13 +1,5 @@
 import { Field, ArgsType, ClassType, ObjectType, Int } from "type-graphql";
-import { Bill } from "../../common/models";
-
-export abstract class Pagination {
-  public static getPaginatedList<T>(items: T[], pageInfo: PaginationArgs): T[] {
-    const start = pageInfo.offset == null ? 0 : pageInfo.offset;
-    const end = pageInfo.limit == null ? undefined : start + pageInfo.limit;
-    return items.slice(start, end);
-  }
-}
+import { Bill, Member } from "../../common/models";
 
 @ArgsType()
 export class PaginationArgs {
@@ -18,10 +10,10 @@ export class PaginationArgs {
   limit?: number;
 
   @Field(() => [String], { nullable: true })
-  sortFields: string[] = [];
+  sortFields?: string[];
 
   @Field(() => [Number], { nullable: true })
-  sortDirections: number[] = [];
+  sortDirections?: number[];
 }
 
 export function PaginatedResponse<TItem extends { [key: string]: any }>(
@@ -29,46 +21,68 @@ export function PaginatedResponse<TItem extends { [key: string]: any }>(
 ) {
   @ObjectType({ isAbstract: true })
   abstract class PaginatedResponseClass {
-    constructor(allItems: TItem[], pageInfo: PaginationArgs) {
-      const start = pageInfo.offset == null ? 0 : pageInfo.offset;
-      const end = pageInfo.limit == null ? undefined : start + pageInfo.limit;
+    /**
+     * Creates an instance of PaginatedResponseClass.
+     *
+     * @constructor
+     * @param {PaginationArgs} pageInfo
+     * @param {TItem[]} providedItems
+     * @param {boolean} isPaginated - is the item list provided already paginated? if true, need to provide total count for generating the info
+     * @param {?number} [providedTotal]
+     */
+    constructor(
+      private pageInfo: PaginationArgs,
+      private providedItems: TItem[],
+      private isPaginated: boolean,
+      private providedTotal: number = providedItems.length,
+    ) {
+      this.start = this.pageInfo.offset == null ? 0 : this.pageInfo.offset;
+      this.end =
+        this.pageInfo.limit == null
+          ? this.providedItems.length
+          : this.start + this.pageInfo.limit;
+    }
 
-      this.items = allItems;
-      if (
-        pageInfo.sortFields.length > 0 &&
-        pageInfo.sortDirections.length > 0
-      ) {
-        this.items = this.items.sort((a, b) => {
-          for (const i in pageInfo.sortFields) {
-            const field = pageInfo.sortFields[i];
+    private start: number;
+    private end: number;
+
+    @Field(() => Int)
+    total(): number {
+      return this.isPaginated ? this.providedTotal : this.providedItems.length;
+    }
+
+    @Field()
+    hasMore(): boolean {
+      return this.end < this.total();
+    }
+
+    @Field(() => [itemsFieldValue])
+    items(): TItem[] {
+      if (this.isPaginated) {
+        return this.providedItems;
+      }
+      return this.providedItems
+        .sort((a, b) => {
+          for (const i in this.pageInfo.sortFields!) {
+            const field = this.pageInfo.sortFields[i];
             const aa: any = a[field] || "";
             const bb: any = b[field] || "";
             if (aa === bb) {
               continue;
             }
-            const direction = pageInfo.sortDirections[i] || -1;
+            const direction = this.pageInfo.sortDirections![i] || -1;
             return aa > bb ? direction : -direction;
           }
           return 0;
-        });
-      }
-      this.items = this.items.slice(start, end);
-
-      this.hasMore = end !== undefined && end < allItems.length;
-      this.total = allItems.length;
+        })
+        .splice(this.start, this.end);
     }
-
-    @Field(() => Int)
-    total!: number;
-
-    @Field()
-    hasMore!: boolean;
-
-    @Field(() => [itemsFieldValue])
-    items!: TItem[];
   }
   return PaginatedResponseClass;
 }
 
 @ObjectType()
 export class PaginatedBills extends PaginatedResponse(Bill) {}
+
+@ObjectType()
+export class PaginatedMembers extends PaginatedResponse(Member) {}

@@ -63,10 +63,11 @@ export class BillResolver extends TableProvider(BillTable) {
       return null;
     }
     const cosponsors = await new MemberResolver().members(
+      { offset: 0, limit: 100 },
       bill.cosponsorInfos.map(ci => ci.memberId),
     );
     return bill.cosponsorInfos.map(co => {
-      const found = cosponsors.find(coo => coo.id === co.memberId);
+      const found = cosponsors.items().find(coo => coo.id === co.memberId);
       return found ? found : { id: co.memberId };
     });
   }
@@ -93,7 +94,7 @@ export class BillResolver extends TableProvider(BillTable) {
       bills = await tbl.getAllBills();
     }
 
-    return new PaginatedBills(bills, pageInfo);
+    return new PaginatedBills(pageInfo, bills, false);
   }
 
   @Query(() => Bill, { nullable: true })

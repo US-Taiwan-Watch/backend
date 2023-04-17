@@ -149,6 +149,31 @@ export abstract class MongoDBTable {
       .then(res => this.addBackIdField(res) as T[]);
   }
 
+  public async queryItemsWithTotalCount<T>(
+    query: any,
+    offset?: number,
+    limit?: number,
+    attrNamesToGet?: (keyof T)[],
+  ): Promise<[T[], number]> {
+    const prjFields = this.composeProjectFields<T>(attrNamesToGet);
+    let cursor = this.getTable<T>().find(query, prjFields);
+    if (offset) {
+      cursor = cursor.skip(offset);
+    }
+    if (limit) {
+      cursor = cursor.limit(limit);
+    }
+    const items = await cursor
+      .toArray()
+      .then(res => this.addBackIdField(res) as T[]);
+    const count = await this.getCounts();
+    return [items, count];
+  }
+
+  public getCounts<T>(): Promise<number> {
+    return this.getTable<T>().countDocuments();
+  }
+
   public async queryItems<T>(
     query: any,
     attrNamesToGet?: (keyof T)[],
