@@ -276,7 +276,7 @@ export class ArticleResolver
                 deleted: false,
                 isPublished: true,
                 publishedTime: new Date(
-                  properties["發布時間"].date.start ||
+                  properties["發布時間"].date?.start ||
                     properties["最近編輯時間"].last_edited_time,
                 ).getTime(),
               },
@@ -297,7 +297,6 @@ export class ArticleResolver
         );
       }),
     );
-    return [];
   }
 
   async deleteNotFoundLocalItems(_: string[]): Promise<any[]> {
