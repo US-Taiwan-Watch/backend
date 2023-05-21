@@ -25,7 +25,7 @@ import { BillSyncer, getBillSyncingCacheKey } from "../data-sync/bill.sync";
 import { TableProvider } from "../mongodb/mongodb-manager";
 import { RedisClient } from "../redis/redis-client";
 import { BillVersionDownloader } from "../storage/bill-version-downloader";
-import { CongressUtils } from "../util/congress-utils";
+import { CongressUtils } from "../../common/utils/congress-utils";
 import { Logger } from "../util/logger";
 import { PaginatedBills, PaginationArgs } from "../util/pagination";
 import { BillTable } from "./bill-table";
