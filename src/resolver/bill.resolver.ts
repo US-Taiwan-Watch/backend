@@ -63,8 +63,9 @@ export class BillResolver extends TableProvider(BillTable) {
       return null;
     }
     const cosponsors = await new MemberResolver().members(
+      // This needs to be changed. The size can be longer than 200
       { offset: 0, limit: 100 },
-      bill.cosponsorInfos.map(ci => ci.memberId),
+      { bioGuideIds: bill.cosponsorInfos.map(ci => ci.memberId) },
     );
     return bill.cosponsorInfos.map(co => {
       const found = cosponsors.items().find(coo => coo.id === co.memberId);

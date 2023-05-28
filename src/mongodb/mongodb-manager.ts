@@ -166,12 +166,12 @@ export abstract class MongoDBTable {
     const items = await cursor
       .toArray()
       .then(res => this.addBackIdField(res) as T[]);
-    const count = await this.getCounts();
+    const count = await this.getCounts(query);
     return [items, count];
   }
 
-  public getCounts<T>(): Promise<number> {
-    return this.getTable<T>().countDocuments();
+  public getCounts<T>(query: object): Promise<number> {
+    return this.getTable<T>().countDocuments(query);
   }
 
   public async queryItems<T>(

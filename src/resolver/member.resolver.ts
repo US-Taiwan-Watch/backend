@@ -6,6 +6,7 @@ import { getMergedMemberData } from "../helper/member.helper";
 import { TableProvider } from "../mongodb/mongodb-manager";
 import { MemberTable } from "./member-table";
 import { PaginatedMembers, PaginationArgs } from "../util/pagination";
+import { MemberFiltersInput } from "../../common/models/member.filters-input";
 
 @Resolver(Member)
 export class MemberResolver extends TableProvider(MemberTable) {
@@ -17,16 +18,21 @@ export class MemberResolver extends TableProvider(MemberTable) {
   @Query(() => PaginatedMembers, { nullable: false })
   public async members(
     @Args() pageInfo: PaginationArgs,
-    @Arg("bioGuideIds", () => [String], { nullable: true })
-    bioGuideIds: string[] | null = null,
+    @Arg("filters", { nullable: true }) filters?: MemberFiltersInput,
   ): Promise<PaginatedMembers> {
     const tbl = await this.table();
-    if (bioGuideIds) {
-      const members = await tbl.getMembers(bioGuideIds);
-      return new PaginatedMembers(pageInfo, members, true);
+    let query: any = {};
+    if (filters?.bioGuideIds) {
+      query["_id"] = { $in: filters.bioGuideIds };
+    }
+    if (filters?.congress) {
+      query["congressRoles.congressNumbers"] = filters.congress;
+    }
+    if (filters?.state) {
+      query["congressRoles.state"] = filters.state;
     }
     const [members, count] = await tbl.queryItemsWithTotalCount<Member>(
-      {},
+      query,
       pageInfo.offset,
       pageInfo.limit,
     );
