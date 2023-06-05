@@ -1,4 +1,3 @@
-import e from "express";
 import {
   Resolver,
   Query,
@@ -9,6 +8,8 @@ import {
   Mutation,
   Ctx,
   Authorized,
+  Int,
+  Info,
 } from "type-graphql";
 import {
   Auth0RoleName,
@@ -30,6 +31,7 @@ import { Logger } from "../util/logger";
 import { PaginatedBills, PaginationArgs } from "../util/pagination";
 import { BillTable } from "./bill-table";
 import { MemberResolver } from "./member.resolver";
+import { GraphQLResolveInfo } from "graphql";
 
 @Resolver(Bill)
 export class BillResolver extends TableProvider(BillTable) {
@@ -44,27 +46,31 @@ export class BillResolver extends TableProvider(BillTable) {
     return true;
   }
 
-  @FieldResolver()
-  async sponsor(@Root() bill: Bill) {
+  @FieldResolver(() => Member, { nullable: true })
+  async sponsor(@Root() bill: Bill, @Info() info: GraphQLResolveInfo) {
     if (!bill.sponsorId) {
       return null;
     }
+    info.variableValues.snapshotDate = bill.introducedDate;
     return await new MemberResolver().member(bill.sponsorId);
   }
 
-  @FieldResolver()
+  @FieldResolver(() => Int, { nullable: true })
   cosponsorsCount(@Root() bill: Bill): number | undefined {
     return bill.cosponsorInfos?.length;
   }
 
-  @FieldResolver()
-  async cosponsors(@Root() bill: Bill): Promise<Member[] | null> {
+  @FieldResolver(() => [Member])
+  async cosponsors(
+    @Root() bill: Bill,
+    @Info() info: GraphQLResolveInfo,
+  ): Promise<Member[]> {
     if (!bill.cosponsorInfos) {
-      return null;
+      return [];
     }
+    info.variableValues.snapshotDate = bill.introducedDate;
     const cosponsors = await new MemberResolver().members(
-      // This needs to be changed. The size can be longer than 200
-      { offset: 0, limit: 100 },
+      { offset: 0, limit: 300 },
       { bioGuideIds: bill.cosponsorInfos.map(ci => ci.memberId) },
     );
     return bill.cosponsorInfos.map(co => {
@@ -73,11 +79,10 @@ export class BillResolver extends TableProvider(BillTable) {
     });
   }
 
-  @FieldResolver()
+  @FieldResolver(() => Boolean)
   async isSyncing(@Root() bill: Bill): Promise<boolean> {
     const cacheKey = getBillSyncingCacheKey(bill.id);
     const isSyncing = await RedisClient.get(cacheKey);
-    console.log(isSyncing);
     return !!isSyncing;
   }
 

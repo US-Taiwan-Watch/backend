@@ -1,12 +1,22 @@
 import _ from "lodash";
-import { Resolver, Query, Arg, FieldResolver, Root, Args } from "type-graphql";
-import { Member, MemberRole } from "../../common/models";
+import {
+  Resolver,
+  Query,
+  Arg,
+  FieldResolver,
+  Root,
+  Args,
+  Info,
+} from "type-graphql";
+import { Member, MemberRole, MemberRoleSnapshot } from "../../common/models";
 import { MemberSyncer } from "../data-sync/member.sync";
 import { getMergedMemberData } from "../helper/member.helper";
 import { TableProvider } from "../mongodb/mongodb-manager";
 import { MemberTable } from "./member-table";
 import { PaginatedMembers, PaginationArgs } from "../util/pagination";
 import { MemberFiltersInput } from "../../common/models/member.filters-input";
+import { CongressUtils } from "../../common/utils/congress-utils";
+import { GraphQLResolveInfo } from "graphql";
 
 @Resolver(Member)
 export class MemberResolver extends TableProvider(MemberTable) {
@@ -19,6 +29,7 @@ export class MemberResolver extends TableProvider(MemberTable) {
   public async members(
     @Args() pageInfo: PaginationArgs,
     @Arg("filters", { nullable: true }) filters?: MemberFiltersInput,
+    @Arg("snapshotDate", { nullable: true }) _snapshotDate?: string,
   ): Promise<PaginatedMembers> {
     const tbl = await this.table();
     let query: any = {};
@@ -42,9 +53,39 @@ export class MemberResolver extends TableProvider(MemberTable) {
   @Query(() => Member, { nullable: true })
   public async member(
     @Arg("bioGuideId") bioGuideId: string,
+    @Arg("snapshotDate", { nullable: true }) _snapshotDate?: string,
   ): Promise<Member | null> {
     const tbl = await this.table();
     return await tbl.getMember(bioGuideId);
+  }
+
+  @FieldResolver(() => MemberRoleSnapshot, { nullable: true })
+  public async congressRoleSnapshot(
+    @Root() member: Member,
+    @Info() info: GraphQLResolveInfo,
+  ): Promise<MemberRoleSnapshot | null> {
+    const date = info.variableValues.snapshotDate;
+    if (!date) {
+      return null;
+    }
+    const memberRoles = await this.congressRoles(member);
+    const congress = CongressUtils.getCongress(date);
+    const memberRole = memberRoles.filter(
+      role =>
+        role.congressNumbers.includes(congress) &&
+        role.startDate <= date &&
+        role.endDate >= date,
+    )[0];
+    if (!memberRole) {
+      return null;
+    }
+    return {
+      ...memberRole,
+      congressNumber: congress,
+      party: memberRole.parties.filter(
+        party => party.startDate <= date && party.endDate >= date,
+      )[0]?.party,
+    };
   }
 
   //TODO: @Query for member by name (fuzzy search)
