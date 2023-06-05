@@ -147,7 +147,7 @@ export function getMergedMemberData(member: Member, field: keyof Member, skip_us
 
   } else {
 
-    const userData = member[field];
+    const userData = member.userWroteMember?.[field];
     const bioguideData = member.bioguideMember?.[field];
     const propublicaData = member.propublicaMember?.[field];
     const unitedstatesData = member.unitedstatesMember?.[field];

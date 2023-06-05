@@ -181,7 +181,10 @@ class MemberDataUpdateSyncer extends EntitySyncer<Member> {
       return false;
     }
 
-    this.entity = mergeMember("UserData", this.entity, this.toUpdate);
+    if (!this.entity.userWroteMember) {
+      this.entity.userWroteMember = new Member(this.entity.id);
+    }
+    this.entity.userWroteMember = mergeMember("UserData", this.entity.userWroteMember, this.toUpdate);
 
     return true;
   }
