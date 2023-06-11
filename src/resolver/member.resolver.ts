@@ -37,7 +37,7 @@ export class MemberResolver extends TableProvider(MemberTable) {
     @Arg("snapshotDate", { nullable: true }) _snapshotDate?: string,
   ): Promise<PaginatedMembers> {
     const tbl = await this.table();
-    let query: any = {};
+    const query: any = {};
     if (filters?.bioGuideIds) {
       query["_id"] = { $in: filters.bioGuideIds };
     }

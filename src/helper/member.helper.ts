@@ -1,16 +1,20 @@
 import { Member, MemberRole } from "../../common/models";
 
-function isValidRole(role: MemberRole): Boolean {
-  if (role.startDate.endsWith('-00') || (role.endDate.endsWith('-99'))) {
+function isValidRole(role: MemberRole): boolean {
+  if (role.startDate.endsWith("-00") || role.endDate.endsWith("-99")) {
     return false;
   }
-  if (role.startDate.localeCompare(role.endDate) > 0) {   // start > end
+  if (role.startDate.localeCompare(role.endDate) > 0) {
+    // start > end
     return false;
   }
   return true;
 }
 
-function isRolePeriodOverlap(role1: MemberRole | undefined, role2: MemberRole | undefined): Boolean {
+function isRolePeriodOverlap(
+  role1: MemberRole | undefined,
+  role2: MemberRole | undefined,
+): boolean {
   if (!role1 || !role2) {
     return false;
   }
@@ -42,34 +46,54 @@ function joinTwoPeriods(period1: [string, string], period2: [string, string]): [
   return ans;
 }
 
-function mergeRoleData(id: string, target: MemberRole, source: MemberRole): Boolean {
+function mergeRoleData(
+  id: string,
+  target: MemberRole,
+  source: MemberRole,
+): boolean {
   /* Consistency Check */
   // congressNumbers
   const congressNumSet = new Set(target.congressNumbers);
-  source.congressNumbers.forEach((num) => congressNumSet.add(num));
-  const congressNumArr = [...congressNumSet].sort((a,b) => a - b);
+  source.congressNumbers.forEach(num => congressNumSet.add(num));
+  const congressNumArr = [...congressNumSet].sort((a, b) => a - b);
   if (congressNumArr.length > 3) {
     console.log(`[WARNING] more than 3 congress for ${id} - ${congressNumArr}`);
     return false;
   }
   // chamber
   if (source.chamber !== target.chamber) {
-    console.log(`[WARNING] different chamber for ${id} - ${source.chamber} -> ${target.chamber}`);
+    console.log(
+      `[WARNING] different chamber for ${id} - ${source.chamber} -> ${target.chamber}`,
+    );
     return false;
   }
   // state
   if (source.state && target.state && source.state !== target.state) {
-    console.log(`[WARNING] different state for ${id} - ${source.state} -> ${target.state}`);
+    console.log(
+      `[WARNING] different state for ${id} - ${source.state} -> ${target.state}`,
+    );
     return false;
   }
   // district (house)
-  if (source.district && target.district && source.district !== target.district) {
-    console.log(`[WARNING] different district for ${id} - ${source.district} -> ${target.district}`);
+  if (
+    source.district &&
+    target.district &&
+    source.district !== target.district
+  ) {
+    console.log(
+      `[WARNING] different district for ${id} - ${source.district} -> ${target.district}`,
+    );
     return false;
   }
   // senatorClass (senator)
-  if (source.senatorClass && target.senatorClass && source.senatorClass !== target.senatorClass) {
-    console.log(`[WARNING] different senatorClass for ${id} - ${source.senatorClass} -> ${target.senatorClass}`);
+  if (
+    source.senatorClass &&
+    target.senatorClass &&
+    source.senatorClass !== target.senatorClass
+  ) {
+    console.log(
+      `[WARNING] different senatorClass for ${id} - ${source.senatorClass} -> ${target.senatorClass}`,
+    );
     return false;
   }
 
@@ -77,7 +101,10 @@ function mergeRoleData(id: string, target: MemberRole, source: MemberRole): Bool
   // congressNumbers
   target.congressNumbers = congressNumArr;
   // date
-  const mergedPeriod = joinTwoPeriods([source.startDate, source.endDate], [target.startDate, target.endDate]);
+  const mergedPeriod = joinTwoPeriods(
+    [source.startDate, source.endDate],
+    [target.startDate, target.endDate],
+  );
   target.startDate = mergedPeriod[0];
   target.endDate = mergedPeriod[1];
   // parties
@@ -85,7 +112,11 @@ function mergeRoleData(id: string, target: MemberRole, source: MemberRole): Bool
   return true;
 }
 
-export function getMergedMemberData(member: Member, field: keyof Member, skip_user: Boolean = false): any {
+export function getMergedMemberData(
+  member: Member,
+  field: keyof Member,
+  skip_user: boolean = false,
+): any {
   let ans: any = undefined;
 
   // TODO: get member's other data (for the case he/she has different ID)
@@ -142,11 +173,11 @@ export function getMergedMemberData(member: Member, field: keyof Member, skip_us
     });
 
     // sort the answer by start date order
-    ansRoles.sort((role1, role2) => role1.startDate.localeCompare(role2.startDate))
+    ansRoles.sort((role1, role2) =>
+      role1.startDate.localeCompare(role2.startDate),
+    );
     ans = ansRoles;
-
   } else {
-
     const userData = member[field];
     const bioguideData = member.bioguideMember?.[field];
     const propublicaData = member.propublicaMember?.[field];
@@ -154,7 +185,6 @@ export function getMergedMemberData(member: Member, field: keyof Member, skip_us
 
     if (!skip_user && userData) {
       ans = userData;
-
     } else {
       // merge the sources
       if (bioguideData) {
@@ -164,10 +194,16 @@ export function getMergedMemberData(member: Member, field: keyof Member, skip_us
       if (unitedstatesData) {
         if (ans && ans !== unitedstatesData) {
           // source data doesn't match with the previous answer
-          console.log(`[MemberDataMerge] Data Conflict with unitedStates - '${ans}' <> '${unitedstatesData}'`);
+          console.log(
+            `[MemberDataMerge] Data Conflict with unitedStates - '${ans}' <> '${unitedstatesData}'`,
+          );
         }
 
-        if (!ans || (ans !== unitedstatesData && String(unitedstatesData).indexOf(String(ans)) === 0)) {
+        if (
+          !ans ||
+          (ans !== unitedstatesData &&
+            String(unitedstatesData).indexOf(String(ans)) === 0)
+        ) {
           // ans hasn't been assigned, or source data covers the ans
           ans = unitedstatesData;
         }
@@ -176,10 +212,16 @@ export function getMergedMemberData(member: Member, field: keyof Member, skip_us
       if (propublicaData) {
         if (ans && ans !== propublicaData) {
           // source data doesn't match with the previous answer
-          console.log(`[MemberDataMerge] Data Conflict with ProPublica - '${ans}' <> '${propublicaData}'`);
+          console.log(
+            `[MemberDataMerge] Data Conflict with ProPublica - '${ans}' <> '${propublicaData}'`,
+          );
         }
 
-        if (!ans || (ans !== propublicaData && String(propublicaData).indexOf(String(ans)) === 0)) {
+        if (
+          !ans ||
+          (ans !== propublicaData &&
+            String(propublicaData).indexOf(String(ans)) === 0)
+        ) {
           // ans hasn't been assigned, or source data covers the ans
           ans = propublicaData;
         }

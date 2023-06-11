@@ -81,7 +81,7 @@ export class MemberBioGuideSyncer extends EntitySyncer<Member> {
         const job_end =
           formatDateString(jobs[job_idx]['endDate'] || jobData['congress']['endDate'] || "", 'End');
 
-        let parties: Array<PartyRecord> = [];
+        const parties: Array<PartyRecord> = [];
 
         for (let party_idx = 0; party_idx < partyList.length; party_idx++) {
           const partyData = partyList[party_idx];

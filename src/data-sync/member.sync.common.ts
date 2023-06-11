@@ -61,7 +61,7 @@ function stringifyParties(parties: PartyRecord[]): string {
     return "";
   }
 
-  let stringifiedDataList: string[] = [];
+  const stringifiedDataList: string[] = [];
   parties.forEach(party => {
     stringifiedDataList.push(`${party.party} (${party.startDate} - ${party.endDate || 'undefined'})`);
   });

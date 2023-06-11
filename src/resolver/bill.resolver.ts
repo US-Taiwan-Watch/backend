@@ -113,7 +113,6 @@ export class BillResolver extends TableProvider(BillTable) {
   @Authorized<Auth0RoleName>(BILL_AUTHORIZED_ROLES)
   @Mutation(() => Bill, { nullable: true })
   public async addBill(
-    @Ctx() ctx: IApolloContext,
     @Arg("bill") billInput: BillInput,
   ): Promise<Bill | null> {
     const tbl = await this.table();
@@ -144,7 +143,6 @@ export class BillResolver extends TableProvider(BillTable) {
   @Authorized<Auth0RoleName>(BILL_AUTHORIZED_ROLES)
   @Mutation(() => Bill, { nullable: true })
   public async updateBill(
-    @Ctx() ctx: IApolloContext,
     @Arg("bill") billInput: BillInput,
   ): Promise<Bill | null> {
     const tbl = await this.table();
