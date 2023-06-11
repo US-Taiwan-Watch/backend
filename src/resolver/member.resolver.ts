@@ -8,7 +8,12 @@ import {
   Args,
   Info,
 } from "type-graphql";
-import { Member, MemberRole, MemberRoleSnapshot } from "../../common/models";
+import {
+  I18NText,
+  Member,
+  MemberRole,
+  MemberRoleSnapshot,
+} from "../../common/models";
 import { MemberSyncer } from "../data-sync/member.sync";
 import { getMergedMemberData } from "../helper/member.helper";
 import { TableProvider } from "../mongodb/mongodb-manager";
@@ -94,98 +99,110 @@ export class MemberResolver extends TableProvider(MemberTable) {
   // Field Resolvers
   //
 
+  @FieldResolver(() => I18NText, { nullable: true })
+  displayName(@Root() member: Member): I18NText {
+    const en = [this.firstName(member), this.lastName(member)]
+      .filter(s => !!s)
+      .join(" ");
+    const zh =
+      [this.firstName_zh(member), this.lastName_zh(member)]
+        .filter(s => !!s)
+        .join("·") || en;
+    return I18NText.create(en, zh);
+  }
+
   @FieldResolver()
-  async firstName(@Root() member: Member): Promise<string> {
+  firstName(@Root() member: Member): string {
     const ans = getMergedMemberData(member, "firstName") || "";
     return ans;
   }
 
   @FieldResolver()
-  async lastName(@Root() member: Member): Promise<string> {
+  lastName(@Root() member: Member): string {
     const ans = getMergedMemberData(member, "lastName") || "";
     return ans;
   }
 
   @FieldResolver()
-  async nickname(@Root() member: Member): Promise<string> {
+  nickname(@Root() member: Member): string {
     const ans = getMergedMemberData(member, "nickname") || "";
     return ans;
   }
 
   @FieldResolver()
-  async firstName_zh(@Root() member: Member): Promise<string> {
+  firstName_zh(@Root() member: Member): string {
     const ans = getMergedMemberData(member, "firstName_zh") || "";
     return ans;
   }
 
   @FieldResolver()
-  async lastName_zh(@Root() member: Member): Promise<string> {
+  lastName_zh(@Root() member: Member): string {
     const ans = getMergedMemberData(member, "lastName_zh") || "";
     return ans;
   }
 
   @FieldResolver()
-  async gender(@Root() member: Member): Promise<string> {
+  gender(@Root() member: Member): string {
     const ans = getMergedMemberData(member, "gender") || "";
     return ans;
   }
 
   @FieldResolver()
-  async birthday(@Root() member: Member): Promise<string> {
+  birthday(@Root() member: Member): string {
     const ans = getMergedMemberData(member, "birthday") || "";
     return ans;
   }
 
   @FieldResolver()
-  async website(@Root() member: Member): Promise<string> {
+  website(@Root() member: Member): string {
     const ans = getMergedMemberData(member, "website") || "";
     return ans;
   }
 
   @FieldResolver()
-  async office(@Root() member: Member): Promise<string> {
+  office(@Root() member: Member): string {
     const ans = getMergedMemberData(member, "office") || "";
     return ans;
   }
 
   @FieldResolver()
-  async phone(@Root() member: Member): Promise<string> {
+  phone(@Root() member: Member): string {
     const ans = getMergedMemberData(member, "phone") || "";
     return ans;
   }
 
   @FieldResolver()
-  async cspanId(@Root() member: Member): Promise<string> {
+  cspanId(@Root() member: Member): string {
     const ans = getMergedMemberData(member, "cspanId") || "";
     return ans;
   }
 
   @FieldResolver()
-  async twitterId(@Root() member: Member): Promise<string> {
+  twitterId(@Root() member: Member): string {
     const ans = getMergedMemberData(member, "twitterId") || "";
     return ans;
   }
 
   @FieldResolver()
-  async facebookId(@Root() member: Member): Promise<string> {
+  facebookId(@Root() member: Member): string {
     const ans = getMergedMemberData(member, "facebookId") || "";
     return ans;
   }
 
   @FieldResolver()
-  async youtubeId(@Root() member: Member): Promise<string> {
+  youtubeId(@Root() member: Member): string {
     const ans = getMergedMemberData(member, "youtubeId") || "";
     return ans;
   }
 
   @FieldResolver()
-  async profilePictureUri(@Root() member: Member): Promise<string> {
+  profilePictureUri(@Root() member: Member): string {
     const ans = getMergedMemberData(member, "profilePictureUri") || "";
     return ans;
   }
 
   @FieldResolver()
-  async congressRoles(@Root() member: Member): Promise<MemberRole[]> {
+  congressRoles(@Root() member: Member): MemberRole[] {
     const ans = getMergedMemberData(member, "congressRoles") || [];
     return ans;
   }

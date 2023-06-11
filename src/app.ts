@@ -131,15 +131,18 @@ async function bootstrap() {
     schema,
     context: async ({ req }) => {
       // get the user token from the headers
+      const ctx = { language: req.headers["content-language"] };
       try {
         const token = req?.headers.authorization?.replace("Bearer ", "");
         if (token) {
           const decoded = await validateToken(token);
           return <IApolloContext>{
+            ...ctx,
             currentUser: decoded,
             token,
           };
         }
+        return ctx;
       } catch (err) {
         console.log(`ERR = ${err}`);
         throw new AuthenticationError("You must be logged in.");

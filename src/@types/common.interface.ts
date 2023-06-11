@@ -20,5 +20,6 @@ export interface JWTDecodedObject {
 export interface IApolloContext {
   currentUser: JWTDecodedObject;
   token: string;
+  language?: string;
   ip?: string;
 }
