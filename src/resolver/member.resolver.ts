@@ -108,7 +108,7 @@ export class MemberResolver extends TableProvider(MemberTable) {
       [this.firstName_zh(member), this.lastName_zh(member)]
         .filter(s => !!s)
         .join("·") || en;
-    return I18NText.create(en, zh);
+    return { en, zh };
   }
 
   @FieldResolver()

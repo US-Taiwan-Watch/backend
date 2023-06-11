@@ -50,10 +50,7 @@ export class ArticleResolver
   }
 
   @Query(() => [Article])
-  public async getAllArticles(
-    @Ctx() ctx: IApolloContext,
-    @Arg("lang", { nullable: true }) _lang?: string,
-  ): Promise<Article[]> {
+  public async getAllArticles(@Ctx() ctx: IApolloContext): Promise<Article[]> {
     const tbl = await this.table();
     const articles = await tbl.getAllArticles();
     const canEdit = await authCheckHelper(ctx, ARTICLE_AUTHORIZED_ROLES);
@@ -64,7 +61,6 @@ export class ArticleResolver
   public async getPublicArticle(
     @Ctx() ctx: IApolloContext,
     @Arg("slug") slug: string,
-    @Arg("lang", { nullable: true }) _lang?: string,
   ): Promise<Article | null> {
     const tbl = await this.table();
     let article = await tbl.getArticleBySlug(slug);
@@ -106,10 +102,10 @@ export class ArticleResolver
     const tbl = await this.table();
     const userId = ctx.currentUser && ctx.currentUser.sub;
     const article = new Article(
-      new I18NText(title),
+      title,
       content,
       slug,
-      new I18NText(preview),
+      preview,
       isPublished,
       authors,
       imageSource,

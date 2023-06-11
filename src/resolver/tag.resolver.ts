@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { Resolver } from "type-graphql";
-import { I18NText, Tag } from "../../common/models";
+import { Tag } from "../../common/models";
 import { TableProvider } from "../mongodb/mongodb-manager";
 import { TagTable } from "./tag-table";
 import { v4 as uuid } from "uuid";
@@ -68,11 +68,12 @@ export class TagResolver
           { notionPageId: pageObject.id },
           {
             $set: {
-              name: I18NText.create(
-                pageObject.properties["Name"].title[0]?.text?.content as string,
-                pageObject.properties["Name (zh)"].rich_text[0]?.text
+              name: {
+                en: pageObject.properties["Name"].title[0]?.text
                   ?.content as string,
-              ),
+                zh: pageObject.properties["Name (zh)"].rich_text[0]?.text
+                  ?.content as string,
+              },
             },
             $setOnInsert: {
               _id: uuid(),

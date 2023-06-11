@@ -1,4 +1,4 @@
-import { Bill, I18NText } from "../../common/models";
+import { Bill } from "../../common/models";
 import { RedisClient } from "../redis/redis-client";
 import { Logger } from "../util/logger";
 import { EntitySyncer } from "./entity.sync";
@@ -102,7 +102,7 @@ export class BillSyncer extends EntitySyncer<Bill> {
 
   protected async syncBasicInfo() {
     const info = await CongressGovHelper.getBillBasicInfo(this.entity);
-    this.entity.title = I18NText.create(info.bill.title, this.entity.title?.zh);
+    this.entity.title = { en: info.bill.title, zh: this.entity.title?.zh };
     this.entity.introducedDate = info.bill.introducedDate;
   }
 

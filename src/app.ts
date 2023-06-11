@@ -28,6 +28,7 @@ import { ApolloServerPluginDrainHttpServer } from "apollo-server-core";
 import { AdminResolver } from "./resolver/admin.resolver";
 import { schedule } from "node-cron";
 import { NotionSyncResolver, TableName } from "./resolver/notion-sync.resolver";
+import { I18nResolver } from "./resolver/i18n.resolver";
 
 async function bootstrap() {
   const jwks = require("jwks-rsa");
@@ -88,6 +89,7 @@ async function bootstrap() {
       BillResolver,
       AdminResolver,
       ArticleResolver,
+      I18nResolver,
     ],
     validate: false,
     authChecker,
