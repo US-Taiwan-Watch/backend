@@ -5,14 +5,20 @@ import { TableProvider } from "../mongodb/mongodb-manager";
 import { NotionSyncTable } from "./notion-sync-table";
 import { TagResolver } from "./tag.resolver";
 import { Logger } from "../util/logger";
-import { NotionManager, NotionSyncable } from "../data-sync/notion-manager";
+import {
+  NotionManager,
+  SyncFromNotion,
+  SyncToNotion,
+} from "../data-sync/notion-manager";
 import { ArticleResolver } from "./article.resolver";
+import { BillResolver } from "./bill.resolver";
 
 const DEFAULT_LOOK_BACK_MS = 5 * 60 * 1000;
 
 export enum TableName {
   TAGS = "tags",
   ARTICLES = "articles",
+  BILLS = "bills",
 }
 
 @Resolver()
@@ -21,12 +27,27 @@ export class NotionSyncResolver extends TableProvider(NotionSyncTable) {
     super();
   }
 
-  private static getTableResolver(name: TableName): NotionSyncable<NotionPage> {
+  private static getSyncToNotionResolver(
+    name: TableName,
+  ): SyncToNotion<NotionPage> {
+    switch (name) {
+      case TableName.TAGS:
+        return new TagResolver();
+      case TableName.ARTICLES:
+        throw new Error("no such feature");
+      case TableName.BILLS:
+        return new BillResolver();
+    }
+  }
+
+  private static getSyncFromNotionResolver(name: TableName): SyncFromNotion {
     switch (name) {
       case TableName.TAGS:
         return new TagResolver();
       case TableName.ARTICLES:
         return new ArticleResolver();
+      case TableName.BILLS:
+        throw new Error("not implement yet");
     }
   }
 
@@ -46,22 +67,38 @@ export class NotionSyncResolver extends TableProvider(NotionSyncTable) {
     });
   }
 
-  // This should only be run once at the beginning
+  /**
+   * * This should only be run once at the beginning if the notion database exists already
+   *
+   * @public
+   * @async
+   * @param {TableName} tableName
+   * @param {string} databaseId
+   * @returns {*}
+   */
   public async linkDatabase(tableName: TableName, databaseId: string) {
     const tbl = await this.table();
-    return await tbl.createOrReplace({
+    await tbl.createOrReplace({
       id: tableName,
       databaseId,
       lastSyncTime: 0,
     });
   }
 
-  // This should only be run once at the beginning
+  /**
+   * This should only be run once at the beginning if the notion database does not exist
+   *
+   * @public
+   * @async
+   * @param {TableName} tableName
+   * @param {string} pageId
+   * @returns {*}
+   */
   public async createEditableMirrorInNotion(
     tableName: TableName,
     pageId: string,
   ) {
-    const resolver = NotionSyncResolver.getTableResolver(tableName);
+    const resolver = NotionSyncResolver.getSyncToNotionResolver(tableName);
     const notionSyncer = await NotionManager.createDatabase(
       pageId,
       resolver,
@@ -73,7 +110,7 @@ export class NotionSyncResolver extends TableProvider(NotionSyncTable) {
         try {
           const id = await notionSyncer.create(entity);
           if (id) {
-            resolver.updateLinkedLocalItem(entity);
+            resolver.linkLocalItem(entity, id);
           }
         } catch (e) {
           console.log(`Insert ${entity} failed`);
@@ -104,9 +141,7 @@ export class NotionSyncResolver extends TableProvider(NotionSyncTable) {
     }
     const logger = this.logger.in("syncFromNotion");
 
-    const resolver = NotionSyncResolver.getTableResolver(tableName);
-
-    const notionSyncer = new NotionManager(sync.databaseId, resolver);
+    const notionSyncer = new NotionManager(sync.databaseId);
     if (lookBackTime >= 0) {
       const lastUpdated = await notionSyncer.getLastUpdatedTime();
       if (lastUpdated && lastUpdated <= sync.lastSyncTime - lookBackTime) {
@@ -133,6 +168,8 @@ export class NotionSyncResolver extends TableProvider(NotionSyncTable) {
           );
 
     logger.log("Collection done, start updating database");
+
+    const resolver = NotionSyncResolver.getSyncFromNotionResolver(tableName);
     const [upsertResults, deleted] = await Promise.all([
       resolver.createOrUpdateLocalItems(updatedOrCreated),
       resolver.deleteNotFoundLocalItems(allTags.map(t => t.id)),

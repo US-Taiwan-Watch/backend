@@ -3,14 +3,15 @@ import { QueryDatabaseParameters } from "@notionhq/client/build/src/api-endpoint
 import { UpdateResult } from "mongodb";
 import { NotionPage } from "../../common/models";
 
-export interface NotionSyncable<T extends NotionPage> {
-  // For Notion item management
+export interface SyncToNotion<T extends NotionPage> {
   getAllLocalItems(): Promise<T[]>;
   getPropertiesForDatabaseCreation(): any;
   getPropertiesForItemCreation(entity: T): Promise<any>;
   getPropertiesForItemUpdating(entity: T): Promise<any>;
-  // Local item management
-  updateLinkedLocalItem(entity: T): Promise<UpdateResult>;
+  linkLocalItem(entity: T, notionPageId: string): Promise<UpdateResult>;
+}
+
+export interface SyncFromNotion {
   createOrUpdateLocalItems(pageObjects: any[]): Promise<UpdateResult[]>;
   deleteNotFoundLocalItems(notionPageIds: string[]): Promise<any[]>;
 }
@@ -26,7 +27,7 @@ export class NotionManager<T extends NotionPage> {
 
   constructor(
     public readonly databaseId: string,
-    private resolver: NotionSyncable<T>,
+    private syncToNotionresolver?: SyncToNotion<T>,
   ) {
     this.notionClient = NotionManager.getClient();
   }
@@ -49,7 +50,7 @@ export class NotionManager<T extends NotionPage> {
 
   public static async createDatabase<T extends NotionPage>(
     pagdId: string,
-    resolver: NotionSyncable<T>,
+    resolver: SyncToNotion<T>,
     name: string,
   ) {
     console.log(resolver.getPropertiesForDatabaseCreation());
@@ -161,7 +162,8 @@ export class NotionManager<T extends NotionPage> {
   }
 
   public async create(entity: T): Promise<string | null> {
-    const properties = await this.resolver.getPropertiesForItemCreation(entity);
+    const properties =
+      await this.syncToNotionresolver?.getPropertiesForItemCreation(entity);
     if (!properties) {
       return null;
     }
@@ -176,7 +178,8 @@ export class NotionManager<T extends NotionPage> {
   }
 
   public async update(entity: T) {
-    const properties = await this.resolver.getPropertiesForItemUpdating(entity);
+    const properties =
+      await this.syncToNotionresolver?.getPropertiesForItemUpdating(entity);
     if (!properties) {
       return null;
     }

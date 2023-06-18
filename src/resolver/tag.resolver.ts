@@ -4,12 +4,12 @@ import { Tag } from "../../common/models";
 import { TableProvider } from "../mongodb/mongodb-manager";
 import { TagTable } from "./tag-table";
 import { v4 as uuid } from "uuid";
-import { NotionSyncable } from "../data-sync/notion-manager";
+import { SyncFromNotion, SyncToNotion } from "../data-sync/notion-manager";
 
 @Resolver(Tag)
 export class TagResolver
   extends TableProvider(TagTable)
-  implements NotionSyncable<Tag>
+  implements SyncToNotion<Tag>, SyncFromNotion
 {
   public getPropertiesForDatabaseCreation() {
     return {
@@ -55,9 +55,9 @@ export class TagResolver
     return await tbl.getAllTags();
   }
 
-  public async updateLinkedLocalItem(tag: Tag) {
+  public async linkLocalItem(tag: Tag, notionPageId: string) {
     const tbl = await this.table();
-    return await tbl.updateTag(tag.id, { notionPageId: tag.notionPageId });
+    return await tbl.updateTag(tag.id, { notionPageId });
   }
 
   public async createOrUpdateLocalItems(pageObjects: any[]) {

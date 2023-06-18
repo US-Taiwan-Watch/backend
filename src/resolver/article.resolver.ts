@@ -22,7 +22,7 @@ import { IApolloContext } from "../@types/common.interface";
 import { ArticleTable } from "./article-table";
 import { UserResolver } from "./user.resolver";
 import { authCheckHelper } from "../util/auth-helper";
-import { NotionManager, NotionSyncable } from "../data-sync/notion-manager";
+import { NotionManager, SyncFromNotion } from "../data-sync/notion-manager";
 import { UpdateResult } from "mongodb";
 import { v4 as uuid } from "uuid";
 import { PublicJPGDownloader } from "../storage/public-jpg-downloader";
@@ -31,7 +31,7 @@ import { RequestSource } from "../data-sync/sources/request-helper";
 @Resolver(Article)
 export class ArticleResolver
   extends TableProvider(ArticleTable)
-  implements NotionSyncable<Article>
+  implements SyncFromNotion
 {
   @FieldResolver()
   public async authorInfos(@Root() article: Article): Promise<User[]> {
@@ -196,22 +196,6 @@ export class ArticleResolver
     const tbl = await this.table();
     const result = await tbl.updateArticle(id, { deleted: true });
     return result.modifiedCount > 0;
-  }
-
-  getAllLocalItems(): Promise<Article[]> {
-    throw new Error("Method not implemented.");
-  }
-  getPropertiesForDatabaseCreation() {
-    throw new Error("Method not implemented.");
-  }
-  getPropertiesForItemCreation(_article: Article): Promise<any> {
-    throw new Error("Method not implemented.");
-  }
-  getPropertiesForItemUpdating(_article: Article): Promise<any> {
-    throw new Error("Method not implemented.");
-  }
-  updateLinkedLocalItem(_article: Article): Promise<UpdateResult> {
-    throw new Error("Method not implemented.");
   }
 
   public async createOrUpdateLocalItems(

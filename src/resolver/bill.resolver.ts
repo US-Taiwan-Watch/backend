@@ -32,15 +32,103 @@ import { PaginatedBills, PaginationArgs } from "../util/pagination";
 import { BillTable } from "./bill-table";
 import { MemberResolver } from "./member.resolver";
 import { GraphQLResolveInfo } from "graphql";
+import { SyncToNotion } from "../data-sync/notion-manager";
+import { UpdateResult } from "mongodb";
 
 @Resolver(Bill)
-export class BillResolver extends TableProvider(BillTable) {
+export class BillResolver
+  extends TableProvider(BillTable)
+  implements SyncToNotion<Bill>
+{
   logger: Logger;
 
   constructor() {
     super();
     this.logger = new Logger("BillResolver");
   }
+  async getAllLocalItems(): Promise<Bill[]> {
+    const tbl = await this.table();
+    return await tbl.getAllBills();
+  }
+
+  getPropertiesForDatabaseCreation() {
+    return {
+      "bill type": {
+        rich_text: {},
+      },
+      "summary (en)": {
+        rich_text: {},
+      },
+      "title (zh)": {
+        rich_text: {},
+      },
+      "bill number": {
+        number: {
+          format: "number",
+        },
+      },
+      "title (en)": {
+        rich_text: {},
+      },
+      "summary (zh)": {
+        rich_text: {},
+      },
+      congress: {
+        number: {
+          format: "number",
+        },
+      },
+      "short name": {
+        title: {},
+      },
+    };
+  }
+
+  async getPropertiesForItemCreation(entity: Bill): Promise<any> {
+    return {
+      "bill type": {
+        rich_text: {},
+      },
+      "summary (en)": {
+        rich_text: {},
+      },
+      "title (zh)": {
+        rich_text: {},
+      },
+      "bill number": {
+        number: {
+          format: "number",
+        },
+      },
+      "title (en)": {
+        rich_text: {},
+      },
+      "summary (zh)": {
+        rich_text: {},
+      },
+      congress: {
+        number: {
+          format: "number",
+        },
+      },
+      "short name": {
+        title: [
+          {
+            text: {
+              content: this.bill,
+            },
+          },
+        ],
+      },
+    };
+  }
+  getPropertiesForItemUpdating(entity: Bill): Promise<any> {
+    throw new Error("Method not implemented.");
+  }
+  linkLocalItem(entity: Bill): Promise<UpdateResult> {
+    throw new Error("Method not implemented.");
+  }
+
   // TODO: false for debugging. Should be true while in real use
   private static shouldSave() {
     return true;
