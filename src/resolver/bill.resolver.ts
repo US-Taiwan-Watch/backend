@@ -6,7 +6,6 @@ import {
   Root,
   FieldResolver,
   Mutation,
-  Ctx,
   Authorized,
   Int,
   Info,
@@ -21,7 +20,6 @@ import {
   I18NText,
   Member,
 } from "../../common/models";
-import { IApolloContext } from "../@types/common.interface";
 import { BillSyncer, getBillSyncingCacheKey } from "../data-sync/bill.sync";
 import { TableProvider } from "../mongodb/mongodb-manager";
 import { RedisClient } from "../redis/redis-client";
@@ -53,79 +51,96 @@ export class BillResolver
 
   getPropertiesForDatabaseCreation() {
     return {
-      "bill type": {
-        rich_text: {},
-      },
-      "summary (en)": {
-        rich_text: {},
-      },
-      "title (zh)": {
-        rich_text: {},
-      },
-      "bill number": {
-        number: {
-          format: "number",
-        },
-      },
-      "title (en)": {
-        rich_text: {},
-      },
-      "summary (zh)": {
-        rich_text: {},
-      },
-      congress: {
-        number: {
-          format: "number",
-        },
-      },
-      "short name": {
+      Id: {
         title: {},
+      },
+      Title: {
+        rich_text: {},
+      },
+      "Title (zh)": {
+        rich_text: {},
+      },
+      "Summary (zh)": {
+        rich_text: {},
+      },
+      Congress: {
+        number: {
+          format: "number",
+        },
+      },
+      "Bill Type": {
+        rich_text: {},
+      },
+      "Bill number": {
+        number: {
+          format: "number",
+        },
       },
     };
   }
 
-  async getPropertiesForItemCreation(entity: Bill): Promise<any> {
+  async getPropertiesForItemCreation(bill: Bill): Promise<any> {
     return {
-      "bill type": {
-        rich_text: {},
-      },
-      "summary (en)": {
-        rich_text: {},
-      },
-      "title (zh)": {
-        rich_text: {},
-      },
-      "bill number": {
-        number: {
-          format: "number",
-        },
-      },
-      "title (en)": {
-        rich_text: {},
-      },
-      "summary (zh)": {
-        rich_text: {},
-      },
-      congress: {
-        number: {
-          format: "number",
-        },
-      },
-      "short name": {
+      Id: {
         title: [
           {
             text: {
-              content: this.bill,
+              content: bill.id,
             },
           },
         ],
       },
+      Title: {
+        rich_text: [
+          {
+            text: {
+              content: bill.title?.en || "",
+            },
+          },
+        ],
+      },
+      "Title (zh)": {
+        rich_text: [
+          {
+            text: {
+              content: bill.title?.zh || "",
+            },
+          },
+        ],
+      },
+      "Summary (zh)": {
+        rich_text: [
+          {
+            text: {
+              content: bill.summary?.zh || "",
+            },
+          },
+        ],
+      },
+      Congress: {
+        number: bill.congress,
+      },
+      "Bill Type": {
+        rich_text: [
+          {
+            text: {
+              content: bill.billType,
+            },
+          },
+        ],
+      },
+      "Bill number": {
+        number: bill.billNumber,
+      },
     };
   }
-  getPropertiesForItemUpdating(entity: Bill): Promise<any> {
-    throw new Error("Method not implemented.");
+
+  async linkLocalItem(bill: Bill, notionPageId: string): Promise<UpdateResult> {
+    const tbl = await this.table();
+    return await tbl.updateBill(bill.id, { notionPageId });
   }
-  linkLocalItem(entity: Bill): Promise<UpdateResult> {
+
+  getPropertiesForItemUpdating(entity: Bill): Promise<any> {
     throw new Error("Method not implemented.");
   }
 

@@ -576,11 +576,15 @@ export function TableProvider<TableType extends MongoDBTable>(TableClass: {
   class X {
     private static _db: MongoDBManager;
     protected async table(): Promise<TableType> {
-      if (X._db) {
-        return X._db.getTable(TableClass);
+      if (!X._db) {
+        X._db = await MongoDBManager.instance(TableClass);
       }
-      X._db = await MongoDBManager.instance(TableClass);
       return X._db.getTable(TableClass);
+    }
+
+    public async getTableName() {
+      const tbl = await this.table();
+      return tbl.tableName;
     }
   }
   return X;

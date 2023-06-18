@@ -3,7 +3,8 @@ import { QueryDatabaseParameters } from "@notionhq/client/build/src/api-endpoint
 import { UpdateResult } from "mongodb";
 import { NotionPage } from "../../common/models";
 
-export interface SyncToNotion<T extends NotionPage> {
+export interface SyncToNotion<T> {
+  getTableName(): Promise<string>;
   getAllLocalItems(): Promise<T[]>;
   getPropertiesForDatabaseCreation(): any;
   getPropertiesForItemCreation(entity: T): Promise<any>;
@@ -12,11 +13,12 @@ export interface SyncToNotion<T extends NotionPage> {
 }
 
 export interface SyncFromNotion {
+  getTableName(): Promise<string>;
   createOrUpdateLocalItems(pageObjects: any[]): Promise<UpdateResult[]>;
   deleteNotFoundLocalItems(notionPageIds: string[]): Promise<any[]>;
 }
 
-export class NotionManager<T extends NotionPage> {
+export class NotionManager {
   private notionClient: Client;
 
   private static getClient() {
@@ -25,10 +27,7 @@ export class NotionManager<T extends NotionPage> {
     });
   }
 
-  constructor(
-    public readonly databaseId: string,
-    private syncToNotionresolver?: SyncToNotion<T>,
-  ) {
+  constructor(public readonly databaseId: string) {
     this.notionClient = NotionManager.getClient();
   }
 
@@ -48,12 +47,11 @@ export class NotionManager<T extends NotionPage> {
       .results;
   }
 
-  public static async createDatabase<T extends NotionPage>(
+  public static async createDatabase(
     pagdId: string,
-    resolver: SyncToNotion<T>,
     name: string,
+    properties: any,
   ) {
-    console.log(resolver.getPropertiesForDatabaseCreation());
     const res = await this.getClient().databases.create({
       parent: { type: "page_id", page_id: pagdId },
       title: [
@@ -64,9 +62,9 @@ export class NotionManager<T extends NotionPage> {
           },
         },
       ],
-      properties: resolver.getPropertiesForDatabaseCreation(),
+      properties,
     });
-    return new this(res.id, resolver);
+    return new this(res.id);
   }
 
   private async queryAllPages(query: QueryDatabaseParameters) {
@@ -116,9 +114,28 @@ export class NotionManager<T extends NotionPage> {
     });
   }
 
-  public async updateSyncStatus() {
+  private async updateDatabase(properties: any) {
     this.notionClient.databases.update({
       database_id: this.databaseId,
+      ...properties,
+    });
+  }
+
+  public async updateDatabaseTitle(title: string) {
+    this.notionClient.databases.update({
+      database_id: this.databaseId,
+      title: [
+        {
+          text: {
+            content: title,
+          },
+        },
+      ],
+    });
+  }
+
+  public async updateSyncStatus() {
+    this.updateDatabase({
       description: [
         { text: { content: "Last synced at " } },
         {
@@ -161,12 +178,7 @@ export class NotionManager<T extends NotionPage> {
     return await Promise.allSettled(res.map(page => this.delete(page.id)));
   }
 
-  public async create(entity: T): Promise<string | null> {
-    const properties =
-      await this.syncToNotionresolver?.getPropertiesForItemCreation(entity);
-    if (!properties) {
-      return null;
-    }
+  public async create(properties: any): Promise<string | null> {
     const res = await NotionManager.retry(
       async () =>
         await this.notionClient.pages.create({
@@ -177,19 +189,11 @@ export class NotionManager<T extends NotionPage> {
     return res && res.id;
   }
 
-  public async update(entity: T) {
-    const properties =
-      await this.syncToNotionresolver?.getPropertiesForItemUpdating(entity);
-    if (!properties) {
-      return null;
-    }
-    if (!entity.notionPageId) {
-      return null;
-    }
+  public async update(notionPageId: string, properties: any) {
     const res = await NotionManager.retry(
       async () =>
         await this.notionClient.pages.update({
-          page_id: entity.notionPageId!,
+          page_id: notionPageId!,
           properties,
         }),
     );

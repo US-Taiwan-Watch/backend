@@ -27,7 +27,7 @@ import { useServer } from "graphql-ws/lib/use/ws";
 import { ApolloServerPluginDrainHttpServer } from "apollo-server-core";
 import { AdminResolver } from "./resolver/admin.resolver";
 import { schedule } from "node-cron";
-import { NotionSyncResolver, TableName } from "./resolver/notion-sync.resolver";
+import { NotionSyncResolver } from "./resolver/notion-sync.resolver";
 import { I18nResolver } from "./resolver/i18n.resolver";
 
 async function bootstrap() {
@@ -99,9 +99,9 @@ async function bootstrap() {
   // Sync articles every 15 mins. this is not ideal as we have to deploy the code for updating the scheduled job. but it's the easiest way
   if (process.env.NODE_ENV !== "dev") {
     schedule("0 */15 * * * *", async () => {
-      const resolver = new NotionSyncResolver();
+      const resolver = new NotionSyncResolver(ArticleResolver);
       console.log("Start syncing articles");
-      await resolver.syncFromNotion(TableName.ARTICLES);
+      await resolver.syncFromNotion();
       console.log("Finish syncing articles");
     });
   }

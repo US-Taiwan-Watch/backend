@@ -1,70 +1,71 @@
 import _ from "lodash";
-import { Resolver } from "type-graphql";
-import { NotionPage } from "../../common/models";
+import { NotionSync } from "../../common/models";
 import { TableProvider } from "../mongodb/mongodb-manager";
 import { NotionSyncTable } from "./notion-sync-table";
-import { TagResolver } from "./tag.resolver";
 import { Logger } from "../util/logger";
 import {
   NotionManager,
   SyncFromNotion,
   SyncToNotion,
 } from "../data-sync/notion-manager";
-import { ArticleResolver } from "./article.resolver";
-import { BillResolver } from "./bill.resolver";
 
 const DEFAULT_LOOK_BACK_MS = 5 * 60 * 1000;
 
-export enum TableName {
-  TAGS = "tags",
-  ARTICLES = "articles",
-  BILLS = "bills",
-}
+type Entity = {
+  id: string;
+};
 
-@Resolver()
-export class NotionSyncResolver extends TableProvider(NotionSyncTable) {
-  constructor(private logger = new Logger("NotionSyncResolver")) {
-    super();
-  }
+export class NotionSyncResolver<T extends Entity> extends TableProvider(
+  NotionSyncTable,
+) {
+  private resolver: SyncToNotion<T> | SyncFromNotion;
+  private syncToNotionResolver?: SyncToNotion<T>;
+  private syncFromNotionResolver?: SyncFromNotion;
 
-  private static getSyncToNotionResolver(
-    name: TableName,
-  ): SyncToNotion<NotionPage> {
-    switch (name) {
-      case TableName.TAGS:
-        return new TagResolver();
-      case TableName.ARTICLES:
-        throw new Error("no such feature");
-      case TableName.BILLS:
-        return new BillResolver();
-    }
-  }
-
-  private static getSyncFromNotionResolver(name: TableName): SyncFromNotion {
-    switch (name) {
-      case TableName.TAGS:
-        return new TagResolver();
-      case TableName.ARTICLES:
-        return new ArticleResolver();
-      case TableName.BILLS:
-        throw new Error("not implement yet");
-    }
-  }
-
-  private async updateLastSyncTime(
-    notionManager: NotionManager<NotionPage>,
-    name?: string,
+  constructor(
+    className: new () => SyncToNotion<T> | SyncFromNotion,
+    private logger = new Logger("NotionSyncResolver"),
   ) {
-    await notionManager.updateSyncStatus();
-    if (!name) {
-      return;
+    super();
+    this.resolver = new className();
+    this.syncToNotionResolver = this.resolver as SyncToNotion<T>;
+    this.syncFromNotionResolver = this.resolver as SyncFromNotion;
+  }
+
+  private async getNotionSyncId() {
+    return this.resolver.getTableName();
+  }
+
+  private getSyncToNotionResolver(): SyncToNotion<T> {
+    if (this.syncToNotionResolver) {
+      return this.syncToNotionResolver;
     }
+    throw Error("resolver does not implement SyncToNotion");
+  }
+
+  private getSyncFromNotionResolver(): SyncFromNotion {
+    if (this.syncFromNotionResolver) {
+      return this.syncFromNotionResolver;
+    }
+    throw Error("resolver does not implement SyncFromNotion");
+  }
+
+  private async updateLastSyncTime(notionManager: NotionManager) {
+    await notionManager.updateSyncStatus();
     const tbl = await this.table();
     return await tbl.createOrReplace({
-      id: name,
+      id: await this.getNotionSyncId(),
       databaseId: notionManager.databaseId,
       lastSyncTime: new Date().getTime(),
     });
+  }
+
+  private async unlinkNotionDatabase() {
+    try {
+      const sync = await this.getNotionSyncInfo();
+      const notionManager = new NotionManager(sync.databaseId);
+      notionManager.updateDatabaseTitle(`[Unlinked] ${sync.id}`);
+    } catch (e) {}
   }
 
   /**
@@ -76,10 +77,11 @@ export class NotionSyncResolver extends TableProvider(NotionSyncTable) {
    * @param {string} databaseId
    * @returns {*}
    */
-  public async linkDatabase(tableName: TableName, databaseId: string) {
+  public async linkDatabase(databaseId: string) {
+    this.unlinkNotionDatabase();
     const tbl = await this.table();
     await tbl.createOrReplace({
-      id: tableName,
+      id: await this.getNotionSyncId(),
       databaseId,
       lastSyncTime: 0,
     });
@@ -94,31 +96,60 @@ export class NotionSyncResolver extends TableProvider(NotionSyncTable) {
    * @param {string} pageId
    * @returns {*}
    */
-  public async createEditableMirrorInNotion(
-    tableName: TableName,
-    pageId: string,
-  ) {
-    const resolver = NotionSyncResolver.getSyncToNotionResolver(tableName);
-    const notionSyncer = await NotionManager.createDatabase(
+  public async createEditableMirrorInNotion(pageId: string) {
+    const resolver = this.getSyncToNotionResolver();
+    const notionManager = await NotionManager.createDatabase(
       pageId,
-      resolver,
-      tableName,
+      await this.getNotionSyncId(),
+      resolver.getPropertiesForDatabaseCreation(),
     );
+    this.unlinkNotionDatabase();
+    await this.insertAllToNotion(notionManager);
+  }
+
+  /**
+   * This should only be run when the notion database is linked but empty
+   *
+   * @public
+   * @async
+   * @param {TableName} tableName
+   * @param {?SyncToNotion<any>} [resolver]
+   * @param {?NotionManager} [notionManager]
+   * @returns {*}
+   */
+  public async insertAllToNotion(notionManager?: NotionManager) {
+    if (!notionManager) {
+      const sync = await this.getNotionSyncInfo();
+      notionManager = new NotionManager(sync.databaseId);
+    }
+    const resolver = this.getSyncToNotionResolver();
     const entities = await resolver.getAllLocalItems();
     await Promise.allSettled(
       entities.map(async entity => {
         try {
-          const id = await notionSyncer.create(entity);
+          const properties = await resolver?.getPropertiesForItemCreation(
+            entity,
+          );
+          const id = await notionManager?.create(properties);
           if (id) {
-            resolver.linkLocalItem(entity, id);
+            resolver?.linkLocalItem(entity, id);
           }
         } catch (e) {
-          console.log(`Insert ${entity} failed`);
+          console.log(`Insert ${entity.id} failed`);
           throw e;
         }
       }),
     );
-    await this.updateLastSyncTime(notionSyncer, tableName);
+    await this.updateLastSyncTime(notionManager);
+  }
+
+  private async getNotionSyncInfo(): Promise<NotionSync> {
+    const tbl = await this.table();
+    const sync = await tbl.get(await this.getNotionSyncId());
+    if (!sync) {
+      throw Error("notion sync info not found");
+    }
+    return sync;
   }
 
   /**
@@ -131,22 +162,17 @@ export class NotionSyncResolver extends TableProvider(NotionSyncTable) {
    * @returns {Promise<void>}
    */
   public async syncFromNotion(
-    tableName: TableName,
     lookBackTime = DEFAULT_LOOK_BACK_MS,
   ): Promise<void> {
-    const tbl = await this.table();
-    const sync = await tbl.get(tableName);
-    if (!sync) {
-      return;
-    }
+    const sync = await this.getNotionSyncInfo();
     const logger = this.logger.in("syncFromNotion");
 
-    const notionSyncer = new NotionManager(sync.databaseId);
+    const notionManager = new NotionManager(sync.databaseId);
     if (lookBackTime >= 0) {
-      const lastUpdated = await notionSyncer.getLastUpdatedTime();
+      const lastUpdated = await notionManager.getLastUpdatedTime();
       if (lastUpdated && lastUpdated <= sync.lastSyncTime - lookBackTime) {
         // Only update notion status but not DB sync time as nothing has been updated
-        await this.updateLastSyncTime(notionSyncer, tableName);
+        await this.updateLastSyncTime(notionManager);
         logger.log(
           `Skipped. last edited time: ${new Date(
             lastUpdated || 0,
@@ -156,7 +182,7 @@ export class NotionSyncResolver extends TableProvider(NotionSyncTable) {
       }
     }
     logger.log("Started");
-    const allTags = await notionSyncer.queryAll();
+    const allTags = await notionManager.queryAll();
 
     const updatedOrCreated =
       lookBackTime < 0
@@ -169,7 +195,7 @@ export class NotionSyncResolver extends TableProvider(NotionSyncTable) {
 
     logger.log("Collection done, start updating database");
 
-    const resolver = NotionSyncResolver.getSyncFromNotionResolver(tableName);
+    const resolver = this.getSyncFromNotionResolver();
     const [upsertResults, deleted] = await Promise.all([
       resolver.createOrUpdateLocalItems(updatedOrCreated),
       resolver.deleteNotFoundLocalItems(allTags.map(t => t.id)),
@@ -190,6 +216,6 @@ export class NotionSyncResolver extends TableProvider(NotionSyncTable) {
     logger.log(`Updated count: ${upsertSummary.modifiedCount}`);
     logger.log(`Deleted count: ${deleted.length}`);
 
-    await this.updateLastSyncTime(notionSyncer, tableName);
+    await this.updateLastSyncTime(notionManager);
   }
 }
