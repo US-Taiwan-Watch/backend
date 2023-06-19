@@ -51,6 +51,10 @@ export abstract class FileDownloader<T> {
     );
   }
 
+  public getPublicUrl() {
+    return AzureStorageManager.getBlobUrl(this.container, this.getPath());
+  }
+
   public async upload(data: Buffer) {
     return await AzureStorageManager.uploadBlob(
       this.container,

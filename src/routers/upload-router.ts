@@ -36,14 +36,14 @@ async function uploadPicture(
       process.env.NODE_ENV === "dev" ? "dev/" : ""
     }${uuid()}.${image.mimetype.replace("image/", "")}`;
     logger.log(`Start uploading post image ${image.name} as ${filename}`);
-    const ress = await AzureStorageManager.uploadBlobData(
+    const url = await AzureStorageManager.uploadBlobData(
       Container.PUBLIC_IMAGE,
       `${path}/${filename}`,
       image.mimetype,
-      image.data
+      image.data,
     );
     logger.log(`Uploaded ${filename}`);
-    res.send(`https://static.ustw.watch/public-image/${path}/${filename}`);
+    res.send(url);
   } catch (err) {
     logger.log(err);
     res.status(500).send(err);

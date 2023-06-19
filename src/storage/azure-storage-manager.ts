@@ -1,11 +1,7 @@
 import { BlobServiceClient } from "@azure/storage-blob";
-import { memoize } from "lodash";
 import config from "../config";
 import { ContentType } from "../data-sync/sources/request-helper";
-
-const blobServiceClient = BlobServiceClient.fromConnectionString(
-  config.storage.connection_string,
-);
+import { STATIC_URL } from "../../common/constants/general-constants";
 
 export enum Container {
   TEST = "test",
@@ -14,11 +10,16 @@ export enum Container {
 }
 
 export abstract class AzureStorageManager {
+  static blobServiceClient = BlobServiceClient.fromConnectionString(
+    config.storage.connection_string,
+  );
+
   public static async getCounts(
     container: Container,
     prefix: string,
   ): Promise<number> {
-    const containerClient = blobServiceClient.getContainerClient(container);
+    const containerClient =
+      this.blobServiceClient.getContainerClient(container);
     const it = containerClient.listBlobsFlat({ prefix });
     let item = await it.next();
     let count = 0;
@@ -33,7 +34,8 @@ export abstract class AzureStorageManager {
     container: Container,
     blobName: string,
   ): Promise<boolean> {
-    const containerClient = blobServiceClient.getContainerClient(container);
+    const containerClient =
+      this.blobServiceClient.getContainerClient(container);
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
     return await blockBlobClient.exists();
   }
@@ -44,25 +46,22 @@ export abstract class AzureStorageManager {
     contentType: ContentType,
     data: Buffer,
   ) {
-    const containerClient = blobServiceClient.getContainerClient(container);
+    const mimeType = AzureStorageManager.getMimeType(contentType);
+    if (contentType === "pdf" || contentType === "jpg") {
+      return this.uploadBlobData(container, blobName, mimeType, data);
+    }
 
+    const containerClient =
+      this.blobServiceClient.getContainerClient(container);
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
 
-    let uploadBlobResponse;
-    const options = {
-      blobHTTPHeaders: { blobContentType: this.getMimeType(contentType) },
-    };
-
-    if (contentType === "xml" || contentType === "txt") {
-      uploadBlobResponse = await blockBlobClient.upload(
-        data,
-        data.length,
-        options,
-      );
-    } else {
-      uploadBlobResponse = await blockBlobClient.uploadData(data, options);
+    const uploadBlobResponse = await blockBlobClient.upload(data, data.length, {
+      blobHTTPHeaders: { blobContentType: mimeType },
+    });
+    if (uploadBlobResponse.errorCode) {
+      throw new Error(uploadBlobResponse.errorCode);
     }
-    return uploadBlobResponse.lastModified;
+    return this.getBlobUrl(container, blobName);
   }
 
   public static async uploadBlobData(
@@ -71,14 +70,21 @@ export abstract class AzureStorageManager {
     mimeType: string,
     data: Buffer,
   ) {
-    const containerClient = blobServiceClient.getContainerClient(container);
-
+    const containerClient =
+      this.blobServiceClient.getContainerClient(container);
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
 
     const uploadBlobResponse = await blockBlobClient.uploadData(data, {
       blobHTTPHeaders: { blobContentType: mimeType },
     });
-    return uploadBlobResponse.lastModified;
+    if (uploadBlobResponse.errorCode) {
+      throw new Error(uploadBlobResponse.errorCode);
+    }
+    return this.getBlobUrl(container, blobName);
+  }
+
+  public static getBlobUrl(container: Container, blobName: string) {
+    return `${STATIC_URL}/${container}/${blobName}`;
   }
 
   private static getMimeType(contentType: ContentType): string {

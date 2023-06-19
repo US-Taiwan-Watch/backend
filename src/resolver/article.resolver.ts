@@ -222,15 +222,16 @@ export class ArticleResolver
 
           let imageUrl = null;
           if (image) {
-            const success = await new PublicJPGDownloader(
+            const downloader = new PublicJPGDownloader(
               image,
               `posts/${pageObject.id}`,
               RequestSource.UNLIMITED,
-            ).downloadAndUpload();
+            );
+            const success = await downloader.downloadAndUpload();
             if (!success) {
               throw new Error("upload image failed");
             }
-            imageUrl = `https://static.ustw.watch/public-image/posts/${pageObject.id}.jpg`;
+            imageUrl = downloader.getPublicUrl();
           }
 
           return await tbl.upsertItemByCustomQuery<Article>(
