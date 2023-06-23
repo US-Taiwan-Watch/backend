@@ -19,6 +19,7 @@ import {
   BILL_AUTHORIZED_ROLES,
   I18NText,
   Member,
+  TextVersionWithFiles,
 } from "../../common/models";
 import { BillSyncer, getBillSyncingCacheKey } from "../data-sync/bill.sync";
 import { TableProvider } from "../mongodb/mongodb-manager";
@@ -187,6 +188,22 @@ export class BillResolver
     const cacheKey = getBillSyncingCacheKey(bill.id);
     const isSyncing = await RedisClient.get(cacheKey);
     return !!isSyncing;
+  }
+
+  @FieldResolver(() => [TextVersionWithFiles])
+  async versions(@Root() bill: Bill): Promise<TextVersionWithFiles[]> {
+    return (
+      bill.versions?.map(version => ({
+        ...version,
+        files: {
+          pdf: new BillVersionDownloader({
+            billId: bill.id,
+            versionCode: version.code,
+            contentType: "pdf",
+          }).getPublicUrl(),
+        },
+      })) || []
+    );
   }
 
   @Query(() => PaginatedBills, { nullable: false })
