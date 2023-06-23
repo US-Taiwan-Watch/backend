@@ -79,20 +79,21 @@ export class BillSyncer extends EntitySyncer<Bill> {
     RedisClient.client.del(cacheKey);
     let succeed = true;
     const successSteps: string[] = [];
+    const failedReasons: { [key: string]: string } = {};
     results.forEach((res, i) => {
       if (res.status == "fulfilled") {
         successSteps.push(runningSteps[i]);
         return;
       }
-      logger.log(
-        `Failed to sync ${runningSteps[i]} for ${this.entity.id}: ${res.reason}`,
-      );
+      failedReasons[runningSteps[i]] = res.reason;
       succeed = false;
     });
+    logger.log(`[${this.entity.id}] Sync completed`);
     if (successSteps.length > 0) {
-      logger.log(
-        `Synced ${successSteps.join(", ")} for ${this.entity.id} successfully`,
-      );
+      logger.log(`[${this.entity.id}] Succeeded: ${successSteps.join(", ")}`);
+    }
+    for (const step in failedReasons) {
+      logger.log(`[${this.entity.id}] Failed: ${step}: ${failedReasons[step]}`);
     }
     if (succeed) {
       this.entity.lastSynced = new Date().getTime();

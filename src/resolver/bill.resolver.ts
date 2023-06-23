@@ -31,8 +31,8 @@ import { PaginatedBills, PaginationArgs } from "../util/pagination";
 import { BillTable } from "./bill-table";
 import { MemberResolver } from "./member.resolver";
 import { GraphQLResolveInfo } from "graphql";
-import { SyncToNotion } from "../data-sync/notion-manager";
 import { UpdateResult } from "mongodb";
+import { SyncToNotion } from "./notion-sync.resolver";
 
 @Resolver(Bill)
 export class BillResolver
@@ -47,42 +47,88 @@ export class BillResolver
   }
   async getAllLocalItems(): Promise<Bill[]> {
     const tbl = await this.table();
-    return await tbl.getAllBills();
+    const bills = await tbl.getAllBills();
+    return bills.slice(0, 10);
   }
 
   getPropertiesForDatabaseCreation() {
     return {
-      Id: {
+      "Congress-type-number": {
         title: {},
       },
-      Title: {
-        rich_text: {},
-      },
-      "Title (zh)": {
-        rich_text: {},
-      },
-      "Summary (zh)": {
+      "Introduce Date": {
         rich_text: {},
       },
       Congress: {
-        number: {
-          format: "number",
-        },
+        select: {},
       },
       "Bill Type": {
-        rich_text: {},
+        select: {},
       },
-      "Bill number": {
+      "Bill Number": {
         number: {
           format: "number",
         },
       },
+      "Title (En)": {
+        rich_text: {},
+      },
+      標題: {
+        rich_text: {},
+      },
+      概要: {
+        rich_text: {},
+      },
+      "Last synced time": {
+        date: {},
+      },
+      // TODO
+      // Tags: {
+      //   relation: [
+      //     {
+      //       id: "66907eb9-3a19-4cc9-b8b2-d9a67228ae53",
+      //     },
+      //   ],
+      // },
+      "Sync status": {
+        select: {
+          options: [
+            {
+              name: BillSyncStatus.WRONG_FORMAT,
+              color: "red",
+            },
+            {
+              name: BillSyncStatus.FAILED,
+              color: "red",
+            },
+            {
+              name: BillSyncStatus.NOT_STARTED,
+              color: "default",
+            },
+            {
+              name: BillSyncStatus.WILL_SYNC,
+              color: "blue",
+            },
+            {
+              name: BillSyncStatus.MANUAL_SYNC,
+              color: "green",
+            },
+            {
+              name: BillSyncStatus.DONE,
+              color: "green",
+            },
+          ],
+        },
+      },
+      // URL: {
+      //   url: 'https://???',
+      // },
     };
   }
 
   async getPropertiesForItemCreation(bill: Bill): Promise<any> {
     return {
-      Id: {
+      "Congress-type-number": {
         title: [
           {
             text: {
@@ -91,7 +137,29 @@ export class BillResolver
           },
         ],
       },
-      Title: {
+      "Introduce Date": {
+        rich_text: [
+          {
+            text: {
+              content: bill.introducedDate || "",
+            },
+          },
+        ],
+      },
+      Congress: {
+        select: {
+          name: bill.congress.toString(),
+        },
+      },
+      "Bill Type": {
+        select: {
+          name: bill.billType,
+        },
+      },
+      "Bill Number": {
+        number: bill.billNumber,
+      },
+      "Title (En)": {
         rich_text: [
           {
             text: {
@@ -100,7 +168,7 @@ export class BillResolver
           },
         ],
       },
-      "Title (zh)": {
+      標題: {
         rich_text: [
           {
             text: {
@@ -109,7 +177,7 @@ export class BillResolver
           },
         ],
       },
-      "Summary (zh)": {
+      概要: {
         rich_text: [
           {
             text: {
@@ -118,21 +186,31 @@ export class BillResolver
           },
         ],
       },
-      Congress: {
-        number: bill.congress,
-      },
-      "Bill Type": {
-        rich_text: [
-          {
-            text: {
-              content: bill.billType,
+      ...(bill.lastSynced
+        ? {
+            "Last synced time": {
+              date: {
+                start: new Date(bill.lastSynced).toISOString(),
+              },
             },
-          },
-        ],
+          }
+        : {}),
+      // TODO
+      // Tags: {
+      //   relation: [
+      //     {
+      //       id: "66907eb9-3a19-4cc9-b8b2-d9a67228ae53",
+      //     },
+      //   ],
+      // },
+      "Sync status": {
+        select: {
+          name: bill.status,
+        },
       },
-      "Bill number": {
-        number: bill.billNumber,
-      },
+      // URL: {
+      //   url: 'https://???',
+      // },
     };
   }
 
@@ -141,7 +219,7 @@ export class BillResolver
     return await tbl.updateBill(bill.id, { notionPageId });
   }
 
-  getPropertiesForItemUpdating(entity: Bill): Promise<any> {
+  getPropertiesForItemUpdate(entity: Bill): Promise<any> {
     throw new Error("Method not implemented.");
   }
 
@@ -286,7 +364,7 @@ export class BillResolver
     return bills;
   }
 
-  public async syncNewBills(fields?: (keyof Bill)[]): Promise<Bill[]> {
+  public async syncIncompleteBills(fields?: (keyof Bill)[]): Promise<Bill[]> {
     const tbl = await this.table();
     const bills = await tbl.getBillsThatNeedSync();
     return await this.syncBills(bills, false, fields);
@@ -414,105 +492,4 @@ export class BillResolver
     const tbl = await this.table();
     await tbl.createOrReplaceBill(bill);
   }
-
-  // protected getPropertiesForCreation(bill: Bill) {
-  //   if (!bill.id) {
-  //     return null;
-  //   }
-  //   return {
-  //     "Congress-type-number": {
-  //       title: [
-  //         {
-  //           text: {
-  //             content: bill.id,
-  //           },
-  //         },
-  //       ],
-  //     },
-  //     "Introduce Date": {
-  //       type: "rich_text",
-  //       rich_text: [
-  //         {
-  //           text: {
-  //             content: bill.introducedDate || "",
-  //           },
-  //         },
-  //       ],
-  //     },
-  //     Congress: {
-  //       select: {
-  //         name: bill.congress.toString(),
-  //       },
-  //     },
-  //     "Bill type": {
-  //       select: {
-  //         name: bill.billType,
-  //       },
-  //     },
-  //     "Bill number": {
-  //       number: bill.billNumber,
-  //     },
-  //     "Title (En)": {
-  //       rich_text: [
-  //         {
-  //           text: {
-  //             content: bill.title?.en || "",
-  //           },
-  //         },
-  //       ],
-  //     },
-  //     "Summary (En)": {
-  //       rich_text: [
-  //         {
-  //           text: {
-  //             content: bill.summary?.en || "",
-  //           },
-  //         },
-  //       ],
-  //     },
-  //     標題: {
-  //       type: "rich_text",
-  //       rich_text: [
-  //         {
-  //           text: {
-  //             content: bill.title?.zh || "",
-  //           },
-  //         },
-  //       ],
-  //     },
-  //     總結: {
-  //       type: "rich_text",
-  //       rich_text: [
-  //         {
-  //           text: {
-  //             content: bill.summary?.zh || "",
-  //           },
-  //         },
-  //       ],
-  //     },
-  //     "Last synced time": {
-  //       date: {
-  //         start: bill.lastSynced
-  //           ? new Date(bill.lastSynced).toISOString()
-  //           : null,
-  //       },
-  //     },
-  //     // TODO
-  //     // Tags: {
-  //     //   relation: [
-  //     //     {
-  //     //       id: "66907eb9-3a19-4cc9-b8b2-d9a67228ae53",
-  //     //     },
-  //     //   ],
-  //     // },
-  //     "Sync status": {
-  //       status: {
-  //         name: bill.status,
-  //       },
-  //     },
-  //     // URL: {
-  //     //   url: 'https://???',
-  //     // },
-  //   };
-  // }
 }

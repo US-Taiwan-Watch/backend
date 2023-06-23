@@ -22,11 +22,12 @@ import { IApolloContext } from "../@types/common.interface";
 import { ArticleTable } from "./article-table";
 import { UserResolver } from "./user.resolver";
 import { authCheckHelper } from "../util/auth-helper";
-import { NotionManager, SyncFromNotion } from "../data-sync/notion-manager";
+import { NotionManager } from "../data-sync/notion-manager";
 import { UpdateResult } from "mongodb";
 import { v4 as uuid } from "uuid";
 import { PublicJPGDownloader } from "../storage/public-jpg-downloader";
 import { RequestSource } from "../data-sync/sources/request-helper";
+import { SyncFromNotion } from "./notion-sync.resolver";
 
 @Resolver(Article)
 export class ArticleResolver

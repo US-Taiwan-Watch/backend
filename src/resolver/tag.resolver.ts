@@ -4,7 +4,7 @@ import { Tag } from "../../common/models";
 import { TableProvider } from "../mongodb/mongodb-manager";
 import { TagTable } from "./tag-table";
 import { v4 as uuid } from "uuid";
-import { SyncFromNotion, SyncToNotion } from "../data-sync/notion-manager";
+import { SyncFromNotion, SyncToNotion } from "./notion-sync.resolver";
 
 @Resolver(Tag)
 export class TagResolver
@@ -46,7 +46,7 @@ export class TagResolver
       },
     };
   }
-  public async getPropertiesForItemUpdating(tag: Tag): Promise<any> {
+  public async getPropertiesForItemUpdate(tag: Tag): Promise<any> {
     return this.getPropertiesForItemCreation(tag);
   }
 

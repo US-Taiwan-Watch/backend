@@ -1,22 +1,5 @@
 import { Client } from "@notionhq/client";
 import { QueryDatabaseParameters } from "@notionhq/client/build/src/api-endpoints";
-import { UpdateResult } from "mongodb";
-import { NotionPage } from "../../common/models";
-
-export interface SyncToNotion<T> {
-  getTableName(): Promise<string>;
-  getAllLocalItems(): Promise<T[]>;
-  getPropertiesForDatabaseCreation(): any;
-  getPropertiesForItemCreation(entity: T): Promise<any>;
-  getPropertiesForItemUpdating(entity: T): Promise<any>;
-  linkLocalItem(entity: T, notionPageId: string): Promise<UpdateResult>;
-}
-
-export interface SyncFromNotion {
-  getTableName(): Promise<string>;
-  createOrUpdateLocalItems(pageObjects: any[]): Promise<UpdateResult[]>;
-  deleteNotFoundLocalItems(notionPageIds: string[]): Promise<any[]>;
-}
 
 export class NotionManager {
   private notionClient: Client;
@@ -193,7 +176,7 @@ export class NotionManager {
     const res = await NotionManager.retry(
       async () =>
         await this.notionClient.pages.update({
-          page_id: notionPageId!,
+          page_id: notionPageId,
           properties,
         }),
     );

@@ -3,13 +3,24 @@ import { NotionSync } from "../../common/models";
 import { TableProvider } from "../mongodb/mongodb-manager";
 import { NotionSyncTable } from "./notion-sync-table";
 import { Logger } from "../util/logger";
-import {
-  NotionManager,
-  SyncFromNotion,
-  SyncToNotion,
-} from "../data-sync/notion-manager";
+import { NotionManager } from "../data-sync/notion-manager";
+import { UpdateResult } from "mongodb";
 
 const DEFAULT_LOOK_BACK_MS = 5 * 60 * 1000;
+export interface SyncToNotion<T> {
+  getTableName(): Promise<string>;
+  getAllLocalItems(): Promise<T[]>;
+  getPropertiesForDatabaseCreation(): any;
+  getPropertiesForItemCreation(entity: T): Promise<any>;
+  getPropertiesForItemUpdate(entity: T): Promise<any>;
+  linkLocalItem(entity: T, notionPageId: string): Promise<UpdateResult>;
+}
+
+export interface SyncFromNotion {
+  getTableName(): Promise<string>;
+  createOrUpdateLocalItems(pageObjects: any[]): Promise<UpdateResult[]>;
+  deleteNotFoundLocalItems(notionPageIds: string[]): Promise<any[]>;
+}
 
 type Entity = {
   id: string;
@@ -23,7 +34,7 @@ export class NotionSyncResolver<T extends Entity> extends TableProvider(
   private syncFromNotionResolver?: SyncFromNotion;
 
   constructor(
-    className: new () => SyncToNotion<T> | SyncFromNotion,
+    private className: new () => SyncToNotion<T> | SyncFromNotion,
     private logger = new Logger("NotionSyncResolver"),
   ) {
     super();
@@ -65,7 +76,11 @@ export class NotionSyncResolver<T extends Entity> extends TableProvider(
       const sync = await this.getNotionSyncInfo();
       const notionManager = new NotionManager(sync.databaseId);
       notionManager.updateDatabaseTitle(`[Unlinked] ${sync.id}`);
-    } catch (e) {}
+    } catch (e) {
+      this.logger
+        .in("unlinkNotionDatabase")
+        .log(`Failed for resolver ${this.className.name}`);
+    }
   }
 
   /**
@@ -103,7 +118,7 @@ export class NotionSyncResolver<T extends Entity> extends TableProvider(
       await this.getNotionSyncId(),
       resolver.getPropertiesForDatabaseCreation(),
     );
-    this.unlinkNotionDatabase();
+    await this.unlinkNotionDatabase();
     await this.insertAllToNotion(notionManager);
   }
 
@@ -135,11 +150,25 @@ export class NotionSyncResolver<T extends Entity> extends TableProvider(
             resolver?.linkLocalItem(entity, id);
           }
         } catch (e) {
-          console.log(`Insert ${entity.id} failed`);
+          this.logger.in("insertAllToNotion").log(`Insert ${entity.id} failed`);
           throw e;
         }
       }),
     );
+    await this.updateLastSyncTime(notionManager);
+  }
+
+  public async syncEntityToNotion(notionPageId: string, entity: T) {
+    const sync = await this.getNotionSyncInfo();
+    const notionManager = new NotionManager(sync.databaseId);
+    const resolver = this.getSyncToNotionResolver();
+    try {
+      const properties = await resolver?.getPropertiesForItemUpdate(entity);
+      await notionManager?.update(notionPageId, properties);
+    } catch (e) {
+      this.logger.in("syncEntityToNotion").log(`Update ${entity.id} failed`);
+      throw e;
+    }
     await this.updateLastSyncTime(notionManager);
   }
 

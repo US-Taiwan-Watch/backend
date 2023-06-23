@@ -11,8 +11,8 @@ if (require.main === module) {
   // new BillResolver().syncAllBills().then(_ => {
   //   console.log('sync succcessfully!');
   // })
-  new BillResolver().syncBillsForCongress(116).then(bills => {
-    console.log('sync 116 bills succcessfully!');
+  new BillResolver().syncIncompleteBills().then(bills => {
+    console.log("sync 116 bills succcessfully!");
   });
 }
 
