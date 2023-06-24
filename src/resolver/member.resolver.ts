@@ -73,7 +73,7 @@ export class MemberResolver extends TableProvider(MemberTable) {
     if (!date) {
       return null;
     }
-    const memberRoles = await this.congressRoles(member);
+    const memberRoles = member.congressRoles || [];
     const congress = CongressUtils.getCongress(date);
     const memberRole = memberRoles.filter(
       role =>
@@ -101,111 +101,17 @@ export class MemberResolver extends TableProvider(MemberTable) {
 
   @FieldResolver(() => I18NText, { nullable: true })
   displayName(@Root() member: Member): I18NText {
-    const en = [this.firstName(member), this.lastName(member)]
+    const en = [member.firstName, member.lastName]
       .filter(s => !!s)
       .join(" ");
     const zh =
-      [this.firstName_zh(member), this.lastName_zh(member)]
+      [member.firstName_zh, member.lastName_zh]
         .filter(s => !!s)
         .join("·") || en;
     return { en, zh };
   }
 
-  @FieldResolver()
-  firstName(@Root() member: Member): string {
-    const ans = getMergedMemberData(member, "firstName") || "";
-    return ans;
-  }
-
-  @FieldResolver()
-  lastName(@Root() member: Member): string {
-    const ans = getMergedMemberData(member, "lastName") || "";
-    return ans;
-  }
-
-  @FieldResolver()
-  nickname(@Root() member: Member): string {
-    const ans = getMergedMemberData(member, "nickname") || "";
-    return ans;
-  }
-
-  @FieldResolver()
-  firstName_zh(@Root() member: Member): string {
-    const ans = getMergedMemberData(member, "firstName_zh") || "";
-    return ans;
-  }
-
-  @FieldResolver()
-  lastName_zh(@Root() member: Member): string {
-    const ans = getMergedMemberData(member, "lastName_zh") || "";
-    return ans;
-  }
-
-  @FieldResolver()
-  gender(@Root() member: Member): string {
-    const ans = getMergedMemberData(member, "gender") || "";
-    return ans;
-  }
-
-  @FieldResolver()
-  birthday(@Root() member: Member): string {
-    const ans = getMergedMemberData(member, "birthday") || "";
-    return ans;
-  }
-
-  @FieldResolver()
-  website(@Root() member: Member): string {
-    const ans = getMergedMemberData(member, "website") || "";
-    return ans;
-  }
-
-  @FieldResolver()
-  office(@Root() member: Member): string {
-    const ans = getMergedMemberData(member, "office") || "";
-    return ans;
-  }
-
-  @FieldResolver()
-  phone(@Root() member: Member): string {
-    const ans = getMergedMemberData(member, "phone") || "";
-    return ans;
-  }
-
-  @FieldResolver()
-  cspanId(@Root() member: Member): string {
-    const ans = getMergedMemberData(member, "cspanId") || "";
-    return ans;
-  }
-
-  @FieldResolver()
-  twitterId(@Root() member: Member): string {
-    const ans = getMergedMemberData(member, "twitterId") || "";
-    return ans;
-  }
-
-  @FieldResolver()
-  facebookId(@Root() member: Member): string {
-    const ans = getMergedMemberData(member, "facebookId") || "";
-    return ans;
-  }
-
-  @FieldResolver()
-  youtubeId(@Root() member: Member): string {
-    const ans = getMergedMemberData(member, "youtubeId") || "";
-    return ans;
-  }
-
-  @FieldResolver()
-  profilePictureUri(@Root() member: Member): string {
-    const ans = getMergedMemberData(member, "profilePictureUri") || "";
-    return ans;
-  }
-
-  @FieldResolver()
-  congressRoles(@Root() member: Member): MemberRole[] {
-    const ans = getMergedMemberData(member, "congressRoles") || [];
-    return ans;
-  }
+  
 
   //
   // Public Functions
@@ -242,6 +148,138 @@ export class MemberResolver extends TableProvider(MemberTable) {
   // Private Functions
   //
 
+  private async resolveMemberFields(member: Member): Promise<Member> {
+    // (1) store outter member data as user data if it is different from sync-ed data: old data
+    // (2) store mergedMember(with userData) as outter member: for query
+    let outterData: any;
+    let mergedDataWithoutUser: any;
+
+    if (!member.userWroteMember) {
+      member.userWroteMember = new Member(member.id);
+    }
+
+    outterData = member.firstName;
+    mergedDataWithoutUser = getMergedMemberData(member, "firstName", true);
+    if (outterData && outterData !== mergedDataWithoutUser) {
+      console.log(`[Resolve][${member.id}] firstName conflict > "${outterData}" / "${mergedDataWithoutUser}"`);
+      member.userWroteMember.firstName = outterData;
+    }
+    member.firstName = getMergedMemberData(member, "firstName") || "";
+
+    outterData = member.lastName;
+    mergedDataWithoutUser = getMergedMemberData(member, "lastName", true);
+    if (outterData && outterData !== mergedDataWithoutUser) {
+      console.log(`[Resolve][${member.id}] lastName conflict > "${outterData}" / "${mergedDataWithoutUser}"`);
+      member.userWroteMember.lastName = outterData;
+    }
+    member.lastName = getMergedMemberData(member, "lastName") || "";
+
+    outterData = member.nickname;
+    mergedDataWithoutUser = getMergedMemberData(member, "nickname", true);
+    if (outterData && outterData !== mergedDataWithoutUser) {
+      console.log(`[Resolve][${member.id}] nickname conflict > "${outterData}" / "${mergedDataWithoutUser}"`);
+      member.userWroteMember.nickname = outterData;
+    }
+    member.nickname = getMergedMemberData(member, "nickname") || "";
+
+    outterData = member.firstName_zh;
+    mergedDataWithoutUser = getMergedMemberData(member, "firstName_zh", true);
+    if (outterData && outterData !== mergedDataWithoutUser) {
+      console.log(`[Resolve][${member.id}] firstName_zh conflict > "${outterData}" / "${mergedDataWithoutUser}"`);
+      member.userWroteMember.firstName_zh = outterData;
+    }
+    member.firstName_zh = getMergedMemberData(member, "firstName_zh") || "";
+
+    outterData = member.lastName_zh;
+    mergedDataWithoutUser = getMergedMemberData(member, "lastName_zh", true);
+    if (outterData && outterData !== mergedDataWithoutUser) {
+      console.log(`[Resolve][${member.id}] lastName_zh conflict > "${outterData}" / "${mergedDataWithoutUser}"`);
+      member.userWroteMember.lastName_zh = outterData;
+    }
+    member.lastName_zh = getMergedMemberData(member, "lastName_zh") || "";
+
+    outterData = member.gender;
+    mergedDataWithoutUser = getMergedMemberData(member, "gender", true);
+    if (outterData && outterData !== mergedDataWithoutUser) {
+      console.log(`[Resolve][${member.id}] gender conflict > "${outterData}" / "${mergedDataWithoutUser}"`);
+      member.userWroteMember.gender = outterData;
+    }
+    member.gender = getMergedMemberData(member, "gender") || "";
+
+    outterData = member.birthday;
+    mergedDataWithoutUser = getMergedMemberData(member, "birthday", true);
+    if (outterData && outterData !== mergedDataWithoutUser) {
+      console.log(`[Resolve][${member.id}] birthday conflict > "${outterData}" / "${mergedDataWithoutUser}"`);
+      member.userWroteMember.birthday = outterData;
+    }
+    member.birthday = getMergedMemberData(member, "birthday") || "";
+
+    outterData = member.website;
+    mergedDataWithoutUser = getMergedMemberData(member, "website", true);
+    if (outterData && outterData !== mergedDataWithoutUser) {
+      console.log(`[Resolve][${member.id}] website conflict > "${outterData}" / "${mergedDataWithoutUser}"`);
+      member.userWroteMember.website = outterData;
+    }
+    member.website = getMergedMemberData(member, "website") || "";
+
+    outterData = member.office;
+    mergedDataWithoutUser = getMergedMemberData(member, "office", true);
+    if (outterData && outterData !== mergedDataWithoutUser) {
+      console.log(`[Resolve][${member.id}] office conflict > "${outterData}" / "${mergedDataWithoutUser}"`);
+      member.userWroteMember.office = outterData;
+    }
+    member.office = getMergedMemberData(member, "office") || "";
+
+    outterData = member.phone;
+    mergedDataWithoutUser = getMergedMemberData(member, "phone", true);
+    if (outterData && outterData !== mergedDataWithoutUser) {
+      console.log(`[Resolve][${member.id}] phone conflict > "${outterData}" / "${mergedDataWithoutUser}"`);
+      member.userWroteMember.phone = outterData;
+    }
+    member.phone = getMergedMemberData(member, "phone") || "";
+
+    outterData = member.cspanId;
+    mergedDataWithoutUser = getMergedMemberData(member, "cspanId", true);
+    if (outterData && outterData !== mergedDataWithoutUser) {
+      console.log(`[Resolve][${member.id}] cspanId conflict > "${outterData}" / "${mergedDataWithoutUser}"`);
+      member.userWroteMember.cspanId = outterData;
+    }
+    member.cspanId = getMergedMemberData(member, "cspanId") || "";
+
+    outterData = member.twitterId;
+    mergedDataWithoutUser = getMergedMemberData(member, "twitterId", true);
+    if (outterData && outterData !== mergedDataWithoutUser) {
+      console.log(`[Resolve][${member.id}] twitterId conflict > "${outterData}" / "${mergedDataWithoutUser}"`);
+      member.userWroteMember.twitterId = outterData;
+    }
+    member.twitterId = getMergedMemberData(member, "twitterId") || "";
+
+    outterData = member.facebookId;
+    mergedDataWithoutUser = getMergedMemberData(member, "facebookId", true);
+    if (outterData && outterData !== mergedDataWithoutUser) {
+      console.log(`[Resolve][${member.id}] facebookId conflict > "${outterData}" / "${mergedDataWithoutUser}"`);
+      member.userWroteMember.facebookId = outterData;
+    }
+    member.facebookId = getMergedMemberData(member, "facebookId") || "";
+
+    outterData = member.youtubeId;
+    mergedDataWithoutUser = getMergedMemberData(member, "youtubeId", true);
+    if (outterData && outterData !== mergedDataWithoutUser) {
+      console.log(`[Resolve][${member.id}] youtubeId conflict > "${outterData}" / "${mergedDataWithoutUser}"`);
+      member.userWroteMember.youtubeId = outterData;
+    }
+    member.youtubeId = getMergedMemberData(member, "youtubeId") || "";
+
+    // profile Pic is directly sync to outter member, no need to resolve
+
+    if (member.congressRoles && !member.userWroteMember.congressRoles) {
+      member.userWroteMember.congressRoles = member.congressRoles;
+    }
+    member.congressRoles = getMergedMemberData(member, "congressRoles") || [];
+
+    return member;
+  }
+
   private async syncMember(
     member: Member,
     memberData: Member,
@@ -255,6 +293,9 @@ export class MemberResolver extends TableProvider(MemberTable) {
 
     try {
       await new MemberSyncer(member, memberData).sync();
+
+      // update sync result in resolved member field
+      await this.resolveMemberFields(member);
 
       if (MemberResolver.shouldSave()) {
         const tbl = await this.table();
