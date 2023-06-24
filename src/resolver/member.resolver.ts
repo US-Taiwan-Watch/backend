@@ -84,7 +84,7 @@ export class MemberResolver extends TableProvider(MemberTable) {
   // Private Functions
   //
 
-  private resolveMemberFields(member: Member): Member {
+  private async resolveMemberFields(member: Member): Promise<Member> {
     // (1) store outter member data as user data if it is different from sync-ed data: old data
     // (2) store mergedMember(with userData) as outter member: for query
     let outterData: any;
@@ -231,7 +231,7 @@ export class MemberResolver extends TableProvider(MemberTable) {
       await new MemberSyncer(member, memberData).sync();
 
       // update sync result in resolved member field
-      this.resolveMemberFields(member);
+      await this.resolveMemberFields(member);
 
       if (MemberResolver.shouldSave()) {
         const tbl = await this.table();
