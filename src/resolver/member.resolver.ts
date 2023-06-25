@@ -158,10 +158,6 @@ export class MemberResolver extends TableProvider(MemberTable) {
 
     outterData = member.firstName;
     mergedDataWithoutUser = getMergedMemberData(member, "firstName", true);
-    if (!member.userWroteMember.firstName && outterData) {
-      // [temp]  backup original data as user wrote data
-      member.userWroteMember.firstName = outterData;
-    }
     if (member.userWroteMember.firstName && mergedDataWithoutUser) {
       if (member.userWroteMember.firstName === mergedDataWithoutUser)
         delete member.userWroteMember.firstName;    // user data is the same as sync-ed data => no need to keep it
@@ -172,10 +168,6 @@ export class MemberResolver extends TableProvider(MemberTable) {
 
     outterData = member.lastName;
     mergedDataWithoutUser = getMergedMemberData(member, "lastName", true);
-    if (!member.userWroteMember.lastName && outterData) {
-      // [temp]  backup original data as user wrote data
-      member.userWroteMember.lastName = outterData;
-    }
     if (member.userWroteMember.lastName && mergedDataWithoutUser) {
       if (member.userWroteMember.lastName === mergedDataWithoutUser)
         delete member.userWroteMember.lastName;    // user data is the same as sync-ed data => no need to keep it
@@ -186,10 +178,6 @@ export class MemberResolver extends TableProvider(MemberTable) {
 
     outterData = member.nickname;
     mergedDataWithoutUser = getMergedMemberData(member, "nickname", true);
-    if (!member.userWroteMember.nickname && outterData) {
-      // [temp]  backup original data as user wrote data
-      member.userWroteMember.nickname = outterData;
-    }
     if (member.userWroteMember.nickname && mergedDataWithoutUser) {
       if (member.userWroteMember.nickname === mergedDataWithoutUser)
         delete member.userWroteMember.nickname;    // user data is the same as sync-ed data => no need to keep it
@@ -200,10 +188,6 @@ export class MemberResolver extends TableProvider(MemberTable) {
 
     outterData = member.firstName_zh;
     mergedDataWithoutUser = getMergedMemberData(member, "firstName_zh", true);
-    if (!member.userWroteMember.firstName_zh && outterData) {
-      // [temp]  backup original data as user wrote data
-      member.userWroteMember.firstName_zh = outterData;
-    }
     if (member.userWroteMember.firstName_zh && mergedDataWithoutUser) {
       if (member.userWroteMember.firstName_zh === mergedDataWithoutUser)
         delete member.userWroteMember.firstName_zh;    // user data is the same as sync-ed data => no need to keep it
@@ -214,10 +198,6 @@ export class MemberResolver extends TableProvider(MemberTable) {
 
     outterData = member.lastName_zh;
     mergedDataWithoutUser = getMergedMemberData(member, "lastName_zh", true);
-    if (!member.userWroteMember.lastName_zh && outterData) {
-      // [temp]  backup original data as user wrote data
-      member.userWroteMember.lastName_zh = outterData;
-    }
     if (member.userWroteMember.lastName_zh && mergedDataWithoutUser) {
       if (member.userWroteMember.lastName_zh === mergedDataWithoutUser)
         delete member.userWroteMember.lastName_zh;    // user data is the same as sync-ed data => no need to keep it
@@ -228,10 +208,6 @@ export class MemberResolver extends TableProvider(MemberTable) {
 
     outterData = member.gender;
     mergedDataWithoutUser = getMergedMemberData(member, "gender", true);
-    if (!member.userWroteMember.gender && outterData) {
-      // [temp]  backup original data as user wrote data
-      member.userWroteMember.gender = outterData;
-    }
     if (member.userWroteMember.gender && mergedDataWithoutUser) {
       if (member.userWroteMember.gender === mergedDataWithoutUser)
         delete member.userWroteMember.gender;    // user data is the same as sync-ed data => no need to keep it
@@ -242,10 +218,6 @@ export class MemberResolver extends TableProvider(MemberTable) {
 
     outterData = member.birthday;
     mergedDataWithoutUser = getMergedMemberData(member, "birthday", true);
-    if (!member.userWroteMember.birthday && outterData) {
-      // [temp]  backup original data as user wrote data
-      member.userWroteMember.birthday = outterData;
-    }
     if (member.userWroteMember.birthday && mergedDataWithoutUser) {
       if (member.userWroteMember.birthday === mergedDataWithoutUser)
         delete member.userWroteMember.birthday;    // user data is the same as sync-ed data => no need to keep it
@@ -256,10 +228,6 @@ export class MemberResolver extends TableProvider(MemberTable) {
 
     outterData = member.website;
     mergedDataWithoutUser = getMergedMemberData(member, "website", true);
-    if (!member.userWroteMember.website && outterData) {
-      // [temp]  backup original data as user wrote data
-      member.userWroteMember.website = outterData;
-    }
     if (member.userWroteMember.website && mergedDataWithoutUser) {
       if (member.userWroteMember.website === mergedDataWithoutUser)
         delete member.userWroteMember.website;    // user data is the same as sync-ed data => no need to keep it
@@ -270,10 +238,6 @@ export class MemberResolver extends TableProvider(MemberTable) {
 
     outterData = member.office;
     mergedDataWithoutUser = getMergedMemberData(member, "office", true);
-    if (!member.userWroteMember.office && outterData) {
-      // [temp]  backup original data as user wrote data
-      member.userWroteMember.office = outterData;
-    }
     if (member.userWroteMember.office && mergedDataWithoutUser) {
       if (member.userWroteMember.office === mergedDataWithoutUser)
         delete member.userWroteMember.office;    // user data is the same as sync-ed data => no need to keep it
@@ -284,10 +248,6 @@ export class MemberResolver extends TableProvider(MemberTable) {
 
     outterData = member.phone;
     mergedDataWithoutUser = getMergedMemberData(member, "phone", true);
-    if (!member.userWroteMember.phone && outterData) {
-      // [temp]  backup original data as user wrote data
-      member.userWroteMember.phone = outterData;
-    }
     if (member.userWroteMember.phone && mergedDataWithoutUser) {
       if (member.userWroteMember.phone === mergedDataWithoutUser)
         delete member.userWroteMember.phone;    // user data is the same as sync-ed data => no need to keep it
@@ -298,10 +258,6 @@ export class MemberResolver extends TableProvider(MemberTable) {
 
     outterData = member.cspanId;
     mergedDataWithoutUser = getMergedMemberData(member, "cspanId", true);
-    if (!member.userWroteMember.cspanId && outterData) {
-      // [temp]  backup original data as user wrote data
-      member.userWroteMember.cspanId = outterData;
-    }
     if (member.userWroteMember.cspanId && mergedDataWithoutUser) {
       if (member.userWroteMember.cspanId === mergedDataWithoutUser)
         delete member.userWroteMember.cspanId;    // user data is the same as sync-ed data => no need to keep it
@@ -312,10 +268,6 @@ export class MemberResolver extends TableProvider(MemberTable) {
 
     outterData = member.twitterId;
     mergedDataWithoutUser = getMergedMemberData(member, "twitterId", true);
-    if (!member.userWroteMember.twitterId && outterData) {
-      // [temp]  backup original data as user wrote data
-      member.userWroteMember.twitterId = outterData;
-    }
     if (member.userWroteMember.twitterId && mergedDataWithoutUser) {
       if (member.userWroteMember.twitterId === mergedDataWithoutUser)
         delete member.userWroteMember.twitterId;    // user data is the same as sync-ed data => no need to keep it
@@ -326,10 +278,6 @@ export class MemberResolver extends TableProvider(MemberTable) {
 
     outterData = member.facebookId;
     mergedDataWithoutUser = getMergedMemberData(member, "facebookId", true);
-    if (!member.userWroteMember.facebookId && outterData) {
-      // [temp]  backup original data as user wrote data
-      member.userWroteMember.facebookId = outterData;
-    }
     if (member.userWroteMember.facebookId && mergedDataWithoutUser) {
       if (member.userWroteMember.facebookId === mergedDataWithoutUser)
         delete member.userWroteMember.facebookId;    // user data is the same as sync-ed data => no need to keep it
@@ -340,10 +288,6 @@ export class MemberResolver extends TableProvider(MemberTable) {
 
     outterData = member.youtubeId;
     mergedDataWithoutUser = getMergedMemberData(member, "youtubeId", true);
-    if (!member.userWroteMember.youtubeId && outterData) {
-      // [temp]  backup original data as user wrote data
-      member.userWroteMember.youtubeId = outterData;
-    }
     if (member.userWroteMember.youtubeId && mergedDataWithoutUser) {
       if (member.userWroteMember.youtubeId === mergedDataWithoutUser)
         delete member.userWroteMember.youtubeId;    // user data is the same as sync-ed data => no need to keep it
