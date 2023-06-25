@@ -32,12 +32,16 @@ import { BillTable } from "./bill-table";
 import { MemberResolver } from "./member.resolver";
 import { GraphQLResolveInfo } from "graphql";
 import { UpdateResult } from "mongodb";
-import { SyncToNotion } from "./notion-sync.resolver";
+import {
+  CloneToNotion,
+  SyncFromNotion,
+  SyncToNotion,
+} from "./notion-sync.resolver";
 
 @Resolver(Bill)
 export class BillResolver
   extends TableProvider(BillTable)
-  implements SyncToNotion<Bill>
+  implements CloneToNotion<Bill>, SyncToNotion<Bill>, SyncFromNotion
 {
   logger: Logger;
 
@@ -45,10 +49,78 @@ export class BillResolver
     super();
     this.logger = new Logger("BillResolver");
   }
+
+  async createOrUpdateLocalItems(pageObjects: any[]): Promise<UpdateResult[]> {
+    const tbl = await this.table();
+    return (
+      await Promise.all(
+        pageObjects.map(pageObject => {
+          const bill = Bill.fromId(
+            pageObject.properties["Congress-type-number"].title[0].text.content,
+          );
+          if (!bill) {
+            return null;
+          }
+          return tbl.upsertItemByCustomQuery<Bill>(
+            { notionPageId: pageObject.id },
+            {
+              $set: {
+                ...bill,
+                title: {
+                  zh:
+                    pageObject.properties["標題"].rich_text[0]?.text?.content ||
+                    "",
+                },
+                summary: {
+                  zh:
+                    pageObject.properties["概要"].rich_text[0]?.text?.content ||
+                    "",
+                },
+                status:
+                  pageObject.properties["Sync status"].select?.name ||
+                  BillSyncStatus.NOT_STARTED,
+                deleted: false,
+              },
+              $setOnInsert: {
+                _id: bill.id,
+                createdTime: new Date().getTime(),
+              },
+            },
+          );
+        }),
+      )
+    ).filter((a): a is UpdateResult => !!a);
+  }
+
+  async deleteNotFoundLocalItems(notionPageIds: string[]): Promise<number> {
+    const tbl = await this.table();
+    const updateResult = await tbl.updateItemsByCustomQuery<Bill>(
+      { notionPageId: { $nin: notionPageIds } },
+      {
+        $set: {
+          deleted: true,
+        },
+      },
+    );
+    return updateResult.modifiedCount;
+  }
+
   async getAllLocalItems(): Promise<Bill[]> {
     const tbl = await this.table();
     const bills = await tbl.getAllBills();
-    return bills.slice(0, 10);
+    // return bills.slice(0, 10);
+    return bills;
+  }
+
+  async getUpdatedLocalItems(lastUpdated: number): Promise<Bill[]> {
+    const tbl = await this.table();
+    return await tbl.queryItemsWorking({
+      deleted: { $ne: true },
+      $or: [
+        { lastSynced: { $gt: lastUpdated } },
+        { createdTime: { $gt: lastUpdated } },
+      ],
+    });
   }
 
   getPropertiesForDatabaseCreation() {
@@ -60,7 +132,9 @@ export class BillResolver
         rich_text: {},
       },
       Congress: {
-        select: {},
+        number: {
+          format: "number",
+        },
       },
       "Bill Type": {
         select: {},
@@ -147,9 +221,7 @@ export class BillResolver
         ],
       },
       Congress: {
-        select: {
-          name: bill.congress.toString(),
-        },
+        number: bill.congress,
       },
       "Bill Type": {
         select: {
@@ -219,8 +291,63 @@ export class BillResolver
     return await tbl.updateBill(bill.id, { notionPageId });
   }
 
-  getPropertiesForItemUpdate(entity: Bill): Promise<any> {
-    throw new Error("Method not implemented.");
+  async getPropertiesForItemUpdate(bill: Bill): Promise<any> {
+    return {
+      "Introduce Date": {
+        rich_text: [
+          {
+            text: {
+              content: bill.introducedDate || "",
+            },
+          },
+        ],
+      },
+      Congress: {
+        number: bill.congress,
+      },
+      "Bill Type": {
+        select: {
+          name: bill.billType,
+        },
+      },
+      "Bill Number": {
+        number: bill.billNumber,
+      },
+      "Title (En)": {
+        rich_text: [
+          {
+            text: {
+              content: bill.title?.en || "",
+            },
+          },
+        ],
+      },
+      ...(bill.lastSynced && bill.lastSynced > 0
+        ? {
+            "Last synced time": {
+              date: {
+                start: new Date(bill.lastSynced).toISOString(),
+              },
+            },
+          }
+        : {}),
+      // TODO
+      // Tags: {
+      //   relation: [
+      //     {
+      //       id: "66907eb9-3a19-4cc9-b8b2-d9a67228ae53",
+      //     },
+      //   ],
+      // },
+      "Sync status": {
+        select: {
+          name: bill.status,
+        },
+      },
+      // URL: {
+      //   url: 'https://???',
+      // },
+    };
   }
 
   // TODO: false for debugging. Should be true while in real use
@@ -396,7 +523,11 @@ export class BillResolver
     @Arg("billId") id: string,
     fields?: (keyof Bill)[],
   ): Promise<Bill | null> {
-    return this.syncBill(Bill.fromId(id), true, fields);
+    const bill = Bill.fromId(id);
+    if (!bill) {
+      return null;
+    }
+    return this.syncBill(bill, true, fields);
   }
 
   private async syncBill(

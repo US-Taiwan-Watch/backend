@@ -281,7 +281,7 @@ export class ArticleResolver
     );
   }
 
-  async deleteNotFoundLocalItems(_: string[]): Promise<any[]> {
-    return [];
+  async deleteNotFoundLocalItems(_: string[]): Promise<number> {
+    return 0;
   }
 }

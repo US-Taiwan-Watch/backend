@@ -14,12 +14,15 @@ export class NotionManager {
     this.notionClient = NotionManager.getClient();
   }
 
-  private static async retry<V>(fn: () => Promise<V>, count = 10) {
+  private static async retry<V>(
+    fn: () => Promise<V>,
+    count = 10,
+  ): Promise<V | null> {
     try {
       return await fn();
     } catch (e) {
       if (count > 0) {
-        return await fn();
+        return await this.retry(fn, count - 1);
       }
       return null;
     }
@@ -98,14 +101,14 @@ export class NotionManager {
   }
 
   private async updateDatabase(properties: any) {
-    this.notionClient.databases.update({
+    return this.notionClient.databases.update({
       database_id: this.databaseId,
       ...properties,
     });
   }
 
   public async updateDatabaseTitle(title: string) {
-    this.notionClient.databases.update({
+    return this.notionClient.databases.update({
       database_id: this.databaseId,
       title: [
         {
@@ -118,7 +121,7 @@ export class NotionManager {
   }
 
   public async updateSyncStatus() {
-    this.updateDatabase({
+    return this.updateDatabase({
       description: [
         { text: { content: "Last synced at " } },
         {

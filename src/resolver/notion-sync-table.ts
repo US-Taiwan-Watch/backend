@@ -2,7 +2,7 @@ import { MongoDBTableBase } from "../mongodb/mongodb-manager";
 import * as _ from "lodash";
 import { NotionSync } from "../../common/models";
 
-export class NotionSyncTable extends MongoDBTableBase("notion-sync") {
+export class NotionSyncTable extends MongoDBTableBase("notion_sync") {
   public async get(name: string): Promise<NotionSync | null> {
     return this.getItem<NotionSync>("_id", name);
   }

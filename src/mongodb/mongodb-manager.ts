@@ -129,6 +129,10 @@ export abstract class MongoDBTable {
     return this.getTable<T>().updateOne(find, query);
   }
 
+  public updateItemsByCustomQuery<T>(find: object, query: object) {
+    return this.getTable<T>().updateMany(find, query);
+  }
+
   public upsertItemByCustomQuery<T>(
     find: object,
     query: object,
@@ -357,6 +361,10 @@ export abstract class MongoDBTable {
 
   public deleteItems(idx: string[]): Promise<mongodb.DeleteResult> {
     return this.getTable().deleteMany({ _id: { $in: idx } });
+  }
+
+  public deleteItemsByCustomQuery(find: object): Promise<mongodb.DeleteResult> {
+    return this.getTable().deleteMany(find);
   }
 
   public deleteAttributesFromItem<T, KeyType = string>(

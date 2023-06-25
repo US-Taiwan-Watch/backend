@@ -4,12 +4,12 @@ import { Tag } from "../../common/models";
 import { TableProvider } from "../mongodb/mongodb-manager";
 import { TagTable } from "./tag-table";
 import { v4 as uuid } from "uuid";
-import { SyncFromNotion, SyncToNotion } from "./notion-sync.resolver";
+import { CloneToNotion, SyncFromNotion } from "./notion-sync.resolver";
 
 @Resolver(Tag)
 export class TagResolver
   extends TableProvider(TagTable)
-  implements SyncToNotion<Tag>, SyncFromNotion
+  implements CloneToNotion<Tag>, SyncFromNotion
 {
   public getPropertiesForDatabaseCreation() {
     return {
@@ -21,6 +21,7 @@ export class TagResolver
       },
     };
   }
+
   public async getPropertiesForItemCreation(tag: Tag): Promise<any> {
     if (!tag.name.en) {
       return null;
@@ -45,9 +46,6 @@ export class TagResolver
         ],
       },
     };
-  }
-  public async getPropertiesForItemUpdate(tag: Tag): Promise<any> {
-    return this.getPropertiesForItemCreation(tag);
   }
 
   public async getAllLocalItems() {
@@ -86,11 +84,10 @@ export class TagResolver
 
   public async deleteNotFoundLocalItems(notionPageIds: string[]) {
     const tbl = await this.table();
-    const deleted = await tbl.queryItemsWorking<Tag>({
+    const result = await tbl.deleteItemsByCustomQuery({
       notionPageId: { $nin: notionPageIds },
     });
-    await tbl.deleteItems(deleted.map(t => t.id));
-    return deleted;
+    return result.deletedCount;
   }
 
   // public async getTagIdsFromNotionIds(notionIds: string[]): Promise<string[]> {
