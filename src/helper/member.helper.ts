@@ -194,13 +194,6 @@ export function getMergedMemberData(
       }
 
       if (unitedstatesData) {
-        if (ans && ans !== unitedstatesData) {
-          // source data doesn't match with the previous answer
-          console.log(
-            `[MemberDataMerge] Data Conflict with unitedStates - '${ans}' <> '${unitedstatesData}'`,
-          );
-        }
-
         if (
           !ans ||
           (ans !== unitedstatesData &&
@@ -209,16 +202,16 @@ export function getMergedMemberData(
           // ans hasn't been assigned, or source data covers the ans
           ans = unitedstatesData;
         }
+
+        if (ans && ans !== unitedstatesData) {
+          // source data doesn't match with the previous answer
+          console.log(
+            `[MemberDataMerge] Data ${field} Conflict with unitedStates - '${ans}' <> '${unitedstatesData}'`,
+          );
+        }
       }
 
       if (propublicaData) {
-        if (ans && ans !== propublicaData) {
-          // source data doesn't match with the previous answer
-          console.log(
-            `[MemberDataMerge] Data Conflict with ProPublica - '${ans}' <> '${propublicaData}'`,
-          );
-        }
-
         if (
           !ans ||
           (ans !== propublicaData &&
@@ -226,6 +219,13 @@ export function getMergedMemberData(
         ) {
           // ans hasn't been assigned, or source data covers the ans
           ans = propublicaData;
+        }
+
+        if (ans && ans !== propublicaData) {
+          // source data doesn't match with the previous answer
+          console.log(
+            `[MemberDataMerge] Data ${field} Conflict with ProPublica - '${ans}' <> '${propublicaData}'`,
+          );
         }
       }
     }

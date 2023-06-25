@@ -111,8 +111,6 @@ export class MemberResolver extends TableProvider(MemberTable) {
     return { en, zh };
   }
 
-  
-
   //
   // Public Functions
   //
@@ -160,119 +158,203 @@ export class MemberResolver extends TableProvider(MemberTable) {
 
     outterData = member.firstName;
     mergedDataWithoutUser = getMergedMemberData(member, "firstName", true);
-    if (outterData && outterData !== mergedDataWithoutUser) {
-      console.log(`[Resolve][${member.id}] firstName conflict > "${outterData}" / "${mergedDataWithoutUser}"`);
+    if (!member.userWroteMember.firstName && outterData) {
+      // [temp]  backup original data as user wrote data
       member.userWroteMember.firstName = outterData;
+    }
+    if (member.userWroteMember.firstName && mergedDataWithoutUser) {
+      if (member.userWroteMember.firstName === mergedDataWithoutUser)
+        delete member.userWroteMember.firstName;    // user data is the same as sync-ed data => no need to keep it
+      else
+        console.log(`[Resolve][${member.id}] firstName conflict with userData > "${member.userWroteMember.firstName}" / "${mergedDataWithoutUser}"`);
     }
     member.firstName = getMergedMemberData(member, "firstName") || "";
 
     outterData = member.lastName;
     mergedDataWithoutUser = getMergedMemberData(member, "lastName", true);
-    if (outterData && outterData !== mergedDataWithoutUser) {
-      console.log(`[Resolve][${member.id}] lastName conflict > "${outterData}" / "${mergedDataWithoutUser}"`);
+    if (!member.userWroteMember.lastName && outterData) {
+      // [temp]  backup original data as user wrote data
       member.userWroteMember.lastName = outterData;
+    }
+    if (member.userWroteMember.lastName && mergedDataWithoutUser) {
+      if (member.userWroteMember.lastName === mergedDataWithoutUser)
+        delete member.userWroteMember.lastName;    // user data is the same as sync-ed data => no need to keep it
+      else
+        console.log(`[Resolve][${member.id}] lastName conflict with userData > "${member.userWroteMember.lastName}" / "${mergedDataWithoutUser}"`);
     }
     member.lastName = getMergedMemberData(member, "lastName") || "";
 
     outterData = member.nickname;
     mergedDataWithoutUser = getMergedMemberData(member, "nickname", true);
-    if (outterData && outterData !== mergedDataWithoutUser) {
-      console.log(`[Resolve][${member.id}] nickname conflict > "${outterData}" / "${mergedDataWithoutUser}"`);
+    if (!member.userWroteMember.nickname && outterData) {
+      // [temp]  backup original data as user wrote data
       member.userWroteMember.nickname = outterData;
+    }
+    if (member.userWroteMember.nickname && mergedDataWithoutUser) {
+      if (member.userWroteMember.nickname === mergedDataWithoutUser)
+        delete member.userWroteMember.nickname;    // user data is the same as sync-ed data => no need to keep it
+      else
+        console.log(`[Resolve][${member.id}] nickname conflict with userData > "${member.userWroteMember.nickname}" / "${mergedDataWithoutUser}"`);
     }
     member.nickname = getMergedMemberData(member, "nickname") || "";
 
     outterData = member.firstName_zh;
     mergedDataWithoutUser = getMergedMemberData(member, "firstName_zh", true);
-    if (outterData && outterData !== mergedDataWithoutUser) {
-      console.log(`[Resolve][${member.id}] firstName_zh conflict > "${outterData}" / "${mergedDataWithoutUser}"`);
+    if (!member.userWroteMember.firstName_zh && outterData) {
+      // [temp]  backup original data as user wrote data
       member.userWroteMember.firstName_zh = outterData;
+    }
+    if (member.userWroteMember.firstName_zh && mergedDataWithoutUser) {
+      if (member.userWroteMember.firstName_zh === mergedDataWithoutUser)
+        delete member.userWroteMember.firstName_zh;    // user data is the same as sync-ed data => no need to keep it
+      else
+        console.log(`[Resolve][${member.id}] firstName_zh conflict with userData > "${member.userWroteMember.firstName_zh}" / "${mergedDataWithoutUser}"`);
     }
     member.firstName_zh = getMergedMemberData(member, "firstName_zh") || "";
 
     outterData = member.lastName_zh;
     mergedDataWithoutUser = getMergedMemberData(member, "lastName_zh", true);
-    if (outterData && outterData !== mergedDataWithoutUser) {
-      console.log(`[Resolve][${member.id}] lastName_zh conflict > "${outterData}" / "${mergedDataWithoutUser}"`);
+    if (!member.userWroteMember.lastName_zh && outterData) {
+      // [temp]  backup original data as user wrote data
       member.userWroteMember.lastName_zh = outterData;
+    }
+    if (member.userWroteMember.lastName_zh && mergedDataWithoutUser) {
+      if (member.userWroteMember.lastName_zh === mergedDataWithoutUser)
+        delete member.userWroteMember.lastName_zh;    // user data is the same as sync-ed data => no need to keep it
+      else
+        console.log(`[Resolve][${member.id}] lastName_zh conflict with userData > "${member.userWroteMember.lastName_zh}" / "${mergedDataWithoutUser}"`);
     }
     member.lastName_zh = getMergedMemberData(member, "lastName_zh") || "";
 
     outterData = member.gender;
     mergedDataWithoutUser = getMergedMemberData(member, "gender", true);
-    if (outterData && outterData !== mergedDataWithoutUser) {
-      console.log(`[Resolve][${member.id}] gender conflict > "${outterData}" / "${mergedDataWithoutUser}"`);
+    if (!member.userWroteMember.gender && outterData) {
+      // [temp]  backup original data as user wrote data
       member.userWroteMember.gender = outterData;
+    }
+    if (member.userWroteMember.gender && mergedDataWithoutUser) {
+      if (member.userWroteMember.gender === mergedDataWithoutUser)
+        delete member.userWroteMember.gender;    // user data is the same as sync-ed data => no need to keep it
+      else
+        console.log(`[Resolve][${member.id}] gender conflict with userData > "${member.userWroteMember.gender}" / "${mergedDataWithoutUser}"`);
     }
     member.gender = getMergedMemberData(member, "gender") || "";
 
     outterData = member.birthday;
     mergedDataWithoutUser = getMergedMemberData(member, "birthday", true);
-    if (outterData && outterData !== mergedDataWithoutUser) {
-      console.log(`[Resolve][${member.id}] birthday conflict > "${outterData}" / "${mergedDataWithoutUser}"`);
+    if (!member.userWroteMember.birthday && outterData) {
+      // [temp]  backup original data as user wrote data
       member.userWroteMember.birthday = outterData;
+    }
+    if (member.userWroteMember.birthday && mergedDataWithoutUser) {
+      if (member.userWroteMember.birthday === mergedDataWithoutUser)
+        delete member.userWroteMember.birthday;    // user data is the same as sync-ed data => no need to keep it
+      else
+        console.log(`[Resolve][${member.id}] birthday conflict with userData > "${member.userWroteMember.birthday}" / "${mergedDataWithoutUser}"`);
     }
     member.birthday = getMergedMemberData(member, "birthday") || "";
 
     outterData = member.website;
     mergedDataWithoutUser = getMergedMemberData(member, "website", true);
-    if (outterData && outterData !== mergedDataWithoutUser) {
-      console.log(`[Resolve][${member.id}] website conflict > "${outterData}" / "${mergedDataWithoutUser}"`);
+    if (!member.userWroteMember.website && outterData) {
+      // [temp]  backup original data as user wrote data
       member.userWroteMember.website = outterData;
+    }
+    if (member.userWroteMember.website && mergedDataWithoutUser) {
+      if (member.userWroteMember.website === mergedDataWithoutUser)
+        delete member.userWroteMember.website;    // user data is the same as sync-ed data => no need to keep it
+      else
+        console.log(`[Resolve][${member.id}] website conflict with userData > "${member.userWroteMember.website}" / "${mergedDataWithoutUser}"`);
     }
     member.website = getMergedMemberData(member, "website") || "";
 
     outterData = member.office;
     mergedDataWithoutUser = getMergedMemberData(member, "office", true);
-    if (outterData && outterData !== mergedDataWithoutUser) {
-      console.log(`[Resolve][${member.id}] office conflict > "${outterData}" / "${mergedDataWithoutUser}"`);
+    if (!member.userWroteMember.office && outterData) {
+      // [temp]  backup original data as user wrote data
       member.userWroteMember.office = outterData;
+    }
+    if (member.userWroteMember.office && mergedDataWithoutUser) {
+      if (member.userWroteMember.office === mergedDataWithoutUser)
+        delete member.userWroteMember.office;    // user data is the same as sync-ed data => no need to keep it
+      else
+        console.log(`[Resolve][${member.id}] office conflict with userData > "${member.userWroteMember.office}" / "${mergedDataWithoutUser}"`);
     }
     member.office = getMergedMemberData(member, "office") || "";
 
     outterData = member.phone;
     mergedDataWithoutUser = getMergedMemberData(member, "phone", true);
-    if (outterData && outterData !== mergedDataWithoutUser) {
-      console.log(`[Resolve][${member.id}] phone conflict > "${outterData}" / "${mergedDataWithoutUser}"`);
+    if (!member.userWroteMember.phone && outterData) {
+      // [temp]  backup original data as user wrote data
       member.userWroteMember.phone = outterData;
+    }
+    if (member.userWroteMember.phone && mergedDataWithoutUser) {
+      if (member.userWroteMember.phone === mergedDataWithoutUser)
+        delete member.userWroteMember.phone;    // user data is the same as sync-ed data => no need to keep it
+      else
+        console.log(`[Resolve][${member.id}] phone conflict with userData > "${member.userWroteMember.phone}" / "${mergedDataWithoutUser}"`);
     }
     member.phone = getMergedMemberData(member, "phone") || "";
 
     outterData = member.cspanId;
     mergedDataWithoutUser = getMergedMemberData(member, "cspanId", true);
-    if (outterData && outterData !== mergedDataWithoutUser) {
-      console.log(`[Resolve][${member.id}] cspanId conflict > "${outterData}" / "${mergedDataWithoutUser}"`);
+    if (!member.userWroteMember.cspanId && outterData) {
+      // [temp]  backup original data as user wrote data
       member.userWroteMember.cspanId = outterData;
+    }
+    if (member.userWroteMember.cspanId && mergedDataWithoutUser) {
+      if (member.userWroteMember.cspanId === mergedDataWithoutUser)
+        delete member.userWroteMember.cspanId;    // user data is the same as sync-ed data => no need to keep it
+      else
+        console.log(`[Resolve][${member.id}] cspanId conflict with userData > "${member.userWroteMember.cspanId}" / "${mergedDataWithoutUser}"`);
     }
     member.cspanId = getMergedMemberData(member, "cspanId") || "";
 
     outterData = member.twitterId;
     mergedDataWithoutUser = getMergedMemberData(member, "twitterId", true);
-    if (outterData && outterData !== mergedDataWithoutUser) {
-      console.log(`[Resolve][${member.id}] twitterId conflict > "${outterData}" / "${mergedDataWithoutUser}"`);
+    if (!member.userWroteMember.twitterId && outterData) {
+      // [temp]  backup original data as user wrote data
       member.userWroteMember.twitterId = outterData;
+    }
+    if (member.userWroteMember.twitterId && mergedDataWithoutUser) {
+      if (member.userWroteMember.twitterId === mergedDataWithoutUser)
+        delete member.userWroteMember.twitterId;    // user data is the same as sync-ed data => no need to keep it
+      else
+        console.log(`[Resolve][${member.id}] twitterId conflict with userData > "${member.userWroteMember.twitterId}" / "${mergedDataWithoutUser}"`);
     }
     member.twitterId = getMergedMemberData(member, "twitterId") || "";
 
     outterData = member.facebookId;
     mergedDataWithoutUser = getMergedMemberData(member, "facebookId", true);
-    if (outterData && outterData !== mergedDataWithoutUser) {
-      console.log(`[Resolve][${member.id}] facebookId conflict > "${outterData}" / "${mergedDataWithoutUser}"`);
+    if (!member.userWroteMember.facebookId && outterData) {
+      // [temp]  backup original data as user wrote data
       member.userWroteMember.facebookId = outterData;
+    }
+    if (member.userWroteMember.facebookId && mergedDataWithoutUser) {
+      if (member.userWroteMember.facebookId === mergedDataWithoutUser)
+        delete member.userWroteMember.facebookId;    // user data is the same as sync-ed data => no need to keep it
+      else
+        console.log(`[Resolve][${member.id}] facebookId conflict with userData > "${member.userWroteMember.facebookId}" / "${mergedDataWithoutUser}"`);
     }
     member.facebookId = getMergedMemberData(member, "facebookId") || "";
 
     outterData = member.youtubeId;
     mergedDataWithoutUser = getMergedMemberData(member, "youtubeId", true);
-    if (outterData && outterData !== mergedDataWithoutUser) {
-      console.log(`[Resolve][${member.id}] youtubeId conflict > "${outterData}" / "${mergedDataWithoutUser}"`);
+    if (!member.userWroteMember.youtubeId && outterData) {
+      // [temp]  backup original data as user wrote data
       member.userWroteMember.youtubeId = outterData;
+    }
+    if (member.userWroteMember.youtubeId && mergedDataWithoutUser) {
+      if (member.userWroteMember.youtubeId === mergedDataWithoutUser)
+        delete member.userWroteMember.youtubeId;    // user data is the same as sync-ed data => no need to keep it
+      else
+        console.log(`[Resolve][${member.id}] youtubeId conflict with userData > "${member.userWroteMember.youtubeId}" / "${mergedDataWithoutUser}"`);
     }
     member.youtubeId = getMergedMemberData(member, "youtubeId") || "";
 
     // profile Pic is directly sync to outter member, no need to resolve
 
-    if (member.congressRoles && !member.userWroteMember.congressRoles) {
+    if (!member.userWroteMember.congressRoles && member.congressRoles) {
       member.userWroteMember.congressRoles = member.congressRoles;
     }
     member.congressRoles = getMergedMemberData(member, "congressRoles") || [];

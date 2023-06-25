@@ -12,6 +12,8 @@ export function isDataSyncSource(source: MemberSrc): boolean {
 }
 
 export function getGender(genderStr: string): GenderType | undefined {
+  genderStr = genderStr.trim();
+
   if (genderStr === "M")
     return 'male';
   else if (genderStr === "F")
@@ -22,6 +24,7 @@ export function getGender(genderStr: string): GenderType | undefined {
 
 export function getFullPartyName(partyName: string): MemberRoleParty {
   let fullPartyName: MemberRoleParty;
+  partyName = partyName.trim();
 
   switch(partyName){
     case "R":
@@ -76,30 +79,37 @@ function stringifyParties(parties: PartyRecord[]): string {
 export function mergeMember(source: MemberSrc, targetMember: Member, srcMember: Member): Member {
   // srcMember -merge/integrate-> targetMember
 
+  srcMember.firstName = srcMember.firstName?.trim();
   if (isNeedUpdate(targetMember.id, source, "firstName", targetMember.firstName, srcMember.firstName)) {
     targetMember.firstName = srcMember.firstName;
   }
 
+  srcMember.middleName = srcMember.middleName?.trim();
   if (isNeedUpdate(targetMember.id, source, "middleName", targetMember.middleName, srcMember.middleName)) {
     targetMember.middleName = srcMember.middleName;
   }
 
+  srcMember.lastName = srcMember.lastName?.trim();
   if (isNeedUpdate(targetMember.id, source, "lastName", targetMember.lastName, srcMember.lastName)) {
     targetMember.lastName = srcMember.lastName;
   }
 
+  srcMember.nameSuffix = srcMember.nameSuffix?.trim();
   if (isNeedUpdate(targetMember.id, source, "nameSuffix", targetMember.nameSuffix, srcMember.nameSuffix)) {
     targetMember.nameSuffix = srcMember.nameSuffix;
   }
 
+  srcMember.nickname = srcMember.nickname?.trim();
   if (isNeedUpdate(targetMember.id, source, "nickname", targetMember.nickname, srcMember.nickname)) {
     targetMember.nickname = srcMember.nickname;
   }
 
+  srcMember.firstName_zh = srcMember.firstName_zh?.trim();
   if (isNeedUpdate(targetMember.id, source, "firstName_zh", targetMember.firstName_zh, srcMember.firstName_zh)) {
     targetMember.firstName_zh = srcMember.firstName_zh;
   }
 
+  srcMember.lastName_zh = srcMember.lastName_zh?.trim();
   if (isNeedUpdate(targetMember.id, source, "lastName_zh", targetMember.lastName_zh, srcMember.lastName_zh)) {
     targetMember.lastName_zh = srcMember.lastName_zh;
   }
@@ -108,26 +118,32 @@ export function mergeMember(source: MemberSrc, targetMember: Member, srcMember: 
     targetMember.gender = srcMember.gender;
   }
 
+  srcMember.birthday = srcMember.birthday?.trim();
   if (isNeedUpdate(targetMember.id, source, "birthday", targetMember.birthday, srcMember.birthday)) {
     targetMember.birthday = srcMember.birthday;
   }
 
+  srcMember.website = srcMember.website?.trim();
   if (isNeedUpdate(targetMember.id, source, "website", targetMember.website, srcMember.website)) {
     targetMember.website = srcMember.website;
   }
 
+  srcMember.office = srcMember.office?.trim();
   if (isNeedUpdate(targetMember.id, source, "office", targetMember.office, srcMember.office)) {
     targetMember.office = srcMember.office;
   }
 
+  srcMember.phone = srcMember.phone?.trim();
   if (isNeedUpdate(targetMember.id, source, "phone", targetMember.phone, srcMember.phone)) {
     targetMember.phone = srcMember.phone;
   }
 
+  srcMember.cspanId = srcMember.cspanId?.trim();
   if (isNeedUpdate(targetMember.id, source, "cspanId", targetMember.cspanId, srcMember.cspanId)) {
     targetMember.cspanId = srcMember.cspanId;
   }
 
+  srcMember.twitterId = srcMember.twitterId?.trim();
   if (isNeedUpdate(targetMember.id, source, "twitterId", targetMember.twitterId, srcMember.twitterId)) {
     targetMember.twitterId = srcMember.twitterId;
   }
@@ -136,6 +152,7 @@ export function mergeMember(source: MemberSrc, targetMember: Member, srcMember: 
     targetMember.facebookId = srcMember.facebookId;
   }
 
+  srcMember.youtubeId = srcMember.youtubeId?.trim();
   if (isNeedUpdate(targetMember.id, source, "youtubeId", targetMember.youtubeId, srcMember.youtubeId)) {
     targetMember.youtubeId = srcMember.youtubeId;
   }
