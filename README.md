@@ -5,7 +5,8 @@
    - `git clone --recurse-submodules https://github.com/US-Taiwan-Watch/backend.git`
 2. create `.azure_pat` in project root and paste the content from [here](https://teams.microsoft.com/l/message/19:2ac8c20126f24e67ac28ae147c9cb30a@thread.tacv2/1663480090929?tenantId=512c96f3-8941-4b5f-97e2-4d50fdf3a16d&groupId=119f3bf4-fb2c-4d73-9b92-cf94106ab77e&parentMessageId=1663480071753&teamName=USTW%20w%2F%20%E5%BF%97%E5%B7%A5%E7%BE%A4&channelName=%E5%B7%A5%E7%A8%8B%E7%B5%84&createdTime=1663480090929&allowXTenantAccess=false)
 3. Run `./env_download.sh > .env` to get the latest `.env`
-4. Make sure you have Node.js 16+, NPM, and yarn. Install modules:
+4. Follow [this](https://yarnpkg.com/getting-started/install) to install yarn 3.6.0 or higher
+5. Make sure you have Node.js 16+, NPM, and yarn. Install modules:
    - `yarn install`
 
 ## Local Development
