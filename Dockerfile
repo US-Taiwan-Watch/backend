@@ -9,8 +9,9 @@ WORKDIR /opt/app
 # where available (npm@5+)
 COPY ./package*.json ./
 COPY ./tsconfig.json ./
-COPY ./yarn.lock ./
+COPY ./yarn.lock .yarnrc.yml ./
 COPY ./.env ./
+RUN yarn set version stable
 
 RUN yarn install
 
