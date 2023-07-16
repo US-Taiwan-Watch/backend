@@ -198,7 +198,11 @@ export class BillResolver extends TableProvider(BillTable) {
     @Arg("billId") id: string,
     fields?: (keyof Bill)[],
   ): Promise<Bill | null> {
-    return this.syncBill(Bill.fromId(id), true, fields);
+    const bill = Bill.fromId(id);
+    if (bill) {
+      return this.syncBill(bill, true, fields);
+    }
+    return null;
   }
 
   private async syncBill(

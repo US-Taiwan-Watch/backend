@@ -97,12 +97,13 @@ export class NotionSyncResolver extends TableProvider(NotionSyncTable) {
     tableName: TableName,
     lookBackTime = DEFAULT_LOOK_BACK_MS,
   ): Promise<void> {
+    const logger = this.logger.in("syncFromNotion");
     const tbl = await this.table();
     const sync = await tbl.get(tableName);
     if (!sync) {
+      logger.log(`no sync func for ${tableName}`);
       return;
     }
-    const logger = this.logger.in("syncFromNotion");
 
     const resolver = NotionSyncResolver.getTableResolver(tableName);
 
