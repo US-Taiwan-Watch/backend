@@ -1,3 +1,4 @@
+import * as _ from "lodash";
 import { Member, MemberRole } from "../../common/models";
 
 function isValidRole(role: MemberRole): boolean {
@@ -130,9 +131,9 @@ export function getMergedMemberData(
     let unitedstatesRoles = member.unitedstatesMember?.["congressRoles"];
 
     // filter out invalid dates
-    bioguideRoles = bioguideRoles?.filter(isValidRole);
-    propublicaRoles = propublicaRoles?.filter(isValidRole);
-    unitedstatesRoles = unitedstatesRoles?.filter(isValidRole);
+    bioguideRoles = _.cloneDeep(bioguideRoles?.filter(isValidRole));
+    propublicaRoles = _.cloneDeep(propublicaRoles?.filter(isValidRole));
+    unitedstatesRoles = _.cloneDeep(unitedstatesRoles?.filter(isValidRole));
 
     // put same period in the same bucket
     // us -> pp -> bioguide (according to data reliability)
@@ -178,7 +179,8 @@ export function getMergedMemberData(
     );
     ans = ansRoles;
   } else {
-    const userData = member[field];
+
+    const userData = member.userWroteMember?.[field];
     const bioguideData = member.bioguideMember?.[field];
     const propublicaData = member.propublicaMember?.[field];
     const unitedstatesData = member.unitedstatesMember?.[field];
@@ -192,13 +194,6 @@ export function getMergedMemberData(
       }
 
       if (unitedstatesData) {
-        if (ans && ans !== unitedstatesData) {
-          // source data doesn't match with the previous answer
-          console.log(
-            `[MemberDataMerge] Data Conflict with unitedStates - '${ans}' <> '${unitedstatesData}'`,
-          );
-        }
-
         if (
           !ans ||
           (ans !== unitedstatesData &&
@@ -207,16 +202,16 @@ export function getMergedMemberData(
           // ans hasn't been assigned, or source data covers the ans
           ans = unitedstatesData;
         }
+
+        if (ans && ans !== unitedstatesData) {
+          // source data doesn't match with the previous answer
+          console.log(
+            `[MemberDataMerge] Data ${field} Conflict with unitedStates - '${ans}' <> '${unitedstatesData}'`,
+          );
+        }
       }
 
       if (propublicaData) {
-        if (ans && ans !== propublicaData) {
-          // source data doesn't match with the previous answer
-          console.log(
-            `[MemberDataMerge] Data Conflict with ProPublica - '${ans}' <> '${propublicaData}'`,
-          );
-        }
-
         if (
           !ans ||
           (ans !== propublicaData &&
@@ -224,6 +219,13 @@ export function getMergedMemberData(
         ) {
           // ans hasn't been assigned, or source data covers the ans
           ans = propublicaData;
+        }
+
+        if (ans && ans !== propublicaData) {
+          // source data doesn't match with the previous answer
+          console.log(
+            `[MemberDataMerge] Data ${field} Conflict with ProPublica - '${ans}' <> '${propublicaData}'`,
+          );
         }
       }
     }

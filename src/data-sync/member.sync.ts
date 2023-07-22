@@ -27,141 +27,138 @@ export class MemberSyncer extends EntitySyncer<Member> {
 
   protected async syncImpl(): Promise<boolean> {
     // Syncers run in sequential. TODO: update to parallel
+    let syncResult: boolean;
 
     // Update user's input data
     new MemberDataUpdateSyncer(this.entity, this.toUpdate).sync();
 
     // Query data from Bioguide
-    await new MemberBioGuideSyncer(this.entity).sync().then(
-      (result) => {
-        if (result === false) {
-          // do nothing for the case we skip the update for failling too many times
-        } else if (this.entity.bioguideMember) {
-          this.entity.bioguideMember.updateTimestamp = Date.now();
+    try {
+      syncResult = await new MemberBioGuideSyncer(this.entity).sync();
 
-          // clear fail count as success
-          if (this.entity.bioguideMember.failCount) {
-            this.entity.bioguideMember.failCount = 0;
-          }
-        } else {
-          console.log(`Cannot sync member ${this.entity.id} from BioGuide`);
-          console.log("No bioguideMember in the result")
-        }
-      }
-    ).catch(
-      e => {
-        console.log(`Cannot sync member ${this.entity.id} from BioGuide`);
-        console.log(e);
+      if (syncResult === false) {
+        // do nothing for the case we skip the update for failling too many times
+      } else if (this.entity.bioguideMember) {
+        this.entity.bioguideMember.updateTimestamp = Date.now();
 
-        if (!this.entity.bioguideMember) {
-          this.entity.bioguideMember = new Member(this.entity.id);
-        }
-
+        // clear fail count as success
         if (this.entity.bioguideMember.failCount) {
-          this.entity.bioguideMember.failCount++;
-        } else {
-          this.entity.bioguideMember.failCount = 1;
+          this.entity.bioguideMember.failCount = 0;
         }
+      } else {
+        console.log(`Cannot sync member ${this.entity.id} from BioGuide`);
+        console.log("No bioguideMember in the result")
       }
-    )
+    } catch (e: any) {
+      console.log(`Cannot sync member ${this.entity.id} from BioGuide`);
+      console.log(e);
+
+      if (!this.entity.bioguideMember) {
+        this.entity.bioguideMember = new Member(this.entity.id);
+      }
+
+      if (this.entity.bioguideMember.failCount) {
+        this.entity.bioguideMember.failCount++;
+      } else {
+        this.entity.bioguideMember.failCount = 1;
+      }
+    }
 
     // Query data from ProPublica
-    await new MemberProPublicaSyncer(this.entity).sync().then(
-      (result) => {
-        if (result === false) {
-          // do nothing for the case we skip the update for failling too many times
-        } else if (this.entity.propublicaMember) {
-          this.entity.propublicaMember.updateTimestamp = Date.now();
+    try {
+      syncResult = await new MemberProPublicaSyncer(this.entity).sync();
 
-          // clear fail count as success
-          if (this.entity.propublicaMember.failCount) {
-            this.entity.propublicaMember.failCount = 0;
-          }
-        } else {
-          console.log(`Cannot sync member ${this.entity.id} from Propublica`);
-          console.log("No propublicaMember in the result")
-        }
-      }
-    ).catch(
-      e => {
-        if (e.status === "ERROR" && e.errors && e.errors[0].error) {
-          console.log(`Cannot sync member ${this.entity.id} from Propublica (${e.errors[0].error})`);
-        } else if (e.status) {
-          console.log(`Cannot sync member ${this.entity.id} from Propublica (Error ${e.status})`);
-        } else if (!isNaN(e) && Number.isInteger(Number(e))) {
-          console.log(`Cannot sync member ${this.entity.id} from Propublica (Error ${Number(e)})`);
-        } else {
-          console.log(`Cannot sync member ${this.entity.id} from Propublica`);
-          console.log(e);
-        }
+      if (syncResult === false) {
+        // do nothing for the case we skip the update for failling too many times
+      } else if (this.entity.propublicaMember) {
+        this.entity.propublicaMember.updateTimestamp = Date.now();
 
-        if (!this.entity.propublicaMember) {
-          this.entity.propublicaMember = new Member(this.entity.id);
-        }
-
+        // clear fail count as success
         if (this.entity.propublicaMember.failCount) {
-          this.entity.propublicaMember.failCount++;
-        } else {
-          this.entity.propublicaMember.failCount = 1;
+          this.entity.propublicaMember.failCount = 0;
         }
-      });
+      } else {
+        console.log(`Cannot sync member ${this.entity.id} from Propublica`);
+        console.log("No propublicaMember in the result")
+      }
+    } catch (e: any) {
+      if (e.status === "ERROR" && e.errors && e.errors[0].error) {
+        console.log(`Cannot sync member ${this.entity.id} from Propublica (${e.errors[0].error})`);
+      } else if (e.status) {
+        console.log(`Cannot sync member ${this.entity.id} from Propublica (Error ${e.status})`);
+      } else if (!isNaN(e) && Number.isInteger(Number(e))) {
+        console.log(`Cannot sync member ${this.entity.id} from Propublica (Error ${Number(e)})`);
+      } else {
+        console.log(`Cannot sync member ${this.entity.id} from Propublica`);
+        console.log(e);
+      }
+
+      if (!this.entity.propublicaMember) {
+        this.entity.propublicaMember = new Member(this.entity.id);
+      }
+
+      if (this.entity.propublicaMember.failCount) {
+        this.entity.propublicaMember.failCount++;
+      } else {
+        this.entity.propublicaMember.failCount = 1;
+      }
+    }
 
     // Query data from the United States database
-    await new MemberUnitedStateSyncer(this.entity).sync().then(
-      (result) => {
-        if (result === false) {
-          // do nothing for the case we skip the update for failling too many times
-        } else if (this.entity.unitedstatesMember) {
-          this.entity.unitedstatesMember.updateTimestamp = Date.now();
+    try {
+      syncResult = await new MemberUnitedStateSyncer(this.entity).sync();
 
-          // clear fail count as success
-          if (this.entity.unitedstatesMember.failCount) {
-            this.entity.unitedstatesMember.failCount = 0;
-          }
-        } else {
-          console.log(`Cannot sync member ${this.entity.id} from the United States project database`);
-          console.log("No unitedstatesMember in the result")
-        }
-      }
-    ).catch(
-      e => {
-        console.log(`Cannot sync member ${this.entity.id} from the United States project database`);
-        console.log(e);
+      if (syncResult === false) {
+        // do nothing for the case we skip the update for failling too many times
+      } else if (this.entity.unitedstatesMember) {
+        this.entity.unitedstatesMember.updateTimestamp = Date.now();
 
-        if (!this.entity.unitedstatesMember) {
-          this.entity.unitedstatesMember = new Member(this.entity.id);
-        }
-
+        // clear fail count as success
         if (this.entity.unitedstatesMember.failCount) {
-          this.entity.unitedstatesMember.failCount++;
-        } else {
-          this.entity.unitedstatesMember.failCount = 1;
+          this.entity.unitedstatesMember.failCount = 0;
         }
-      });
+      } else {
+        console.log(`Cannot sync member ${this.entity.id} from the United States project database`);
+        console.log("No unitedstatesMember in the result")
+      }
+    } catch (e: any) {
+      console.log(`Cannot sync member ${this.entity.id} from the United States project database`);
+      console.log(e);
+
+      if (!this.entity.unitedstatesMember) {
+        this.entity.unitedstatesMember = new Member(this.entity.id);
+      }
+
+      if (this.entity.unitedstatesMember.failCount) {
+        this.entity.unitedstatesMember.failCount++;
+      } else {
+        this.entity.unitedstatesMember.failCount = 1;
+      }
+    }
 
     // update pic
     if (
       (!this.entity.profilePictureUri) &&
       ((!this.entity.getPictureFailCount) || (this.entity.getPictureFailCount < 3))
     ) {
-      await new MemberProPicDownloader(this.entity.id).downloadAndUpload().then(result => {
-        if (result === true) {
-          // download and upload succeeded => update the picture URI
-          this.entity.profilePictureUri
-            = `https://ustwstorage.blob.core.windows.net/public-image/profile_pictures/${this.entity.id}.jpg`;
+      syncResult = await new MemberProPicDownloader(this.entity.id).downloadAndUpload();
 
-          console.log(`[Member][BioGuide] ${this.entity.id} profile picture downloaded`);
+      if (syncResult === true) {
+        // download and upload succeeded => update the picture URI
+        this.entity.profilePictureUri
+          = `https://ustwstorage.blob.core.windows.net/public-image/profile_pictures/${this.entity.id}.jpg`;
+
+        console.log(`[Member][BioGuide] ${this.entity.id} profile picture downloaded`);
+      } else {
+        // download and upload failed
+        console.log(`Cannot download member ${this.entity.id}'s profile picture from Bioguide`);
+
+        if (this.entity.getPictureFailCount) {
+          this.entity.getPictureFailCount++;
         } else {
-          // download and upload failed
-          console.log(`Cannot download member ${this.entity.id}'s profile picture from Bioguide`);
-
-          if (this.entity.getPictureFailCount) {
-            this.entity.getPictureFailCount++;
-          } else {
-            this.entity.getPictureFailCount = 1;
-          }
+          this.entity.getPictureFailCount = 1;
         }
-      });
+      }
     }
 
     return true;
@@ -181,7 +178,10 @@ class MemberDataUpdateSyncer extends EntitySyncer<Member> {
       return false;
     }
 
-    this.entity = mergeMember("UserData", this.entity, this.toUpdate);
+    if (!this.entity.userWroteMember) {
+      this.entity.userWroteMember = new Member(this.entity.id);
+    }
+    this.entity.userWroteMember = mergeMember("UserData", this.entity.userWroteMember, this.toUpdate);
 
     return true;
   }
