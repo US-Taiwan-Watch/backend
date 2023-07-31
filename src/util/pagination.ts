@@ -1,5 +1,5 @@
 import { Field, ArgsType, ClassType, ObjectType, Int } from "type-graphql";
-import { Bill, Member } from "../../common/models";
+import { Article, Bill, Member } from "../../common/models";
 
 @ArgsType()
 export class PaginationArgs {
@@ -86,3 +86,6 @@ export class PaginatedBills extends PaginatedResponse(Bill) {}
 
 @ObjectType()
 export class PaginatedMembers extends PaginatedResponse(Member) {}
+
+@ObjectType()
+export class PaginatedArticles extends PaginatedResponse(Article) {}

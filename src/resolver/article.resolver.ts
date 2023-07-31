@@ -7,6 +7,7 @@ import {
   Root,
   Ctx,
   Authorized,
+  Args,
 } from "type-graphql";
 import {
   Article,
@@ -16,6 +17,7 @@ import {
   ARTICLE_AUTHORIZED_ROLES,
   I18NText,
   I18NTextInput,
+  ArticleTypeArgs,
 } from "../../common/models";
 import { TableProvider } from "../mongodb/mongodb-manager";
 import { IApolloContext } from "../@types/common.interface";
@@ -28,6 +30,7 @@ import { v4 as uuid } from "uuid";
 import { PublicJPGDownloader } from "../storage/public-jpg-downloader";
 import { RequestSource } from "../data-sync/sources/request-helper";
 import { SyncFromNotion } from "./notion-sync.resolver";
+import { PaginatedArticles, PaginationArgs } from "../util/pagination";
 
 @Resolver(Article)
 export class ArticleResolver
@@ -50,12 +53,47 @@ export class ArticleResolver
     return article.type || ArticleType.ARTICLE;
   }
 
+  // TODO: to be deprecated
   @Query(() => [Article])
   public async getAllArticles(@Ctx() ctx: IApolloContext): Promise<Article[]> {
     const tbl = await this.table();
     const articles = await tbl.getAllArticles();
     const canEdit = await authCheckHelper(ctx, ARTICLE_AUTHORIZED_ROLES);
     return articles.filter(a => !a.deleted && (canEdit || a.isPublished));
+  }
+
+  @Query(() => PaginatedArticles)
+  public async getPostsWithType(
+    @Ctx() ctx: IApolloContext,
+    @Args() pageInfo: PaginationArgs,
+    @Args() typeArgs: ArticleTypeArgs,
+  ): Promise<PaginatedArticles> {
+    const tbl = await this.table();
+    const canEdit = await authCheckHelper(ctx, ARTICLE_AUTHORIZED_ROLES);
+
+    const query = {
+      deleted: false,
+      ...(canEdit ? {} : { isPublished: true }),
+      type: typeArgs.type,
+    };
+
+    let sort = {};
+    if (pageInfo.sortFields && pageInfo.sortDirections) {
+      sort = Object.fromEntries(
+        pageInfo.sortFields.map((field, i) => [
+          field,
+          pageInfo.sortDirections![i],
+        ]),
+      );
+    }
+
+    const [members, count] = await tbl.queryItemsWithTotalCount<Article>(
+      query,
+      pageInfo.offset,
+      pageInfo.limit,
+      sort,
+    );
+    return new PaginatedArticles(pageInfo, members, true, count);
   }
 
   @Query(() => Article, { nullable: true })

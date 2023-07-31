@@ -157,10 +157,11 @@ export abstract class MongoDBTable {
     query: any,
     offset?: number,
     limit?: number,
+    sort?: any,
     attrNamesToGet?: (keyof T)[],
   ): Promise<[T[], number]> {
     const prjFields = this.composeProjectFields<T>(attrNamesToGet);
-    let cursor = this.getTable<T>().find(query, prjFields);
+    let cursor = this.getTable<T>().find(query, prjFields).sort(sort);
     if (offset) {
       cursor = cursor.skip(offset);
     }
