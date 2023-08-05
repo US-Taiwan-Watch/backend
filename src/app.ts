@@ -29,6 +29,7 @@ import { AdminResolver } from "./resolver/admin.resolver";
 import { schedule } from "node-cron";
 import { NotionSyncResolver } from "./resolver/notion-sync.resolver";
 import { I18nResolver } from "./resolver/i18n.resolver";
+import { BannerResolver } from "./resolver/banner.resolver";
 
 async function bootstrap() {
   const jwks = require("jwks-rsa");
@@ -90,6 +91,7 @@ async function bootstrap() {
       AdminResolver,
       ArticleResolver,
       I18nResolver,
+      BannerResolver,
     ],
     validate: false,
     authChecker,
