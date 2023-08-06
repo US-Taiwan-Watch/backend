@@ -5,6 +5,7 @@ import { TableProvider } from "../mongodb/mongodb-manager";
 import { TagTable } from "./tag-table";
 import { v4 as uuid } from "uuid";
 import { CloneToNotion, SyncFromNotion } from "./notion-sync.resolver";
+import { UpdateResult } from "mongodb";
 
 @Resolver(Tag)
 export class TagResolver
@@ -80,6 +81,10 @@ export class TagResolver
         ),
       ),
     );
+  }
+
+  updateRelations(_pageObjects: any[]): Promise<UpdateResult[]> {
+    throw new Error("Method not implemented.");
   }
 
   public async deleteNotFoundLocalItems(notionPageIds: string[]) {

@@ -27,6 +27,7 @@ export interface SyncToNotion<T> extends NotionSyncable {
 
 export interface SyncFromNotion extends NotionSyncable {
   createOrUpdateLocalItems(pageObjects: any[]): Promise<UpdateResult[]>;
+  updateRelations(pageObjects: any[]): Promise<UpdateResult[]>;
   deleteNotFoundLocalItems(notionPageIds: string[]): Promise<number>;
 }
 
@@ -75,11 +76,10 @@ export class NotionSyncResolver<T extends Entity> extends TableProvider(
   }
 
   /**
-   * * This should only be run once at the beginning if the notion database exists already
+   * This should only be run once at the beginning if the notion database exists already
    *
    * @public
    * @async
-   * @param {TableName} tableName
    * @param {string} databaseId
    * @returns {*}
    */
@@ -98,7 +98,6 @@ export class NotionSyncResolver<T extends Entity> extends TableProvider(
    *
    * @public
    * @async
-   * @param {TableName} tableName
    * @param {string} pageId
    * @returns {*}
    */
@@ -117,8 +116,6 @@ export class NotionSyncResolver<T extends Entity> extends TableProvider(
    *
    * @public
    * @async
-   * @param {TableName} tableName
-   * @param {?SyncToNotion<any>} [resolver]
    * @param {?NotionManager} [notionManager]
    * @returns {*}
    */
@@ -194,6 +191,11 @@ export class NotionSyncResolver<T extends Entity> extends TableProvider(
     }
   }
 
+  public async createCopyFromNotion(databaseId: string) {
+    await this.linkDatabase(databaseId);
+    await this.syncFromNotion();
+  }
+
   /**
    * Sync data from Notion
    *
@@ -228,6 +230,7 @@ export class NotionSyncResolver<T extends Entity> extends TableProvider(
     }
     logger.log("Started");
     const allPages = await notionManager.queryAll();
+    logger.log(`Collection done, totally ${allPages.length} items`);
 
     const updatedOrCreated =
       lookBackTime < 0
@@ -238,12 +241,18 @@ export class NotionSyncResolver<T extends Entity> extends TableProvider(
               sync.lastSyncTime - lookBackTime,
           );
 
-    logger.log("Collection done, start updating database");
+    logger.log(
+      `Start updating database with ${updatedOrCreated.length} updated or created`,
+    );
 
     const [upsertResults, deletedCount] = await Promise.all([
       resolver.createOrUpdateLocalItems(updatedOrCreated),
       resolver.deleteNotFoundLocalItems(allPages.map(t => t.id)),
     ]);
+
+    const updateRelationsResults = await resolver.updateRelations(
+      updatedOrCreated,
+    );
 
     const upsertSummary = upsertResults.reduce(
       (acc, r) => ({
@@ -258,6 +267,12 @@ export class NotionSyncResolver<T extends Entity> extends TableProvider(
 
     logger.log(`Created count: ${upsertSummary.upsertedCount}`);
     logger.log(`Updated count: ${upsertSummary.modifiedCount}`);
+    logger.log(
+      `Updated Relations count: ${updateRelationsResults.reduce(
+        (acc, u) => acc + u.modifiedCount,
+        0,
+      )}`,
+    );
     logger.log(`Deleted count: ${deletedCount}`);
 
     if (updateSyncTime) {

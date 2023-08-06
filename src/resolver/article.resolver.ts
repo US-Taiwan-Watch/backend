@@ -244,74 +244,63 @@ export class ArticleResolver
     return await Promise.all(
       pageObjects.map(async pageObject => {
         const properties = pageObject.properties;
-        if (properties["Publish"].checkbox) {
-          const blocks = await NotionManager.getPageContents(pageObject.id);
-          const text = blocks
-            .filter((block: any) => block.paragraph)
-            .map((block: any) =>
-              block.paragraph.rich_text[0]
-                ? block.paragraph.rich_text[0].text.content
-                    .replace(/\n/g, "\\n")
-                    .replace(/"/g, '\\"')
-                : "",
-            )
-            .join("\\n");
-          const image = (blocks.find((p: any) => p.image) as any)?.image?.file
-            ?.url;
+        const blocks = await NotionManager.getPageContents(pageObject.id);
+        const text = blocks
+          .filter((block: any) => block.paragraph)
+          .map((block: any) =>
+            block.paragraph.rich_text[0]
+              ? block.paragraph.rich_text[0].text.content
+                  .replace(/\n/g, "\\n")
+                  .replace(/"/g, '\\"')
+              : "",
+          )
+          .join("\\n");
+        const image = (blocks.find((p: any) => p.image) as any)?.image?.file
+          ?.url;
 
-          let imageUrl = null;
-          if (image) {
-            const downloader = new PublicJPGDownloader(
-              image,
-              `posts/${pageObject.id}`,
-              RequestSource.UNLIMITED,
-            );
-            const success = await downloader.downloadAndUpload();
-            if (!success) {
-              throw new Error("upload image failed");
-            }
-            imageUrl = downloader.getPublicUrl();
-          }
-
-          return await tbl.upsertItemByCustomQuery<Article>(
-            { notionPageId: pageObject.id },
-            {
-              $set: {
-                title: {
-                  zh: properties["標題"].title
-                    .map((part: any) => part.text.content)
-                    .join(""),
-                },
-                content: `{"id":"yqsyyd","version":1,"rows":[{"id":"518dnt","cells":[{"id":"72dy7s","size":12,"plugin":{"id":"ory/editor/core/content/slate","version":1},"dataI18n":{"zh":{"slate":[{"type":"PARAGRAPH/PARAGRAPH","children":[{"text":"${text}"}]}]}},"rows":[],"inline":null}]}]}`,
-                authors: ["google-oauth2|117639421567357025264"],
-                imageSource: imageUrl,
-                type: 1,
-                createdTime: new Date(
-                  properties["Created time"].created_time,
-                ).getTime(),
-                lastModifiedTime: new Date(
-                  properties["最近編輯時間"].last_edited_time,
-                ).getTime(),
-                tags: [],
-                deleted: false,
-                isPublished: true,
-                publishedTime: new Date(
-                  properties["發布時間"].date?.start ||
-                    properties["最近編輯時間"].last_edited_time,
-                ).getTime(),
-              },
-              $setOnInsert: {
-                _id: uuid(),
-              },
-            },
+        let imageUrl = null;
+        if (image) {
+          const downloader = new PublicJPGDownloader(
+            image,
+            `posts/${pageObject.id}`,
+            RequestSource.UNLIMITED,
           );
+          const success = await downloader.downloadAndUpload();
+          if (!success) {
+            throw new Error("upload image failed");
+          }
+          imageUrl = downloader.getPublicUrl();
         }
-        // Update to draft if not published
-        return await tbl.updateItemByCustomQuery<Article>(
+
+        return await tbl.upsertItemByCustomQuery<Article>(
           { notionPageId: pageObject.id },
           {
             $set: {
-              isPublished: false,
+              title: {
+                zh: properties["標題"].title
+                  .map((part: any) => part.text.content)
+                  .join(""),
+              },
+              content: `{"id":"yqsyyd","version":1,"rows":[{"id":"518dnt","cells":[{"id":"72dy7s","size":12,"plugin":{"id":"ory/editor/core/content/slate","version":1},"dataI18n":{"zh":{"slate":[{"type":"PARAGRAPH/PARAGRAPH","children":[{"text":"${text}"}]}]}},"rows":[],"inline":null}]}]}`,
+              authors: ["google-oauth2|117639421567357025264"],
+              imageSource: imageUrl,
+              type: 1,
+              createdTime: new Date(
+                properties["Created time"].created_time,
+              ).getTime(),
+              lastModifiedTime: new Date(
+                properties["最近編輯時間"].last_edited_time,
+              ).getTime(),
+              tags: [],
+              deleted: false,
+              isPublished: properties["Publish"].checkbox,
+              publishedTime: new Date(
+                properties["發布時間"].date?.start ||
+                  properties["最近編輯時間"].last_edited_time,
+              ).getTime(),
+            },
+            $setOnInsert: {
+              _id: uuid(),
             },
           },
         );
@@ -319,7 +308,37 @@ export class ArticleResolver
     );
   }
 
-  async deleteNotFoundLocalItems(_: string[]): Promise<number> {
-    return 0;
+  public async updateRelations(pageObjects: any[]): Promise<UpdateResult[]> {
+    const tbl = await this.table();
+    const idMappings = await tbl.getAllArticles();
+    return await Promise.all(
+      pageObjects.map(async pageObject => {
+        const properties = pageObject.properties;
+        const relatedNotionPageIds = properties["相關文章"].relation.map(
+          (r: any) => idMappings.find(v => v.notionPageId === r.id)?.id,
+        );
+        return await tbl.updateItemByCustomQuery(
+          { notionPageId: pageObject.id },
+          {
+            $set: {
+              relatedArticleIds: relatedNotionPageIds,
+            },
+          },
+        );
+      }),
+    );
+  }
+
+  async deleteNotFoundLocalItems(notionPageIds: string[]): Promise<number> {
+    const tbl = await this.table();
+    const updateResult = await tbl.updateItemsByCustomQuery<Article>(
+      { notionPageId: { $nin: notionPageIds } },
+      {
+        $set: {
+          deleted: true,
+        },
+      },
+    );
+    return updateResult.modifiedCount;
   }
 }

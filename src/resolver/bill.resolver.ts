@@ -92,6 +92,10 @@ export class BillResolver
     ).filter((a): a is UpdateResult => !!a);
   }
 
+  updateRelations(_pageObjects: any[]): Promise<UpdateResult[]> {
+    throw new Error("Method not implemented.");
+  }
+
   async deleteNotFoundLocalItems(notionPageIds: string[]): Promise<number> {
     const tbl = await this.table();
     const updateResult = await tbl.updateItemsByCustomQuery<Bill>(
