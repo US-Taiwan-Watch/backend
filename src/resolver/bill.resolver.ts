@@ -446,6 +446,11 @@ export class BillResolver
       billInput.billType,
       billInput.billNumber,
     );
+    if (!bill) {
+      throw Error(
+        `invalid input: ${billInput.congress}, ${billInput.billType}, ${billInput.billNumber}`,
+      );
+    }
     const existingBill = await this.bill(bill.id);
     if (existingBill) {
       throw Error(`Bill ${bill.id} exists`);
@@ -476,6 +481,11 @@ export class BillResolver
       billInput.billType,
       billInput.billNumber,
     );
+    if (!bill) {
+      throw Error(
+        `invalid input: ${billInput.congress}, ${billInput.billType}, ${billInput.billNumber}`,
+      );
+    }
     bill.title = <I18NText>billInput.title;
     bill.summary = <I18NText>billInput.summary;
     await tbl.createOrReplaceBill(bill);
