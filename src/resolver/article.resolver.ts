@@ -67,6 +67,7 @@ export class ArticleResolver
     @Ctx() ctx: IApolloContext,
     @Args() pageInfo: PaginationArgs,
     @Args() typeArgs: ArticleTypeArgs,
+    additionalQuery?: any,
   ): Promise<PaginatedArticles> {
     const tbl = await this.table();
     const canEdit = await authCheckHelper(ctx, ARTICLE_AUTHORIZED_ROLES);
@@ -75,6 +76,7 @@ export class ArticleResolver
       deleted: false,
       ...(canEdit ? {} : { isPublished: true }),
       type: typeArgs.type,
+      ...additionalQuery,
     };
 
     let sort = {};
@@ -94,6 +96,29 @@ export class ArticleResolver
       sort,
     );
     return new PaginatedArticles(pageInfo, members, true, count);
+  }
+
+  @Query(() => PaginatedArticles)
+  public async getPublicArticlesAfter(
+    @Ctx() ctx: IApolloContext,
+    @Arg("slug") slug: string,
+    @Args() pageInfo: PaginationArgs,
+  ): Promise<PaginatedArticles> {
+    const article = await this.getPublicArticle(ctx, slug);
+    if (!article) {
+      return new PaginatedArticles(pageInfo, [], true, 0);
+    }
+    return this.getPostsWithType(
+      ctx,
+      pageInfo,
+      { type: article.type || ArticleType.ARTICLE },
+      Object.fromEntries(
+        pageInfo.sortFields?.map((field, i) => [
+          field,
+          { [pageInfo.sortDirections![i] > 0 ? "$gt" : "$lt"]: article[field] },
+        ]) || [],
+      ),
+    );
   }
 
   @Query(() => Article, { nullable: true })
