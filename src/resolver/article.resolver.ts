@@ -307,6 +307,7 @@ export class ArticleResolver
                   .join(""),
               },
               content: `{"id":"yqsyyd","version":1,"rows":[{"id":"518dnt","cells":[{"id":"72dy7s","size":12,"plugin":{"id":"ory/editor/core/content/slate","version":1},"dataI18n":{"zh":{"slate":[{"type":"PARAGRAPH/PARAGRAPH","children":[{"text":"${text}"}]}]}},"rows":[],"inline":null}]}]}`,
+              text,
               authors: ["google-oauth2|117639421567357025264"],
               imageSource: imageUrl,
               type: 1,
