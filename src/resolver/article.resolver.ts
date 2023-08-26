@@ -89,13 +89,13 @@ export class ArticleResolver
       );
     }
 
-    const [members, count] = await tbl.queryItemsWithTotalCount<Article>(
+    const [posts, count] = await tbl.queryItemsWithTotalCount<Article>(
       query,
       pageInfo.offset,
       pageInfo.limit,
       sort,
     );
-    return new PaginatedArticles(pageInfo, members, true, count);
+    return new PaginatedArticles(pageInfo, posts, true, count);
   }
 
   @Query(() => PaginatedArticles)
@@ -357,7 +357,7 @@ export class ArticleResolver
   async deleteNotFoundLocalItems(notionPageIds: string[]): Promise<number> {
     const tbl = await this.table();
     const updateResult = await tbl.updateItemsByCustomQuery<Article>(
-      { notionPageId: { $nin: notionPageIds } },
+      { notionPageId: { $nin: notionPageIds }, fbPostId: { $exists: false } },
       {
         $set: {
           deleted: true,
