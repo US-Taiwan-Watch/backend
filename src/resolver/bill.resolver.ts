@@ -421,15 +421,18 @@ export class BillResolver
     @Arg("query", { nullable: true }) queryInput?: BillQueryInput,
   ): Promise<PaginatedBills> {
     const tbl = await this.table();
-    let bills: Bill[];
 
     if (queryInput && queryInput.keywords.length > 0) {
-      bills = await tbl.searchBills(queryInput.keywords);
+      const bills = await tbl.searchBills(queryInput.keywords);
+      return new PaginatedBills(pageInfo, bills, false);
     } else {
-      bills = await tbl.getAllBills();
+      const [bills, count] = await tbl.queryItemsWithTotalCount<Bill>(
+        { deleted: { $ne: true } },
+        pageInfo.offset,
+        pageInfo.limit,
+      );
+      return new PaginatedBills(pageInfo, bills, true, count);
     }
-
-    return new PaginatedBills(pageInfo, bills, false);
   }
 
   @Query(() => Bill, { nullable: true })

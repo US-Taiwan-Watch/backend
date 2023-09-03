@@ -75,7 +75,7 @@ export function PaginatedResponse<TItem extends { [key: string]: any }>(
           }
           return 0;
         })
-        .splice(this.start, this.end);
+        .slice(this.start, this.end);
     }
   }
   return PaginatedResponseClass;
