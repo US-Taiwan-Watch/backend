@@ -12,6 +12,6 @@ if (require.main === module) {
   const logger = new Logger("articles-sync");
   logger.info("Start syncing articles");
   new NotionSyncResolver(ArticleResolver)
-    .syncFromNotion()
+    .syncFromNotion(-1)
     .then(() => logger.info("Finish syncing articles"));
 }

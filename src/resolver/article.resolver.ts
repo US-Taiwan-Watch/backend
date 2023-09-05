@@ -275,11 +275,10 @@ export class ArticleResolver
           .map((block: any) =>
             block.paragraph.rich_text[0]
               ? block.paragraph.rich_text[0].text.content
-                  .replace(/\n/g, "\\n")
-                  .replace(/"/g, '\\"')
               : "",
           )
-          .join("\\n");
+          .join("\n");
+        const textForJSON = text.replace(/\n/g, "\\n").replace(/"/g, '\\"');
         const image = (blocks.find((p: any) => p.image) as any)?.image?.file
           ?.url;
 
@@ -306,7 +305,7 @@ export class ArticleResolver
                   .map((part: any) => part.text.content)
                   .join(""),
               },
-              content: `{"id":"yqsyyd","version":1,"rows":[{"id":"518dnt","cells":[{"id":"72dy7s","size":12,"plugin":{"id":"ory/editor/core/content/slate","version":1},"dataI18n":{"zh":{"slate":[{"type":"PARAGRAPH/PARAGRAPH","children":[{"text":"${text}"}]}]}},"rows":[],"inline":null}]}]}`,
+              content: `{"id":"yqsyyd","version":1,"rows":[{"id":"518dnt","cells":[{"id":"72dy7s","size":12,"plugin":{"id":"ory/editor/core/content/slate","version":1},"dataI18n":{"zh":{"slate":[{"type":"PARAGRAPH/PARAGRAPH","children":[{"text":"${textForJSON}"}]}]}},"rows":[],"inline":null}]}]}`,
               text,
               authors: ["google-oauth2|117639421567357025264"],
               imageSource: imageUrl,
