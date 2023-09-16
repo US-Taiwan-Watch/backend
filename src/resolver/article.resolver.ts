@@ -357,7 +357,11 @@ export class ArticleResolver
   async deleteNotFoundLocalItems(notionPageIds: string[]): Promise<number> {
     const tbl = await this.table();
     const updateResult = await tbl.updateItemsByCustomQuery<Article>(
-      { notionPageId: { $nin: notionPageIds }, fbPostId: { $exists: false } },
+      {
+        notionPageId: { $nin: notionPageIds },
+        fbPostId: { $exists: false },
+        type: ArticleType.ARTICLE,
+      },
       {
         $set: {
           deleted: true,
