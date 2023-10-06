@@ -33,8 +33,7 @@ export abstract class AzureStorageManager {
   public static async getBlobs(
     container: Container,
     prefix: string,
-    sortBy?: string,
-  ): Promise<string[]> {
+  ): Promise<{ url: string; metadata: { [key: string]: string } }[]> {
     const containerClient =
       this.blobServiceClient.getContainerClient(container);
     const it = containerClient.listBlobsFlat({
@@ -47,14 +46,10 @@ export abstract class AzureStorageManager {
       results.push(item.value);
       item = await it.next();
     }
-    if (sortBy) {
-      results.sort((a, b) =>
-        a.metadata && b.metadata
-          ? parseInt(a.metadata[sortBy]) - parseInt(b.metadata[sortBy])
-          : 0,
-      );
-    }
-    return results.map(r => this.getBlobUrl(container, r.name));
+    return results.map(r => ({
+      url: this.getBlobUrl(container, r.name),
+      metadata: r.metadata || {},
+    }));
   }
 
   public static async checkBlobExists(
