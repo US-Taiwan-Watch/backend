@@ -41,7 +41,7 @@ export abstract class AzureStorageManager {
       includeMetadata: true,
     });
     let item = await it.next();
-    let results = [];
+    const results = [];
     while (!item.done) {
       results.push(item.value);
       item = await it.next();

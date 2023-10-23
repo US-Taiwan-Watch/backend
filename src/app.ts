@@ -20,14 +20,16 @@ import { ApolloServerPluginInlineTrace } from "apollo-server-core";
 import { authChecker } from "./util/auth-helper";
 import auth0RuleWebhookRouter from "./auth0/webhook";
 import uploadRouter from "./routers/upload-router";
-import syncRouter from "./routers/sync-router";
 import { appInsightsClient } from "./util/app-insights";
 import WS from "ws";
 import { useServer } from "graphql-ws/lib/use/ws";
 import { ApolloServerPluginDrainHttpServer } from "apollo-server-core";
 import { AdminResolver } from "./resolver/admin.resolver";
 import { schedule } from "node-cron";
-import { NotionSyncResolver } from "./resolver/notion-sync.resolver";
+import {
+  NotionSyncResolver,
+  NotionSyncType,
+} from "./resolver/notion-sync.resolver";
 import { I18nResolver } from "./resolver/i18n.resolver";
 import { BannerResolver } from "./resolver/banner.resolver";
 
@@ -92,6 +94,7 @@ async function bootstrap() {
       ArticleResolver,
       I18nResolver,
       BannerResolver,
+      NotionSyncResolver,
     ],
     validate: false,
     authChecker,
@@ -101,9 +104,10 @@ async function bootstrap() {
   // Sync articles every 15 mins. this is not ideal as we have to deploy the code for updating the scheduled job. but it's the easiest way
   if (process.env.NODE_ENV !== "dev") {
     schedule("0 */15 * * * *", async () => {
-      const resolver = new NotionSyncResolver(ArticleResolver);
       console.log("Start syncing articles");
-      await resolver.syncFromNotion();
+      await new NotionSyncResolver().syncFromNotionMutation(
+        NotionSyncType.ARTICLE,
+      );
       console.log("Finish syncing articles");
     });
   }
@@ -115,7 +119,6 @@ async function bootstrap() {
 
   app.use("/auth0-rule", auth0RuleWebhookRouter);
   app.use("/upload", uploadRouter);
-  app.use("/sync", syncRouter);
 
   // Create server
   const httpServer: http.Server = http.createServer((req, res) => {

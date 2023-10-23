@@ -334,24 +334,25 @@ export class ArticleResolver
   }
 
   public async updateRelations(pageObjects: any[]): Promise<UpdateResult[]> {
-    const tbl = await this.table();
-    const idMappings = await tbl.getAllArticles();
-    return await Promise.all(
-      pageObjects.map(async pageObject => {
-        const properties = pageObject.properties;
-        const relatedNotionPageIds = properties["相關文章"].relation.map(
-          (r: any) => idMappings.find(v => v.notionPageId === r.id)?.id,
-        );
-        return await tbl.updateItemByCustomQuery(
-          { notionPageId: pageObject.id },
-          {
-            $set: {
-              relatedArticleIds: relatedNotionPageIds,
-            },
-          },
-        );
-      }),
-    );
+    return [];
+    // const tbl = await this.table();
+    // const idMappings = await tbl.getAllArticles();
+    // return await Promise.all(
+    //   pageObjects.map(async pageObject => {
+    //     const properties = pageObject.properties;
+    //     const relatedNotionPageIds = properties["相關文章"].relation.map(
+    //       (r: any) => idMappings.find(v => v.notionPageId === r.id)?.id,
+    //     );
+    //     return await tbl.updateItemByCustomQuery(
+    //       { notionPageId: pageObject.id },
+    //       {
+    //         $set: {
+    //           relatedArticleIds: relatedNotionPageIds,
+    //         },
+    //       },
+    //     );
+    //   }),
+    // );
   }
 
   async deleteNotFoundLocalItems(notionPageIds: string[]): Promise<number> {

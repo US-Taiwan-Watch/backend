@@ -6,8 +6,18 @@ import { Logger } from "../util/logger";
 import { NotionManager } from "../data-sync/notion-manager";
 import { UpdateResult } from "mongodb";
 import { executePromisesAllSettledWithConcurrency } from "../../common/utils/concurrency-utils";
+import { ArticleResolver } from "./article.resolver";
+import { Arg, Mutation, Resolver, registerEnumType } from "type-graphql";
 
 const DEFAULT_LOOK_BACK_MS = 5 * 60 * 1000;
+
+export enum NotionSyncType {
+  ARTICLE = "articles",
+}
+
+registerEnumType(NotionSyncType, {
+  name: "NotionSyncType",
+});
 
 export interface NotionSyncable {
   getTableName(): Promise<string>;
@@ -36,17 +46,33 @@ type Entity = {
   notionPageId?: string;
 };
 
+@Resolver()
 export class NotionSyncResolver<T extends Entity> extends TableProvider(
   NotionSyncTable,
 ) {
-  private resolver: NotionSyncable;
+  private resolver!: NotionSyncable;
+  private className!: new () => NotionSyncable;
 
   constructor(
-    private className: new () => NotionSyncable,
+    className?: new () => NotionSyncable,
     private logger = new Logger("NotionSyncResolver"),
   ) {
     super();
+    if (className) {
+      this.resolver = new className();
+    }
+  }
+
+  private getResolverClass(type: NotionSyncType) {
+    switch (type) {
+      case NotionSyncType.ARTICLE:
+        return ArticleResolver;
+    }
+  }
+
+  private setResolver(className: new () => NotionSyncable): this {
     this.resolver = new className();
+    return this;
   }
 
   private async getNotionSyncId() {
@@ -73,6 +99,16 @@ export class NotionSyncResolver<T extends Entity> extends TableProvider(
         .in("unlinkNotionDatabase")
         .log(`Failed for resolver ${this.className.name}`);
     }
+  }
+
+  @Mutation(() => Boolean, { name: "syncFromNotion" })
+  public async syncFromNotionMutation(
+    @Arg("type", () => NotionSyncType, { nullable: false })
+    type: NotionSyncType,
+  ): Promise<boolean> {
+    this.setResolver(this.getResolverClass(type));
+    await this.syncFromNotion();
+    return true;
   }
 
   /**
