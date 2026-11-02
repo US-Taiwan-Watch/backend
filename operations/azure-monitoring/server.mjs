@@ -5,7 +5,7 @@ import {dirname} from 'node:path';
 import {pathToFileURL} from 'node:url';
 
 export const requiredChecks = ['serviceActive','certificateValidBeyond30Days','diskBelow85Percent','recentFullBackup','backupChecksum','primary','tlsRequired','approvedBindAddresses','authorization','backendOnlyMongoFirewall','certificatePurpose_sslserver','certificatePurpose_sslclient'];
-export const diagnosticChecks = [...requiredChecks,'certificateRenewalHealthy','certificateIssuerValidBeyond90Days','certificateRenewalTimerActive'];
+export const diagnosticChecks = [...requiredChecks,'certificateRenewalHealthy','certificateIssuerValidBeyond90Days','certificateRenewalTimerActive','offServerBackupHealthy','backupCredentialValidBeyond30Days','offServerBackupTimerActive'];
 export function validHeartbeat(value, now = Date.now()) {
   return value && Number.isInteger(value.checkedAtEpoch) && value.checkedAtEpoch * 1000 > now - 600000 && value.checkedAtEpoch * 1000 <= now + 60000 && typeof value.passed === 'boolean' && requiredChecks.every(k => typeof value.checks?.[k] === 'boolean') && diagnosticChecks.every(k=>value.checks[k] === undefined || typeof value.checks[k] === 'boolean');
 }

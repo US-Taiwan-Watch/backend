@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "recipientCertificate": "/etc/ustw-recovery/recipient.crt",
+  "credentialExpiresEpoch": 0,
+  "mediaSources": {
+    "media-article": "https://ustwcmsstorage.blob.core.windows.net/media-article?READ_LIST_SAS",
+    "media-ketagalan": "https://ustwcmsstorage.blob.core.windows.net/media-ketagalan?READ_LIST_SAS",
+    "media-member": "https://ustwcmsstorage.blob.core.windows.net/media-member?READ_LIST_SAS",
+    "media-people": "https://ustwcmsstorage.blob.core.windows.net/media-people?READ_LIST_SAS",
+    "media-project": "https://ustwcmsstorage.blob.core.windows.net/media-project?READ_LIST_SAS",
+    "ustw-taiwan-records-private-v3": "https://ustwcmsstorage.blob.core.windows.net/ustw-taiwan-records-private-v3?READ_LIST_SAS"
+  },
+  "backupContainer": "https://ustwcmsstorage.blob.core.windows.net/ustw-recovery-backups-v1?CREATE_ONLY_SAS"
+}

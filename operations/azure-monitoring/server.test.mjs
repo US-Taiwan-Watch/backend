@@ -18,7 +18,7 @@ test('only exact bearer token accepted',()=>{
 });
 test('renewal failures fail closed while older complete reports remain compatible',()=>{
   assert.equal(databaseHealthy(value()),true);
-  for(const key of ['certificateRenewalHealthy','certificateIssuerValidBeyond90Days','certificateRenewalTimerActive']){
+  for(const key of ['certificateRenewalHealthy','certificateIssuerValidBeyond90Days','certificateRenewalTimerActive','offServerBackupHealthy','backupCredentialValidBeyond30Days','offServerBackupTimerActive']){
     const report=value();report.checks[key]=false;assert.equal(databaseHealthy(report),false);
     report.checks[key]='wrong type';assert.equal(validHeartbeat(report),false);
     report.checks[key]=true;assert.equal(databaseHealthy(report),true);
