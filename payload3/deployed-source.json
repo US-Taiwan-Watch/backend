@@ -1,0 +1,995 @@
+{
+  "description": "Deployed application inputs, excluding OS metadata; original and checked-in hashes record whitespace-only source cleanup. Service settings excluded.",
+  "payload": "3.92.1",
+  "mongodb": "9.0.4",
+  "registryDigest": "sha256:b47bea2f5884629c00af1b9f09463bbf5efb103147cdf0cf99308e8bf4410308",
+  "files": [
+    {
+      "path": "Dockerfile",
+      "sha256": "2db5bcbaf31e61cbb4312b560dba4a6d4780bb3829095cd3c8c707681f94fb5e",
+      "checkedInSha256": "2db5bcbaf31e61cbb4312b560dba4a6d4780bb3829095cd3c8c707681f94fb5e",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "next.config.mjs",
+      "sha256": "bac11d1092ffe76cad0966d46466ac07f9691c21081bf5c0b70d4c68554649c0",
+      "checkedInSha256": "bac11d1092ffe76cad0966d46466ac07f9691c21081bf5c0b70d4c68554649c0",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": ".npmrc",
+      "sha256": "7151cf397def0c2cb0ab65643701d27d335a72c90f775675b5f826bc7005818a",
+      "checkedInSha256": "7151cf397def0c2cb0ab65643701d27d335a72c90f775675b5f826bc7005818a",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "next-env.d.ts",
+      "sha256": "1862ac4bbbc5192d4bf562161df66ea547ed3e67173100656ab606ae9797db2b",
+      "checkedInSha256": "1862ac4bbbc5192d4bf562161df66ea547ed3e67173100656ab606ae9797db2b",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": ".dockerignore",
+      "sha256": "d8ca607d21856284ba254ca17ed8e024d65ca0ada9a2233ff43447e0010dd6f0",
+      "checkedInSha256": "d8ca607d21856284ba254ca17ed8e024d65ca0ada9a2233ff43447e0010dd6f0",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "start-production.mjs",
+      "sha256": "3c692762b4d9c244b64355cb6f1cf44c347cf7d6489105eab2ffd3f86e818721",
+      "checkedInSha256": "15302f160979c43adf2a8de5cbbb8b4b2c1929f80691435c54ca596309e0638c",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "0e537534558d09370278c2005005a7ea58e742da2064a069561fb0f437b37ae6",
+      "checkedInSha256": "0e537534558d09370278c2005005a7ea58e742da2064a069561fb0f437b37ae6",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "package.json",
+      "sha256": "31ca181e8f96f58318aacfcb1ba659b12e5b2fb6c919a63c45c3fb9b5eef589c",
+      "checkedInSha256": "31ca181e8f96f58318aacfcb1ba659b12e5b2fb6c919a63c45c3fb9b5eef589c",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "tsconfig.json",
+      "sha256": "53ba0399e94d63ac936d8201cff8a702898c0b506251c21e7f0ac7652d786a21",
+      "checkedInSha256": "53ba0399e94d63ac936d8201cff8a702898c0b506251c21e7f0ac7652d786a21",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "mongodb-ca.crt",
+      "sha256": "bea592d406529f68ac7cb729d4e94595b27cc43e8944d164436355143c1c3456",
+      "checkedInSha256": "bea592d406529f68ac7cb729d4e94595b27cc43e8944d164436355143c1c3456",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "scripts/patch-payload-form.cjs",
+      "sha256": "c56bed46d0710136c50bf1df178cd71aab9e40f190705aa85f037a7f2a0f224c",
+      "checkedInSha256": "c56bed46d0710136c50bf1df178cd71aab9e40f190705aa85f037a7f2a0f224c",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/generated-schema.graphql",
+      "sha256": "2b30fe144038ca8c581ee74776126df93a9dd857a4480ebee3a2c17c6630390b",
+      "checkedInSha256": "3ae121618013c0c2de7358eedee54fd0ab5405a296701d39d5a66527150d7833",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/payload.config.ts",
+      "sha256": "f9eee1873bc7c6e81a025172144cff68cb8efcd900636f65e01b627f9b11db07",
+      "checkedInSha256": "f9eee1873bc7c6e81a025172144cff68cb8efcd900636f65e01b627f9b11db07",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/payload-types.ts",
+      "sha256": "a7bb7e554d04c89bcad5049c9d61fddfb9127ab5bbb701a44fb86a27e75fd50a",
+      "checkedInSha256": "3a9153db671c31dcd9cbfdd837fd4774b338b3e785317077022f14fc5c9662f7",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/endpoints/uploadMedia.ts",
+      "sha256": "7ab0780e36528b4053a53dace764eeed22d8f8c5b39685a8f417dd4958caee0b",
+      "checkedInSha256": "7ab0780e36528b4053a53dace764eeed22d8f8c5b39685a8f417dd4958caee0b",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/app/(payload)/layout.tsx",
+      "sha256": "3d5c31216af7b50db3cd4d7acdf70e8c75222e175cd89170af241914d503ff0a",
+      "checkedInSha256": "3d5c31216af7b50db3cd4d7acdf70e8c75222e175cd89170af241914d503ff0a",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/app/(payload)/page.tsx",
+      "sha256": "180966d7606de296259930a4f2a9408ad7a833e7e918672446d6d0dea9a71684",
+      "checkedInSha256": "180966d7606de296259930a4f2a9408ad7a833e7e918672446d6d0dea9a71684",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/app/(payload)/admin/importMap.js",
+      "sha256": "913404200ac0a302592b0554e3c4923ea70ca1b91525bc6aa258ed15bbf875e0",
+      "checkedInSha256": "913404200ac0a302592b0554e3c4923ea70ca1b91525bc6aa258ed15bbf875e0",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/app/(payload)/admin/[[...segments]]/page.tsx",
+      "sha256": "4c8df48789f30877a87e684e6de17bcbe771365c6aa6403a7e32ab2e17f357c2",
+      "checkedInSha256": "4c8df48789f30877a87e684e6de17bcbe771365c6aa6403a7e32ab2e17f357c2",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/app/(payload)/api/graphql-playground/route.ts",
+      "sha256": "17f993909f814f31099ba943f10999e171b37247b757a025210e9553edcb6d1f",
+      "checkedInSha256": "17f993909f814f31099ba943f10999e171b37247b757a025210e9553edcb6d1f",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/app/(payload)/api/[...slug]/route.ts",
+      "sha256": "60860a6a4d9dcd7a42ecb4c1f11f313cd495a271af7acd420a5853ef01e898fb",
+      "checkedInSha256": "60860a6a4d9dcd7a42ecb4c1f11f313cd495a271af7acd420a5853ef01e898fb",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/app/(payload)/api/graphql/route.ts",
+      "sha256": "d2a251e0ebcc8c46e48876a6d94bb62217996c9088f9eb624f7bd6e05c60331a",
+      "checkedInSha256": "d2a251e0ebcc8c46e48876a6d94bb62217996c9088f9eb624f7bd6e05c60331a",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/access/auth0Tokens.ts",
+      "sha256": "622228c16c9a1c0c0ab3d2e12d3bb8e4e12afbc2cb0ca24ad7e1dd43a335cd81",
+      "checkedInSha256": "622228c16c9a1c0c0ab3d2e12d3bb8e4e12afbc2cb0ca24ad7e1dd43a335cd81",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/access/records.ts",
+      "sha256": "9f38a6e2506be2656d05d9f263e47a599e2b3e2c9ba22c58c93568ace59105eb",
+      "checkedInSha256": "9f38a6e2506be2656d05d9f263e47a599e2b3e2c9ba22c58c93568ace59105eb",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/access/memberIdentity.ts",
+      "sha256": "de4cdbae1069cbab23acb2d8dbfa2aba885dcbb86762bf65383abad6c3d3630b",
+      "checkedInSha256": "de4cdbae1069cbab23acb2d8dbfa2aba885dcbb86762bf65383abad6c3d3630b",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/access/cmsAccess.ts",
+      "sha256": "589340a610b9b274a197131f24db58353006bcb6d1c62cc25f08f2b71ccfef99",
+      "checkedInSha256": "589340a610b9b274a197131f24db58353006bcb6d1c62cc25f08f2b71ccfef99",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/runtime/podcast.ts",
+      "sha256": "5edd6e13bba3a591ba0d46c79afe7b70e6a4131aaccf87e2536f9e2e298118c4",
+      "checkedInSha256": "5edd6e13bba3a591ba0d46c79afe7b70e6a4131aaccf87e2536f9e2e298118c4",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/runtime/config.ts",
+      "sha256": "990eda905f3ae4a74bf074fc4138f6bfcef2e5b0470b71651a7713af9b0bf5d5",
+      "checkedInSha256": "990eda905f3ae4a74bf074fc4138f6bfcef2e5b0470b71651a7713af9b0bf5d5",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/runtime/media.ts",
+      "sha256": "76e5e2cd7e3785332c12d4ca08142e6ab0acae350ce61a41e78095146961e3b5",
+      "checkedInSha256": "76e5e2cd7e3785332c12d4ca08142e6ab0acae350ce61a41e78095146961e3b5",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/middlewares/auth-internal.ts",
+      "sha256": "88c76a9d2a14fa6f1f8c6dc15f9b4ff3979df5299b22652ff3115b4ca66ca467",
+      "checkedInSha256": "88c76a9d2a14fa6f1f8c6dc15f9b4ff3979df5299b22652ff3115b4ca66ca467",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/utilities/mongo.ts",
+      "sha256": "722fc4a0927ec67cb1a01a052352d955ee9bdf10ca32f3a47d660341712edb84",
+      "checkedInSha256": "722fc4a0927ec67cb1a01a052352d955ee9bdf10ca32f3a47d660341712edb84",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/components/peopleRoleSelect.tsx",
+      "sha256": "0975e5c385652dcf3f716141b17c8e95c49ab29abddd81b242c34946a8d04ef6",
+      "checkedInSha256": "c35f7c092a030b59b012637e67c15577f3c4e7ab98673b5583dbfb86a6680db3",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/components/articlePodcastSelect.tsx",
+      "sha256": "eeefcdc4165ae8d69139834695c3eaa6bf5e71d1d32037ca0943927d492984ca",
+      "checkedInSha256": "eeefcdc4165ae8d69139834695c3eaa6bf5e71d1d32037ca0943927d492984ca",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/components/peopleSyncSection.tsx",
+      "sha256": "334216e811f3a8356df212f7b80fc63fbc9d0d273832b5f21b371fd322d06178",
+      "checkedInSha256": "334216e811f3a8356df212f7b80fc63fbc9d0d273832b5f21b371fd322d06178",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/components/recordReviewSection.tsx",
+      "sha256": "f84809c2590c45afec51fda2f0df8720d63925ca35e83de686b4a2ef0755ae89",
+      "checkedInSha256": "f84809c2590c45afec51fda2f0df8720d63925ca35e83de686b4a2ef0755ae89",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/components/billSummarySection.tsx",
+      "sha256": "74fba1ef674d923fa6e117a5f3f89747fe496c69b25e5f111e0d4928d509ccab",
+      "checkedInSha256": "74fba1ef674d923fa6e117a5f3f89747fe496c69b25e5f111e0d4928d509ccab",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/components/peopleBioSection.tsx",
+      "sha256": "74fba1ef674d923fa6e117a5f3f89747fe496c69b25e5f111e0d4928d509ccab",
+      "checkedInSha256": "74fba1ef674d923fa6e117a5f3f89747fe496c69b25e5f111e0d4928d509ccab",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/components/peopleCongressSelect.tsx",
+      "sha256": "71746bab8926e7b25337e10135d6b186bf923eaebb68c5fb6cc363bd32026139",
+      "checkedInSha256": "0ee529b51303959b90bc38eeadaf3ce9136d29468bb296dc89202432e6019c4d",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/components/billSyncSection.tsx",
+      "sha256": "625fd06e04bf0fcf3d1be2db0ebb48441992c93f53ff9e533cc6e7a70a936869",
+      "checkedInSha256": "625fd06e04bf0fcf3d1be2db0ebb48441992c93f53ff9e533cc6e7a70a936869",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/configs/slate.ts",
+      "sha256": "76893f4842ebfd08f00059a9bf742aafd8b2d5aae5de40e489588e49c6e67187",
+      "checkedInSha256": "1edb6d13ffcffaee977b7adef24fad86d19572050460672753421e4bff1dbc28",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/configs/vote.ts",
+      "sha256": "7110f1a0dbc158a07468164347363d5c7779a549e31bb01930d7346efa977bad",
+      "checkedInSha256": "2ec28d8515719c3cc4b91f084774bfb8181fcc7eaca8bf27ef78498d091cf67f",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/configs/taiwan-record.ts",
+      "sha256": "b5979413b35b4735142429f38f7982d469dcdff0ee5dc8fdb5f9cb47dfbd6969",
+      "checkedInSha256": "2cc7f6db55d62baf9b78b17f8e3dcd0057f8658e29e5039387d4611a8c64a47a",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/configs/people.ts",
+      "sha256": "0a049fb065557aff808ef400f20c2c1bd46e3996da0cb5387b4105e6fba0e33e",
+      "checkedInSha256": "0a049fb065557aff808ef400f20c2c1bd46e3996da0cb5387b4105e6fba0e33e",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/configs/about.ts",
+      "sha256": "ffce351d2a0bbff29a2a2eb3fd885978f42ce269b6e34f772743da5328f6ec60",
+      "checkedInSha256": "0c2453cacac0b1782f4628e66a8a3d8d743334276e892da469546c32ef5f3939",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/configs/member.ts",
+      "sha256": "2719d8875d107d3adceb2610ea6caa5efb1107dfbe2ecaeec6985eb7d00ca3bc",
+      "checkedInSha256": "9fb7f2e96082b1b7b23f78cead2e34bd170bf36b5162ec36f91f26cfba48d1b3",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/configs/category-people.ts",
+      "sha256": "7e7aab8457593c313eeb75719c2c7a8f80db6b4d7cb24f29e23d52f2d23e0298",
+      "checkedInSha256": "b6bbca7912a2d315cc605f39a8452c6ff93c7768f9365e888f13118510745a0f",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/configs/bill.ts",
+      "sha256": "803b99fc90bd468431b67fe40c90cb539f339c6a2a4fd6fc67c26695fa3f057c",
+      "checkedInSha256": "803b99fc90bd468431b67fe40c90cb539f339c6a2a4fd6fc67c26695fa3f057c",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/jobs/weeklyUpdate.ts",
+      "sha256": "0ad30410382652b2b72bc0bbe1172a502c0e753f935a19f267a24918a3a87a74",
+      "checkedInSha256": "0ad30410382652b2b72bc0bbe1172a502c0e753f935a19f267a24918a3a87a74",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/Peoples/index.ts",
+      "sha256": "cdf9307cc7053dcf16bd6088bd4e57301336d38988cef3855363167647495adf",
+      "checkedInSha256": "cdf9307cc7053dcf16bd6088bd4e57301336d38988cef3855363167647495adf",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/Peoples/endpoints/syncPeople.ts",
+      "sha256": "e658ebf48e12829b84f398c9a3c9227ce275f20b142c20af62d7a373d358a30f",
+      "checkedInSha256": "015d4aae0814bfff0d2734855f8e1c03f374d57064a469f272c03c587afa348a",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Peoples/endpoints/fetchPeople.ts",
+      "sha256": "000270c23d0c0140a4be1cf25eda2b9af7c14302dac8f4effd10d6e2a2ca9666",
+      "checkedInSha256": "6676bae5ef102f60a8adf8e674adc04eb818980c124462d865d5f8b26b368055",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Peoples/endpoints/aiBiography.ts",
+      "sha256": "5ca538c43ce91ef9e1b9cb02569b9bf1c9819c9ec8e73d487b7b310e2b1d50d5",
+      "checkedInSha256": "ecf7c586ceb9fcb8c129dfca2b3cb90f24d7988c05b03e3b3d9a083da9b871ba",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Peoples/endpoints/upsertPeople.ts",
+      "sha256": "2b1da3dec0c937c3c377219dfd430a381ff40f77da2400ecd003c6748a8f1265",
+      "checkedInSha256": "a30c1e98e57b716fb535f6ee9ce1bcf85adfd4eb7f08ad238ca24e926790fa22",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Peoples/mutations/addViewCount.ts",
+      "sha256": "318cc4bf09f28f25c0498d5235b279dceae0a0b4fe74905e72b3e12ef9375cae",
+      "checkedInSha256": "318cc4bf09f28f25c0498d5235b279dceae0a0b4fe74905e72b3e12ef9375cae",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/Peoples/queries/filter.ts",
+      "sha256": "744acc05f0f29e376ba43a64d4bd28fdc2397e16cb218462dbab1128267455f6",
+      "checkedInSha256": "744acc05f0f29e376ba43a64d4bd28fdc2397e16cb218462dbab1128267455f6",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/Peoples/queries/addBillCount.ts",
+      "sha256": "e8aaae1d321805c00d0779703eb031beeabcfffce390ff2d144855c92312ce4b",
+      "checkedInSha256": "3e94945ab2b97013c02fc0eec45d2aeeaecc70b272dd148f767c830d801f9450",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Peoples/queries/index.ts",
+      "sha256": "eaf7333f6269f6c38b5d56d0082d146978705c1bbf0ba21b3ff26084138b9b55",
+      "checkedInSha256": "c3a398a06f8eefb427d31cb97035bbfbc83b7b371fe17eb8674bd6c7d7ee2389",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Peoples/utils/extract.ts",
+      "sha256": "12bab6bc6bb90d35a1994b54ca0699ac8e6c077049e1c70bc92c1fef3d0ea925",
+      "checkedInSha256": "a7c7405241f7a63c26b1a09e9b025ccd20ce514febc24aeded0c99741f8b5466",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Peoples/utils/url.ts",
+      "sha256": "4da8eca3806ff0a69bd44490abac46eea37482894c12aa698629c9b867544bf6",
+      "checkedInSha256": "bb7d67f3ec0fb9ca80dbb3ed8a3e0c4098d350293f36333bfcbe0ebeeacb12a2",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Peoples/utils/roles.ts",
+      "sha256": "f4d57bda7dd17116fb1a120e2a0e4902de7990db532f6ee1c71521f736ab4da6",
+      "checkedInSha256": "df801ae1a24dda07367d5afdf76017f4ab8807a6fd97207ca3b80da41d504f10",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Peoples/resolvers/filter.ts",
+      "sha256": "ff1e61b47cb8822100d3adcc85a57473ac9244a2e6e5fd60fb1368430633ed8d",
+      "checkedInSha256": "ff1e61b47cb8822100d3adcc85a57473ac9244a2e6e5fd60fb1368430633ed8d",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/Peoples/resolvers/addBillCount.ts",
+      "sha256": "e10d224d991cbf2fe78354a06ec953d2e77518aea129e7a7b6249130d8e04478",
+      "checkedInSha256": "e10d224d991cbf2fe78354a06ec953d2e77518aea129e7a7b6249130d8e04478",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/Peoples/hooks/afterChange.ts",
+      "sha256": "06fc47a1966617abed7cd48e2f8e2858c5a6c2328f3d2a6e554f2540f9a3f61c",
+      "checkedInSha256": "59b96be70689e64399e2e6ef06d2f7786b442daa51c25ed8de5470d73e0b567f",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Peoples/hooks/afterRead.ts",
+      "sha256": "88dfab48c15ea04b46db483349108b507b11502663c71e934fadd0e16acd1875",
+      "checkedInSha256": "88dfab48c15ea04b46db483349108b507b11502663c71e934fadd0e16acd1875",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/Peoples/hooks/afterDelete.ts",
+      "sha256": "a54e473fd144469038fe5a835365861cf25f53994b049b4603c9fae72b28b14a",
+      "checkedInSha256": "edef03baa2617e092cb8c62bc875e2e2a490a1af98bff6744562bec118a28aa0",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Peoples/hooks/beforeChange.ts",
+      "sha256": "3294c735071ae4691d14337b64c4182ad2d85abe3c0b5bec19f22668f777bdfc",
+      "checkedInSha256": "ecf10caa60bc9a7d8d1b0a8233034bb7313f7b739c8ee70f65e6309c0561df06",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Peoples/services/dataFetch.ts",
+      "sha256": "a83ba2d8cef9dbb5ff63289d5bb1229518ae6e880f82ba7187ae571ca35e0706",
+      "checkedInSha256": "a83ba2d8cef9dbb5ff63289d5bb1229518ae6e880f82ba7187ae571ca35e0706",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/Peoples/services/peopleFilter.ts",
+      "sha256": "e2bc2935da1fcd8dc55bfcda09abf74d83d55ee99fc9eba24c220006d16906b0",
+      "checkedInSha256": "71ef72e7e9de8e27cf62a2d0f66a5b6e824039954c68c98e9a595878eeb92ed1",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Peoples/services/dataProcess.ts",
+      "sha256": "08ea7b1324e0337a43e2e4b2664ca0e9e7d5f263e0ff844fe2f4dea27f09f764",
+      "checkedInSha256": "0641e72f877c56d615c805cae5328fafa5e9b592f1f185b183fafdebb18dd970",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Peoples/services/dataTranslate.ts",
+      "sha256": "95d9fc3fda881b563f1b310f01a7db842aae4c1a5e4c744ccdce4d40165c0dc8",
+      "checkedInSha256": "477a1f6663ab4f182f3d8988de8122f154a30721fb1e640dcaf5c8f0ecf0eb35",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Peoples/services/peopleUpdate.ts",
+      "sha256": "643fcbf351ceca0a41007e31b06e15fc9011eb106c7e9d95ea265e33f78a71ba",
+      "checkedInSha256": "5ae0689631fdf4aea92664cb12e620ffbd83022a40495dd7f21887259ca88c0a",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Peoples/services/peopleCompose.ts",
+      "sha256": "bd8f8b458c38c3bfb48c233e26871b85bf4054ad7af3712dbd7714a85ec1d632",
+      "checkedInSha256": "c9c1a0663089fe635b7882472ee769c8650b848a94d3eafb532e24c2986a6f03",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Peoples/services/peopleCreate.ts",
+      "sha256": "38a2d8f259cf04b861064f7efa5ab40a16aa89eaca5839982d64c04f5a921773",
+      "checkedInSha256": "a6c6151280ab8e511800b4380b11819b4acb790620429535c5ad3debb05b073d",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Peoples/services/dataGenerate.ts",
+      "sha256": "05c10ea43ef4210832cf865f58e0e7226477d9cf8352e4ddac1032542c040e98",
+      "checkedInSha256": "9a35693dee5c358cd37c97a97bddf523b9644cce336780dd2fa7caa7896e6c65",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Admin/index.ts",
+      "sha256": "b332ceb2a3bbe15a471acbea7c861448357e3fc47f7cec2d2394a268fd35e1b5",
+      "checkedInSha256": "b332ceb2a3bbe15a471acbea7c861448357e3fc47f7cec2d2394a268fd35e1b5",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/Votes/index.ts",
+      "sha256": "1dd08a6221ff25ae761eece6ea0e7e131bbdfa42a9b0c2994dc51aa56566b19c",
+      "checkedInSha256": "1dd08a6221ff25ae761eece6ea0e7e131bbdfa42a9b0c2994dc51aa56566b19c",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/Tags/index.ts",
+      "sha256": "1b10f4d3f628fdbe6f50a32b2772de80a9b9ac2afc6c0720228f39fe4f26d3ed",
+      "checkedInSha256": "1b10f4d3f628fdbe6f50a32b2772de80a9b9ac2afc6c0720228f39fe4f26d3ed",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/Tags/hooks/beforeChange.ts",
+      "sha256": "0fa6b85ef8796f5ece103645774f06f8554b4613be2b3af343b198a663a53364",
+      "checkedInSha256": "e6051c7157859200e17c1a15d625f27be8b74baff8f2b918401719a5c285ec34",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Bills/index.ts",
+      "sha256": "176ed37d0e432e58b2d4cae93a0acfc14d636ebcd1a752a5ffc943ce63fcbef4",
+      "checkedInSha256": "d0672fd1e18e697c445469216fb3d866fa1c22b2ceedeecfc0310a6377bdbe99",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Bills/endpoints/aiSummary.ts",
+      "sha256": "e0e40bac7c1f21ea5af6e0a21d2c7b871fd6f50c294083822c55308b79c2c89e",
+      "checkedInSha256": "ab5c8d5876e3b683266c455bd7f6c438962b5dd8ec0ef0d67516298cdf54e1e2",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Bills/endpoints/syncBill.ts",
+      "sha256": "ff03d84a2b871060a78bdbf9d5fdb20617addd96da417f9df6cd99ef0851d6af",
+      "checkedInSha256": "539a379a62a346ec466b5135bcfcfd04a59bd9394f2c200bec4fe4b5d17f6c59",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Bills/endpoints/updateBill.ts",
+      "sha256": "773c3c38ef7aa97cd8b2eb866b5c2dbea43ee1d3b79606f81f3ba60a5c1c0c01",
+      "checkedInSha256": "b60269402266022ea9798ec75ac4e477ab4afa7ffc1102e0d86f71cb71297a1c",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Bills/endpoints/fetchBill.ts",
+      "sha256": "34be070d30f6893966b37f37dcf1990d3b684d0e310eeacac0c14975c6e9bb94",
+      "checkedInSha256": "924ebd8ae002acd7f365a5880496ab6049eec39c47815057c1e4c9b1bbe764ea",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Bills/util/current.ts",
+      "sha256": "7eef09735a8830e227cbc09d829b9a11f32a3d498739e75804c28e9b0a1ced13",
+      "checkedInSha256": "645832c2a39a43c4c6db54dd35025f0a8d7ca9a447f540967b05a0d7f609f6d8",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Bills/queries/topTags.ts",
+      "sha256": "3991bf51e87674143df1011357341f40e1c19d637fe8dda266750286ad51959b",
+      "checkedInSha256": "3991bf51e87674143df1011357341f40e1c19d637fe8dda266750286ad51959b",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/Bills/queries/filter.ts",
+      "sha256": "daee1fb428bd257e972b30f02e21360cf4f376d63c178385974bd076bdfa8c58",
+      "checkedInSha256": "daee1fb428bd257e972b30f02e21360cf4f376d63c178385974bd076bdfa8c58",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/Bills/queries/topSponsors.ts",
+      "sha256": "e7637bea6327b9bfa9ddf216bb0a2cbb13ec006e79609733fbd4a1820027d0f9",
+      "checkedInSha256": "cea544fdfdd7033c9e18bd3ab4400fc530c569052f939884a632f3b1a1ba255f",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Bills/queries/index.ts",
+      "sha256": "859f81d43975a14cab2e3bff6d430e4a896a7d5cd07a7217afd411aa00e178b9",
+      "checkedInSha256": "866d7e3e12f552e16a71b3e859b433cdeec5ce2ee3af1cb09075035a98a017a6",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Bills/queries/trendByCategory.ts",
+      "sha256": "0ca1c8d55687a53e65272ea29d93832ce71f4d5c3528b08815a36df14cac79d3",
+      "checkedInSha256": "009889c50dd0ab81f08892acc7f23892827755be722c92bf2464e4563444fa4f",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Bills/resolvers/topTags.ts",
+      "sha256": "6e8cd97c299216324dc9dd74846e37f9526bd73a883048c757f7c89635e85d28",
+      "checkedInSha256": "296ae215a15558f989af713e21a587df82734a8329abd595d1e03692879921db",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Bills/resolvers/filter.ts",
+      "sha256": "76558ab7fba234a473bac9383d747e120971524031887077d9c9a51ceae9ce5d",
+      "checkedInSha256": "4ecd09aa16f707fe0cb167abf1898cb51d437968202f8e9b1165ce763df0fc08",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Bills/resolvers/topSponsors.ts",
+      "sha256": "4e0e02b64704afabf9ff95107188cec460b59ea7a59910b7f1715bc6859f35b5",
+      "checkedInSha256": "4e0e02b64704afabf9ff95107188cec460b59ea7a59910b7f1715bc6859f35b5",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/Bills/resolvers/trendByCategory.ts",
+      "sha256": "78e74e88d134b3ceb6366d9a41694203ace0bf552bd1c0c887959a44291553ca",
+      "checkedInSha256": "608346d807869cc6d565869b741bb50df6a0f9871beb999f41c980bb1e018b9f",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Bills/hooks/afterChange.ts",
+      "sha256": "5bc3d16d63a0f00df0bd802e3a0e98298b07349cd9a71dedf170a721db572b0d",
+      "checkedInSha256": "498b82111848371974844d4aba4a2c2b1cd621da81f3aa7e7ad606e9d6cc17d4",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Bills/hooks/afterDelete.ts",
+      "sha256": "a038b4575cc4dc53a3c652d8659f57408bfb67ad3599494b2cb3206c51f81e0d",
+      "checkedInSha256": "850a3711aedbb6df30b731f13d3ee6fa74f209367f2eeea1e4759dde5b7421b7",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Bills/hooks/beforeChange.ts",
+      "sha256": "804da5b003fdade286e7a1dcd4bfbd6332b019ae72ea81c3ab3fcd13bcf4cffc",
+      "checkedInSha256": "37f5c8719d83763f2ef1a978d361b1dbd88d3a19ecb1ef296547d7f431244815",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Bills/services/dataFetch.ts",
+      "sha256": "a20eeb1d166658b6b6c18ec8410b2a727acc4642b2668ec7914bacd10dedf236",
+      "checkedInSha256": "a20eeb1d166658b6b6c18ec8410b2a727acc4642b2668ec7914bacd10dedf236",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/Bills/services/dataProcess.ts",
+      "sha256": "b45af2c0f8b52c94d1b61650c6e3102413f7e4f8f32dd70ae7d547ec9da2d2b4",
+      "checkedInSha256": "b45af2c0f8b52c94d1b61650c6e3102413f7e4f8f32dd70ae7d547ec9da2d2b4",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/Bills/services/dataTranslate.ts",
+      "sha256": "9ac7fc9bbcd0e0d28913079fb0abb9f81c739d3b6e86acdcd66c36c15c4cc5a0",
+      "checkedInSha256": "22953241d0ce61d5237428aa42ebfdf1709744b7a98b544a56c05547c3086d3a",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Bills/services/dataClassify.ts",
+      "sha256": "f869c1d9173730517221482762fd45ec206351e2f01bcfc3375fe7e0ebd7ae35",
+      "checkedInSha256": "95b7167e596012ebdf136629983af3b9eb0542bf19cdf5e0590343021c8862d1",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Bills/services/billCompose.ts",
+      "sha256": "5fb70add80a14de42125bdd7f074ca23838ae0e2191d2176af5050923ff8e9ba",
+      "checkedInSha256": "5fb70add80a14de42125bdd7f074ca23838ae0e2191d2176af5050923ff8e9ba",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/Bills/services/billUpdate.ts",
+      "sha256": "0d7b770970951820d59b1c82e1b97d04e8d720f0950b73278ff80ee6a70858b2",
+      "checkedInSha256": "53ccf89d5697d6bfa7646dcb4c4b0193cf886e0cf65ca8dcd3c5fdb9feedd419",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Bills/services/congress.ts",
+      "sha256": "ad57c14464ba5c481ba4b7f20bc17161456921efd982c79cbd97d8204f89b648",
+      "checkedInSha256": "ad57c14464ba5c481ba4b7f20bc17161456921efd982c79cbd97d8204f89b648",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/Bills/services/dataGenerate.ts",
+      "sha256": "66e76ee2a4abe2809cb578ecd3e7203849a6dc2d6e4f1290e327b2b652319861",
+      "checkedInSha256": "07a6c2518105a621b52c14422fa82de16ae89d12ee5d6a8f2fddee145383c2c7",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Members/index.ts",
+      "sha256": "be1dbf88ff4ce070abae2cfcda56fb78a08a314c66f45a61f7a5e0c03c5b5912",
+      "checkedInSha256": "be1dbf88ff4ce070abae2cfcda56fb78a08a314c66f45a61f7a5e0c03c5b5912",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/Members/mutations/bookmark.ts",
+      "sha256": "250f5eeb3de4a102e22f7e8e3de0524a67bf7141579c24d09419e434fc081298",
+      "checkedInSha256": "a61f1b0dcbafd843d71fe45ade6ad67afc809a62224528b3e52abe099c5fcb2b",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Members/mutations/notification.ts",
+      "sha256": "0a3c5e124d2e8e6a1f68c55b3c2f75b7c1022fa52cea7534a670d1fc16b555c6",
+      "checkedInSha256": "9321fb50eba91b8902ba307a9ecdd6d82c9246824cb1b4cebd99227eea27a431",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Members/mutations/index.ts",
+      "sha256": "0d2cae0baeb1a16f2ccfa48a56a1590e8a8bfbc07926b4807905d0beadab12ca",
+      "checkedInSha256": "35b2ad20e8f07db056a2227cce364a62a504fb48b7a2e25c56beb963b5e03173",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Members/mutations/subscribe.ts",
+      "sha256": "67b26719f4e202036ace81a9a0de5199b9e46ed757d87ea4e79bed904c5ee228",
+      "checkedInSha256": "c0759fcc8e002cced4a8b191e4f9c0b161d8d5cf894ecd33c521a81a835d2ba1",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Members/mutations/auth.ts",
+      "sha256": "5c1dc1ebfa6bff358d255da0503720c656c882d0dfb7c63dac34b04317f4df89",
+      "checkedInSha256": "fddfb8c1b77ae40bffaebe9fb35a74e05daccabb25a89f23dc90495c180b2fa8",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Members/queries/search.ts",
+      "sha256": "a7e3cfb4d364d346d4093e982c2f202a1eceaf954bf3ea1fe7aaf743790eca44",
+      "checkedInSha256": "38c1e1205c2727ab43246b9f16dc7a5ee2cb30dda0bb268ab84368bdb5b55389",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Members/queries/index.ts",
+      "sha256": "f2254aa41902f32a81c574dbe866e0f310dd4eae97c4ee2989bbe98df6670caa",
+      "checkedInSha256": "e823088066c91d0e4ad12a0eccf4aca58939e08e7940ccad4714f6af2f2a2c11",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Members/queries/me.ts",
+      "sha256": "715532b3be3de7212cb1d4f74d17a786e8dc7e9d0917b4c3e345a7c50c9d80f3",
+      "checkedInSha256": "6faf26d654bc0bae1485c80ae2c8d2d21e3d5d2610f34beb875d1e58a84d34ff",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Members/resolvers/search.ts",
+      "sha256": "084d1f5f6fd3e261915723d931f4b2474e793e7460dd158f0816038d87b0d2a6",
+      "checkedInSha256": "084d1f5f6fd3e261915723d931f4b2474e793e7460dd158f0816038d87b0d2a6",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/Members/resolvers/bookmark.ts",
+      "sha256": "6c555a8b585673120d9854a54a25439801e6c99781e37d398cdc9cec867bcec5",
+      "checkedInSha256": "6c555a8b585673120d9854a54a25439801e6c99781e37d398cdc9cec867bcec5",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/Members/resolvers/notification.ts",
+      "sha256": "6deb69d4b551d40e4a9e17ee540fc9c2528491a576743bc6a11952c919e3a5b9",
+      "checkedInSha256": "6deb69d4b551d40e4a9e17ee540fc9c2528491a576743bc6a11952c919e3a5b9",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/Members/resolvers/relationship.ts",
+      "sha256": "ca0077f1d0ef92c3380935df41227ef2f805b18abd4a964330e05877d3cc6cbd",
+      "checkedInSha256": "ca0077f1d0ef92c3380935df41227ef2f805b18abd4a964330e05877d3cc6cbd",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/Members/resolvers/me.ts",
+      "sha256": "166c04877476faf8c921dd4bc0ed7c113e058e536c7777456fb16c9933ffbccf",
+      "checkedInSha256": "fd182a529edeab19a4dcde8f51ffbcc3e9c8af02f22b81b8fda78cca3f44cd88",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Members/resolvers/subscribe.ts",
+      "sha256": "3a39aa5c24e367bbd271346a506e5858c38079e0912726bda90ec3d2bba87461",
+      "checkedInSha256": "3a39aa5c24e367bbd271346a506e5858c38079e0912726bda90ec3d2bba87461",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/Members/resolvers/auth.ts",
+      "sha256": "78e5c840d5dea1319c51df214d8ba014f1a4377f27c0f13724c6c3415766da06",
+      "checkedInSha256": "13214d426601fd10ac591488e9af327db4d73467a7eb9d376ed2dac4174e8447",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/TaiwanRecords/moderation.ts",
+      "sha256": "c014b571a59117377656a284a8d3861de59511ff36e8c5602cad3423515897f3",
+      "checkedInSha256": "c014b571a59117377656a284a8d3861de59511ff36e8c5602cad3423515897f3",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/TaiwanRecords/index.ts",
+      "sha256": "407998d35b1318cb9033a2188a0c0fd6df4094bc8c8c7614626c5a3e3497c58e",
+      "checkedInSha256": "407998d35b1318cb9033a2188a0c0fd6df4094bc8c8c7614626c5a3e3497c58e",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/TaiwanRecords/endpoints/reject.ts",
+      "sha256": "08e5d4cb455482149addd2b0f49b3adba23c950e16dfd049beb2f4faf5af08ce",
+      "checkedInSha256": "08e5d4cb455482149addd2b0f49b3adba23c950e16dfd049beb2f4faf5af08ce",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/TaiwanRecords/endpoints/unpublish.ts",
+      "sha256": "522d6996e6b6e862b5e08d150ac7772150f7abb9797059272d68bd224ea7222d",
+      "checkedInSha256": "522d6996e6b6e862b5e08d150ac7772150f7abb9797059272d68bd224ea7222d",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/TaiwanRecords/endpoints/approve.ts",
+      "sha256": "de5857008fb7a1a7a7b9cdf981d99f5d36f23a836a0f80a835489e0a5ae845d7",
+      "checkedInSha256": "de5857008fb7a1a7a7b9cdf981d99f5d36f23a836a0f80a835489e0a5ae845d7",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/TaiwanRecords/mutations/reviewRecord.ts",
+      "sha256": "1f1df23837228feec775a95a0f48c12134fa037f338b81b3210a47ef6835b6a8",
+      "checkedInSha256": "1f1df23837228feec775a95a0f48c12134fa037f338b81b3210a47ef6835b6a8",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/TaiwanRecords/mutations/index.ts",
+      "sha256": "56f524f5e1b62d1eb3fdea11e8560e4deb4bb2bcca164c6468516d50a1ed4f38",
+      "checkedInSha256": "4bb84fe30d81e67b12c8a5c9e414869df31935b0c4b0f41329fa8406105d6df7",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/TaiwanRecords/resolvers/reviewRecord.ts",
+      "sha256": "7f3a6e0dc2bdccd1a8df4cea25ba7470beaef8e78034fc74ee93d7bbb3fff741",
+      "checkedInSha256": "7f3a6e0dc2bdccd1a8df4cea25ba7470beaef8e78034fc74ee93d7bbb3fff741",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/TaiwanRecords/hooks/beforeChange.ts",
+      "sha256": "b2ad5e62464864098a40853ca132d1e7c72c12aa5fb72c202050f6575dbaad67",
+      "checkedInSha256": "b2ad5e62464864098a40853ca132d1e7c72c12aa5fb72c202050f6575dbaad67",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/Ustw/Authors/index.ts",
+      "sha256": "569593d11bb51b3679319de2396d5b429567a7631a4ef1445a4cdd07d3a9fa61",
+      "checkedInSha256": "569593d11bb51b3679319de2396d5b429567a7631a4ef1445a4cdd07d3a9fa61",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/Ustw/Footprints/index.ts",
+      "sha256": "a3a34c01bdb386dbd1e596582467070aa5836f350e6ae618247e0b2c771bc825",
+      "checkedInSha256": "a92bc82ada68f5720c9b73bc98bc3a67a845d0512c8424f39dfd2cb85956ef90",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Ustw/Footprints/hooks/beforeChange.ts",
+      "sha256": "ccbcb96bb2d175c13803af9b4bf8d1f5c6805eb6daf05aab984ac1ddc2673b7b",
+      "checkedInSha256": "8850eb676c1def75b7faed21e7dd5cbb2608f4d8e9652307836ff30d8e7e8946",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Ustw/Projects/index.ts",
+      "sha256": "800a1d26c652a10d27721a16b03ee6603a067d5063f36b3d657a3a018ecbf3ed",
+      "checkedInSha256": "f89c1faec77cb856db111c2575c30d7088bf8cec54212986671780d603e89bcd",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Ustw/Projects/hooks/beforeChange.ts",
+      "sha256": "7160e541a87c8fa14273a3e3f4987539a5fead3b421aaefb4de963548715f409",
+      "checkedInSha256": "8409308f200b48e784796cf10a8fd6894ee0775aa6e6d1f22f7ef4de0bc2f408",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Ustw/Articles/index.ts",
+      "sha256": "0cd576d3850cba1d12fb7f3e78fff5a17327fa1b9e767ceb71e1f0db20937c93",
+      "checkedInSha256": "0cd576d3850cba1d12fb7f3e78fff5a17327fa1b9e767ceb71e1f0db20937c93",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/Ustw/Articles/hooks/afterChange.ts",
+      "sha256": "92e28b8aa0ec40099596fc378f3a0baa8c608ee6dde66495aed398527cd84491",
+      "checkedInSha256": "8bbfb94a332efba9e14c9b96eed7625c7f86044fc821b6c1dced1eda15c1dde5",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Ustw/Articles/hooks/afterDelete.ts",
+      "sha256": "aecc90b744ae25b75f6b077d3b81645a399b9bdc1a476ec10915b3ef174bc87f",
+      "checkedInSha256": "e62fded31cbea1f41a2c6d73e4611acc975f196d3ce5cab9d880c7bbdd57925a",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Ustw/Members/index.ts",
+      "sha256": "f8b7a78b50c971d7538e4a6599660957f85c11042b2ef40248729a9bf008c645",
+      "checkedInSha256": "abd9d601d806e09f6f27b96e1e8f5ab37efe6ab4a8d51eb71563b1f8d70fbfdf",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Ustw/Members/hooks/beforeChange.ts",
+      "sha256": "54e37ed7dc4dcd5692cc15a73406e3c4668c6a2a3a4e21f6e4314da209f76a34",
+      "checkedInSha256": "23ee05444c0d8d9150d454b452e151a2fc8c71b50dc0283fd9ce6127d7940baf",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Categories/Categories.ts",
+      "sha256": "f72f0c27365fe828bd3bfbe8e611a7f60eccb23c7d17b694f7d8ac0cb36e940a",
+      "checkedInSha256": "f72f0c27365fe828bd3bfbe8e611a7f60eccb23c7d17b694f7d8ac0cb36e940a",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/Categories/index.ts",
+      "sha256": "96d3677a0f7e7b30c0ae757ca9d1d7ea8e68467e73db821fd0f6f085595e0be0",
+      "checkedInSha256": "a8b7a2c3eb6d9885f6ca70680e6a2baf82e2ed088b4227c531a5ab5d65f70ee8",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Categories/hooks/beforeChange.ts",
+      "sha256": "0fa6b85ef8796f5ece103645774f06f8554b4613be2b3af343b198a663a53364",
+      "checkedInSha256": "e6051c7157859200e17c1a15d625f27be8b74baff8f2b918401719a5c285ec34",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Ketagalan/Authors/index.ts",
+      "sha256": "c961695789fcb951318fd42995464d54e1f9b6c12e196c7355bf9e34b3f7a096",
+      "checkedInSha256": "c961695789fcb951318fd42995464d54e1f9b6c12e196c7355bf9e34b3f7a096",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/Ketagalan/Footprints/index.ts",
+      "sha256": "e767d9c8770b56367f38e54fcf80224d1957d7eb0671b510ebbb891a9a7b2eed",
+      "checkedInSha256": "6c5fc171534c1bc650b93febb86e6fa6c3b792c202f04005da56d59a280f5814",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Ketagalan/Footprints/hooks/beforeChange.ts",
+      "sha256": "ccbcb96bb2d175c13803af9b4bf8d1f5c6805eb6daf05aab984ac1ddc2673b7b",
+      "checkedInSha256": "8850eb676c1def75b7faed21e7dd5cbb2608f4d8e9652307836ff30d8e7e8946",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Ketagalan/Projects/index.ts",
+      "sha256": "d5d0265d03b837090c2dc813ed834d465cbd6ff9c342c550cc5c34f7ab82f2f6",
+      "checkedInSha256": "b0826d0da7b3ab64a29e8e59a3d5944ff82b6a42fcada841d438a2aa06c01860",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Ketagalan/Projects/hooks/beforeChange.ts",
+      "sha256": "7160e541a87c8fa14273a3e3f4987539a5fead3b421aaefb4de963548715f409",
+      "checkedInSha256": "8409308f200b48e784796cf10a8fd6894ee0775aa6e6d1f22f7ef4de0bc2f408",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Ketagalan/Articles/index.ts",
+      "sha256": "03f57bb6066b7207bd613554d17739296d1b8be752474c299edac98e518eab75",
+      "checkedInSha256": "03f57bb6066b7207bd613554d17739296d1b8be752474c299edac98e518eab75",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/Ketagalan/Articles/hooks/afterChange.ts",
+      "sha256": "94b0caf34f6c0cfde8ec13865a8af20ba0a694ec65489e2332b687bf2685bc4a",
+      "checkedInSha256": "815336444a6ae28f04ba30597552f7fc9a2d0f8f56363e789b60c48b62831e92",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Ketagalan/Articles/hooks/afterDelete.ts",
+      "sha256": "aecc90b744ae25b75f6b077d3b81645a399b9bdc1a476ec10915b3ef174bc87f",
+      "checkedInSha256": "e62fded31cbea1f41a2c6d73e4611acc975f196d3ce5cab9d880c7bbdd57925a",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Ketagalan/Members/index.ts",
+      "sha256": "1ff971bc77dd6c7a63824a6aa9ddc5aa1abaeba205106135ee620993abb89e83",
+      "checkedInSha256": "a74ccf7e07eddc7919a6a480d0819df42915135411aecbcbacd98c39e92d0245",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Ketagalan/Members/hooks/beforeChange.ts",
+      "sha256": "54e37ed7dc4dcd5692cc15a73406e3c4668c6a2a3a4e21f6e4314da209f76a34",
+      "checkedInSha256": "23ee05444c0d8d9150d454b452e151a2fc8c71b50dc0283fd9ce6127d7940baf",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Media/MediaTaiwanRecord.ts",
+      "sha256": "ec1eadadc1eb918b460157ef71a7ddd998cfce4132299f6c7001462b0f0c0dc0",
+      "checkedInSha256": "ec1eadadc1eb918b460157ef71a7ddd998cfce4132299f6c7001462b0f0c0dc0",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/Media/MediaMember.ts",
+      "sha256": "d7149785ba4891788e10b118dcd9ada04a0579a8e4e97d3cfe959be3dbf26a2d",
+      "checkedInSha256": "d7149785ba4891788e10b118dcd9ada04a0579a8e4e97d3cfe959be3dbf26a2d",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/Media/MediaProject.ts",
+      "sha256": "dc8ef9318a23008c7d99d27fd410bab8522f1953515eeb68b250083eaf892681",
+      "checkedInSha256": "dc8ef9318a23008c7d99d27fd410bab8522f1953515eeb68b250083eaf892681",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/Media/MediaArticle.ts",
+      "sha256": "136510c655a3b1704c2ff91a2c54d148eb3c061277152242ad7dd52918ee26b9",
+      "checkedInSha256": "136510c655a3b1704c2ff91a2c54d148eb3c061277152242ad7dd52918ee26b9",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/Media/MediaKetagalan.ts",
+      "sha256": "f8f0c7595712a763c3c6f828a7bf417afdd6b784a704e5f71c39bb4b3c521cf7",
+      "checkedInSha256": "f8f0c7595712a763c3c6f828a7bf417afdd6b784a704e5f71c39bb4b3c521cf7",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/collections/Media/index.ts",
+      "sha256": "0040ff71730993761f59bc92176cce12a190959f77e039534c4905440533f855",
+      "checkedInSha256": "1bfe517c95a0a0cd658eb006a3930885a485fe8a414ee086c945c389c646e226",
+      "whitespaceOnlyNormalization": true
+    },
+    {
+      "path": "src/collections/Media/MediaPeople.ts",
+      "sha256": "75582875b3a6db5e8c040d491f92935c1009d340e1373ae09c694e050ae9793b",
+      "checkedInSha256": "75582875b3a6db5e8c040d491f92935c1009d340e1373ae09c694e050ae9793b",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/services/auth0.ts",
+      "sha256": "4e34dbdca4a75a523cb2c745b48ef36e55807763ecdb98273dfb134bc548fb7b",
+      "checkedInSha256": "4e34dbdca4a75a523cb2c745b48ef36e55807763ecdb98273dfb134bc548fb7b",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/services/fetchJson.ts",
+      "sha256": "dff44b7d58480e9546308bb40a31fabb71da134827315878994faf3a556d61ae",
+      "checkedInSha256": "dff44b7d58480e9546308bb40a31fabb71da134827315878994faf3a556d61ae",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/services/sendgrid.ts",
+      "sha256": "7391fd69e114dfeacbc4004813ce215164f1ab0a9912a9f14268bf970924de07",
+      "checkedInSha256": "7391fd69e114dfeacbc4004813ce215164f1ab0a9912a9f14268bf970924de07",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/services/algolia.ts",
+      "sha256": "f1760d2eb814c661aa9ca2303ad46fc89bfd01f6c8c92b10e5c0ea737afdad61",
+      "checkedInSha256": "f1760d2eb814c661aa9ca2303ad46fc89bfd01f6c8c92b10e5c0ea737afdad61",
+      "whitespaceOnlyNormalization": false
+    },
+    {
+      "path": "src/services/azureSearch.ts",
+      "sha256": "8fe98554a741b8f63d851585ac8e267ebc771a1af09455e8bd9de9b31f2a2571",
+      "checkedInSha256": "8fe98554a741b8f63d851585ac8e267ebc771a1af09455e8bd9de9b31f2a2571",
+      "whitespaceOnlyNormalization": false
+    }
+  ],
+  "excludedOsMetadata": [
+    ".DS_Store"
+  ]
+}

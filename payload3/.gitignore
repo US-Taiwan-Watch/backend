@@ -1,0 +1,9 @@
+node_modules
+.next/
+*.tsbuildinfo
+.env*
+!.env.example
+*.key
+*.pem
+runtime-storage/
+.DS_Store
