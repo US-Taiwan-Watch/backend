@@ -1,6 +1,6 @@
 [Unit]
-Description=USTW encrypted database and media backup to private Azure storage
-After=network-online.target mongod.service
+Description=USTW encrypted media backup to private Azure storage
+After=network-online.target
 Wants=network-online.target
 [Service]
 Type=oneshot
@@ -13,5 +13,4 @@ IOSchedulingClass=idle
 CPUQuota=50%
 MemoryMax=1G
 TimeoutStartSec=3600
-ExecStartPre=/usr/local/sbin/ustw-mongodb-backup
 ExecStart=/usr/bin/python3 /usr/local/lib/ustw-recovery/backup.py

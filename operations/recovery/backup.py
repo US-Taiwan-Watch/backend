@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Daily, self-contained encrypted backups. Writer has no cloud read/delete access.
+"""Daily, self-contained encrypted media backups. Writer has no cloud read/delete access.
 
 Source media is cached as individually sealed files; unchanged media is never
 downloaded again. Every daily media archive is complete, so Azure can expire
@@ -12,7 +12,7 @@ import xml.etree.ElementTree as ET
 import seal
 
 BASE=Path('/var/lib/ustw-recovery');CONFIG=Path('/etc/ustw-recovery/config.json')
-MAX_MEDIA=800_000_000;MAX_FILES=4000;MAX_DB=10_000_000
+MAX_MEDIA=800_000_000;MAX_FILES=4000
 MAX_DAILY_DOWNLOAD=100_000_000;MAX_MONTHLY_DOWNLOAD=5_000_000_000
 MAX_UPLOAD=830_000_000
 
@@ -64,7 +64,7 @@ def upload(url,name,path):
         with path.open('rb') as stream:connection.request('PUT',parsed.path+'?'+parsed.query,body=stream,headers=headers)
         response=connection.getresponse();response.read(1024)
         if response.status!=201:raise RuntimeError('Backup storage did not acknowledge creation: '+str(response.status))
-        return {'name':name,'bytes':path.stat().st_size,'sha256':seal.sha256(path),'azureAcknowledged':True,'contentMD5Validated':True}
+        return {'name':name,'bytes':path.stat().st_size,'sha256':seal.sha256(path),'azureAcknowledged':True,'contentMD5Validated':True,'contentMD5':base64.b64encode(digest.digest()).decode()}
     finally:connection.close()
 
 def obtain(row,source,cache,cert,work):
@@ -95,7 +95,7 @@ def backup(config,now=None):
     now=now or datetime.datetime.now(datetime.timezone.utc);stamp=now.strftime('%Y%m%dT%H%M%SZ');day=now.strftime('%Y-%m-%d');month=now.strftime('%Y-%m')
     cert=Path(config['recipientCertificate']);cache=BASE/'cache';cache.mkdir(mode=0o700,exist_ok=True)
     status_path=BASE/'status.json';previous=json.loads(status_path.read_text()) if status_path.exists() else {}
-    if previous.get('ok') and previous.get('day')==day:return previous
+    if previous.get('ok') and previous.get('scope')=='media' and previous.get('day')==day:return previous
     if config['credentialExpiresEpoch']-time.time()<30*86400:raise RuntimeError('Storage credentials require renewal within 30 days')
     usage_path=BASE/'download-usage.json';usage=json.loads(usage_path.read_text()) if usage_path.exists() else {}
     used=usage.get('bytes',0) if usage.get('month')==month else 0
@@ -107,11 +107,8 @@ def backup(config,now=None):
     # Reserve before fetching. Failed attempts cannot silently consume unbounded egress.
     atomic(usage_path,{'month':month,'bytes':used+download})
     if shutil.disk_usage(BASE).free<3_000_000_000:raise RuntimeError('Insufficient protected backup workspace')
-    archive_dir=Path('/var/backups/ustw-mongodb');database=max(archive_dir.glob('ustw-full-*.archive.gz'),key=lambda p:p.stat().st_mtime)
-    if not 0<=time.time()-database.stat().st_mtime<3*3600 or database.stat().st_size>MAX_DB:raise RuntimeError('Fresh bounded database backup is required')
-    if seal.sha256(database)!=Path(str(database)+'.sha256').read_text().split()[0]:raise RuntimeError('Source database checksum failed')
     with tempfile.TemporaryDirectory(prefix='work-',dir=BASE) as folder:
-        work=Path(folder);database_enc=work/'database.archive.gz.cms';seal.transform(database,database_enc,cert)
+        work=Path(folder)
         records=[]
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
             futures=[pool.submit(obtain,row,sources[row['container']],cache,cert,work) for row in rows]
@@ -127,13 +124,13 @@ def backup(config,now=None):
             for row in records:tar.add(cache/Path(row['localFile']).name,arcname=row['localFile'],recursive=False)
         media_enc=work/'media.tar.cms';seal.transform(media_tar,media_enc,cert);media_tar.unlink()
         prefix='daily/'+stamp+'/'
-        receipts=[upload(config['backupContainer'],prefix+'database.archive.gz.cms',database_enc),upload(config['backupContainer'],prefix+'media.tar.cms',media_enc)]
-        summary=work/'receipt.json';atomic(summary,{'version':1,'createdAt':now.isoformat(),'recipientCertificateSHA256':seal.sha256(cert),'files':receipts,'mediaFiles':len(rows),'mediaBytes':sum(r['bytes'] for r in rows),'databasePlainSHA256':seal.sha256(database)})
+        receipts=[upload(config['backupContainer'],prefix+'media.tar.cms',media_enc)]
+        summary=work/'receipt.json';atomic(summary,{'version':1,'scope':'media','createdAt':now.isoformat(),'recipientCertificateSHA256':seal.sha256(cert),'files':receipts,'mediaFiles':len(rows),'mediaBytes':sum(r['bytes'] for r in rows)})
         summary_enc=work/'receipt.json.cms';seal.transform(summary,summary_enc,cert);receipts.append(upload(config['backupContainer'],prefix+'receipt.json.cms',summary_enc))
     live={cache_id(r['container'],r['name'],r['etag']) for r in rows}
     for item in cache.iterdir():
         if item.is_file() and item.suffix in ('.cms','.json') and item.stem not in live:item.unlink()
-    status={'ok':True,'day':day,'checkedAtEpoch':int(time.time()),'lastSuccessEpoch':int(time.time()),'mediaFiles':len(rows),'mediaBytes':sum(r['bytes'] for r in rows),'downloadedBytes':download,'monthlySourceDownloadedBytes':used+download,'cloudFiles':receipts,'credentialExpiresEpoch':config['credentialExpiresEpoch']}
+    status={'ok':True,'scope':'media','day':day,'checkedAtEpoch':int(time.time()),'lastSuccessEpoch':int(time.time()),'mediaFiles':len(rows),'mediaBytes':sum(r['bytes'] for r in rows),'downloadedBytes':download,'monthlySourceDownloadedBytes':used+download,'cloudFiles':receipts,'credentialExpiresEpoch':config['credentialExpiresEpoch']}
     atomic(status_path,status);return status
 
 def main():
