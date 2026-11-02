@@ -1,0 +1,1 @@
+{"name":"ustw-azure-monitor","version":"1.0.0","private":true,"type":"module","scripts":{"start":"node --max-old-space-size=64 server.mjs","test":"node --test"},"engines":{"node":">=22"}}

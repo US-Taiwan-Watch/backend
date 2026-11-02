@@ -1,0 +1,150 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "resources": [
+    {
+      "type": "Microsoft.Insights/actionGroups",
+      "apiVersion": "2023-01-01",
+      "name": "ustw-production-email",
+      "location": "global",
+      "properties": {
+        "groupShortName": "USTW-prod",
+        "enabled": true,
+        "emailReceivers": [
+          {
+            "emailAddress": "contact@ustw.watch",
+            "name": "USTW shared inbox",
+            "useCommonAlertSchema": true
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Insights/metricAlerts",
+      "apiVersion": "2018-03-01",
+      "name": "ustw-production-health",
+      "location": "global",
+      "properties": {
+        "actions": [
+          {
+            "actionGroupId": "/subscriptions/01245504-7d2b-413e-8764-fb555e5a5b33/resourceGroups/ustw-cms-rg/providers/Microsoft.Insights/actionGroups/ustw-production-email"
+          }
+        ],
+        "autoMitigate": true,
+        "criteria": {
+          "allOf": [
+            {
+              "criterionType": "StaticThresholdCriterion",
+              "metricName": "Http5xx",
+              "metricNamespace": "Microsoft.Web/sites",
+              "name": "Health",
+              "operator": "GreaterThan",
+              "threshold": 0.0,
+              "timeAggregation": "Total"
+            }
+          ],
+          "odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria"
+        },
+        "description": "USTW website/backend/database/disk/backup/TLS monitoring. Check monitoring app console and database journal. Stateful: recovery after six quiet hours prevents email storms.",
+        "enabled": true,
+        "evaluationFrequency": "PT5M",
+        "scopes": [
+          "/subscriptions/01245504-7d2b-413e-8764-fb555e5a5b33/resourceGroups/ustw-cms-rg/providers/Microsoft.Web/sites/ustw-ops-monitor"
+        ],
+        "severity": 1,
+        "windowSize": "PT6H"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/actionGroups', 'ustw-production-email')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Insights/metricAlerts",
+      "apiVersion": "2018-03-01",
+      "name": "ustw-monitor-unavailable",
+      "location": "global",
+      "properties": {
+        "actions": [
+          {
+            "actionGroupId": "/subscriptions/01245504-7d2b-413e-8764-fb555e5a5b33/resourceGroups/ustw-cms-rg/providers/Microsoft.Insights/actionGroups/ustw-production-email"
+          }
+        ],
+        "autoMitigate": true,
+        "criteria": {
+          "allOf": [
+            {
+              "criterionType": "StaticThresholdCriterion",
+              "metricName": "HealthCheckStatus",
+              "metricNamespace": "Microsoft.Web/sites",
+              "name": "Health",
+              "operator": "LessThan",
+              "threshold": 100.0,
+              "timeAggregation": "Minimum"
+            }
+          ],
+          "odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria"
+        },
+        "description": "USTW website/backend/database/disk/backup/TLS monitoring. Check monitoring app console and database journal. Stateful: recovery after six quiet hours prevents email storms.",
+        "enabled": true,
+        "evaluationFrequency": "PT5M",
+        "scopes": [
+          "/subscriptions/01245504-7d2b-413e-8764-fb555e5a5b33/resourceGroups/ustw-cms-rg/providers/Microsoft.Web/sites/ustw-ops-monitor"
+        ],
+        "severity": 1,
+        "windowSize": "PT6H"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/actionGroups', 'ustw-production-email')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Insights/activityLogAlerts",
+      "apiVersion": "2020-10-01",
+      "name": "ustw-production-platform-health",
+      "location": "global",
+      "properties": {
+        "actions": {
+          "actionGroups": [
+            {
+              "actionGroupId": "/subscriptions/01245504-7d2b-413e-8764-fb555e5a5b33/resourceGroups/ustw-cms-rg/providers/Microsoft.Insights/actionGroups/ustw-production-email"
+            }
+          ]
+        },
+        "condition": {
+          "allOf": [
+            {
+              "equals": "ResourceHealth",
+              "field": "category"
+            },
+            {
+              "equals": "Active",
+              "field": "status"
+            },
+            {
+              "anyOf": [
+                {
+                  "equals": "Unavailable",
+                  "field": "properties.currentHealthStatus"
+                },
+                {
+                  "equals": "Degraded",
+                  "field": "properties.currentHealthStatus"
+                }
+              ]
+            }
+          ]
+        },
+        "description": "Azure-reported unavailable/degraded resource health for the current USTW website, backend and monitor. No metric or log-query charges.",
+        "enabled": true,
+        "scopes": [
+          "/subscriptions/01245504-7d2b-413e-8764-fb555e5a5b33/resourceGroups/ustw-cms-rg/providers/Microsoft.Web/sites/ustw-cms-backend",
+          "/subscriptions/01245504-7d2b-413e-8764-fb555e5a5b33/resourceGroups/ustw-cms-rg/providers/Microsoft.Web/sites/ustw-cms-frontend-dev",
+          "/subscriptions/01245504-7d2b-413e-8764-fb555e5a5b33/resourceGroups/ustw-cms-rg/providers/Microsoft.Web/sites/ustw-ops-monitor"
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/actionGroups', 'ustw-production-email')]"
+      ]
+    }
+  ]
+}
