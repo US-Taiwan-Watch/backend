@@ -1,5 +1,5 @@
 [Unit]
-Description=Copy encrypted USTW recovery archives off server daily
+Description=Copy encrypted USTW media archives off server daily
 [Timer]
 OnCalendar=*-*-* 08:15:00 UTC
 RandomizedDelaySec=5m
