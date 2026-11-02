@@ -1,3 +1,5 @@
+> **Current production CMS:** [payload3/](payload3/README.md) contains the deployed Payload3.92.1 / MongoDB9 application. The older root application below is historical. CI no longer publishes its old Docker image.
+
 # USTW Backend
 
 ## Prepare repo

@@ -1,0 +1,14 @@
+**
+!package.json
+!package-lock.json
+!.npmrc
+!next.config.mjs
+!next-env.d.ts
+!tsconfig.json
+!src/
+!src/**
+!scripts/
+!scripts/patch-payload-form.cjs
+!start-production.mjs
+!Dockerfile
+!mongodb-ca.crt
