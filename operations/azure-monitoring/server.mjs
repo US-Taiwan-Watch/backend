@@ -5,11 +5,12 @@ import {dirname} from 'node:path';
 import {pathToFileURL} from 'node:url';
 
 export const requiredChecks = ['serviceActive','certificateValidBeyond30Days','diskBelow85Percent','recentFullBackup','backupChecksum','primary','tlsRequired','approvedBindAddresses','authorization','backendOnlyMongoFirewall','certificatePurpose_sslserver','certificatePurpose_sslclient'];
+export const diagnosticChecks = [...requiredChecks,'certificateRenewalHealthy','certificateIssuerValidBeyond90Days','certificateRenewalTimerActive'];
 export function validHeartbeat(value, now = Date.now()) {
-  return value && Number.isInteger(value.checkedAtEpoch) && value.checkedAtEpoch * 1000 > now - 600000 && value.checkedAtEpoch * 1000 <= now + 60000 && typeof value.passed === 'boolean' && requiredChecks.every(k => typeof value.checks?.[k] === 'boolean');
+  return value && Number.isInteger(value.checkedAtEpoch) && value.checkedAtEpoch * 1000 > now - 600000 && value.checkedAtEpoch * 1000 <= now + 60000 && typeof value.passed === 'boolean' && requiredChecks.every(k => typeof value.checks?.[k] === 'boolean') && diagnosticChecks.every(k=>value.checks[k] === undefined || typeof value.checks[k] === 'boolean');
 }
 export function databaseHealthy(value, now = Date.now()) {
-  return Boolean(validHeartbeat(value, now) && value.passed && requiredChecks.every(k => value.checks[k]));
+  return Boolean(validHeartbeat(value, now) && value.passed && diagnosticChecks.every(k => value.checks[k] !== false));
 }
 export function authenticated(header, token) {
   const expected = Buffer.from(`Bearer ${token}`), actual = Buffer.from(header || '');
@@ -50,7 +51,7 @@ export async function start(env = process.env) {
       for await (const chunk of req) {data += chunk; if (Buffer.byteLength(data) > 8192) return reply(413,{status:'too large'});}
       const value = JSON.parse(data);
       if (!validHeartbeat(value) || (heartbeat && value.checkedAtEpoch <= heartbeat.checkedAtEpoch)) return reply(400,{status:'invalid heartbeat'});
-      const filtered = {checkedAtEpoch:value.checkedAtEpoch, passed:value.passed, checks:Object.fromEntries(requiredChecks.map(k=>[k,value.checks[k]]))};
+      const filtered = {checkedAtEpoch:value.checkedAtEpoch, passed:value.passed, checks:Object.fromEntries(diagnosticChecks.filter(k=>typeof value.checks[k] === 'boolean').map(k=>[k,value.checks[k]]))};
       await mkdir(dirname(statePath),{recursive:true,mode:0o700});
       await writeFile(`${statePath}.tmp`,JSON.stringify(filtered),{mode:0o600});
       await rename(`${statePath}.tmp`,statePath);
@@ -67,7 +68,7 @@ export async function start(env = process.env) {
     try {
       const results = await Promise.all([checkUrl(env.WEBSITE_URL),checkUrl(env.BACKEND_URL)]);
       websitesHealthy = results.every(Boolean); websitesCheckedAt = Date.now();
-      console.log(JSON.stringify({checkedAt:new Date().toISOString(),website:results[0],backend:results[1],database:databaseHealthy(heartbeat),failedDatabaseChecks:requiredChecks.filter(k=>heartbeat?.checks?.[k] !== true)}));
+      console.log(JSON.stringify({checkedAt:new Date().toISOString(),website:results[0],backend:results[1],database:databaseHealthy(heartbeat),failedDatabaseChecks:diagnosticChecks.filter(k=>requiredChecks.includes(k) ? heartbeat?.checks?.[k] !== true : heartbeat?.checks?.[k] === false)}));
       // An HTTPS request through App Service records its standard Http5xx metric.
       // /ready remains independent: a backup warning must never recycle the shared worker.
       if (env.PROBE_URL && (heartbeat || Date.now()-startedAt > 600000)) await fetch(env.PROBE_URL,{signal:AbortSignal.timeout(15000)}).then(r=>r.body?.cancel()).catch(()=>{});

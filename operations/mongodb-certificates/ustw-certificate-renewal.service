@@ -1,0 +1,12 @@
+[Unit]
+Description=USTW MongoDB certificate renewal and online reload
+After=mongod.service network-online.target
+
+[Service]
+Type=oneshot
+User=root
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+TimeoutStartSec=300
+ExecStart=/usr/bin/python3 /usr/local/libexec/ustw-renew-certificate.py
