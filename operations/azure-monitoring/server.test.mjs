@@ -16,6 +16,14 @@ test('only exact bearer token accepted',()=>{
   const t='x'.repeat(48); assert.equal(authenticated(`Bearer ${t}`,t),true);
   for (const h of ['',`Bearer ${'y'.repeat(48)}`,t]) assert.equal(authenticated(h,t),false);
 });
+test('renewal failures fail closed while older complete reports remain compatible',()=>{
+  assert.equal(databaseHealthy(value()),true);
+  for(const key of ['certificateRenewalHealthy','certificateIssuerValidBeyond90Days','certificateRenewalTimerActive']){
+    const report=value();report.checks[key]=false;assert.equal(databaseHealthy(report),false);
+    report.checks[key]='wrong type';assert.equal(validHeartbeat(report),false);
+    report.checks[key]=true;assert.equal(databaseHealthy(report),true);
+  }
+});
 test('website failure, network failure, redirects, and invalid backend payload fail closed',async()=>{
   assert.equal(await checkUrl('http://example.com'),false);
   assert.equal(await checkUrl('https://example.com',async()=>{throw Error();}),false);
