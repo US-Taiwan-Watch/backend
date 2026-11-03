@@ -75,4 +75,4 @@ Azure copying is media only. It does not duplicate source or database backups. A
 - Bill/people automatic updates and newsletters remain disabled by user decision.
 - Registrar/DNS ownership, some service billing/legal ownership and old-server retirement are later administrative work.
 - This owner's USTW ChatGPT space is a project dashboard; team access is not configured. It is not a required engineering entry point.
-- `local-operations` on Jerry's Mac contains optional tools, operator sign-in caches and historical working records. It is not shared, is not part of deployment and is not the team's documentation or credential store. Do not publish that folder or rely on its files for onboarding.
+- The temporary migration workspace, local tools/session caches and rehearsal records were removed after handoff. Maintenance uses these GitHub guides and authorized service access; no operator's Mac is required. The historical encrypted current/pre-cutover app-settings snapshot is in the existing protected Notion recovery section; live settings remain in Azure.
