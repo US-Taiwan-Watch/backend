@@ -4,7 +4,7 @@ The database host checks its certificate daily at **07:00 UTC plus up to 15 minu
 
 ## Trust and keys
 
-- The original root CA and backend trust file are unchanged. The root signing key remains offline in the protected USTW workspace; it was not copied to the database host.
+- The original root CA and backend trust file are unchanged. The root signing key is retained in [Notion service credentials](https://www.notion.so/2e449272635e4867afeb7ed843bf9730) → **Production recovery kit**, outside the database host. Temporary workspace key copies were removed after verifying the Notion kit.
 - A dedicated RSA3072 issuer key is generated on `ustw-db-prod`. Its signed intermediate has a critical `pathlen:0` constraint, TLS server/client purposes, and critical DNS/IP constraints permitting only the current database hostname, `localhost`, `45.61.62.229` and `127.0.0.1`. It cannot issue subordinate CAs. Normal DNS constraint semantics also permit subdomains of the listed DNS names; the renewal script pins the exact existing leaf SAN set and subject.
 - The issuer directory is root-only (0700); its private key is 0600. The MongoDB process cannot read the signing key. The existing leaf private key stays on the server and is reused; this task renews certificates rather than rotating the leaf key.
 - The leaf retains its exact subject/SANs and both serverAuth/clientAuth purposes. The active PEM contains the existing private key, leaf certificate and intermediate chain. MongoDB's CA file remains the original root.
@@ -60,6 +60,6 @@ For manual rollback, stop the renewal timer, preserve the current files, restore
 
 Four Python tests cover the renewal boundary, atomic replacement, ownership, successful rotation and rollback. Six monitor test groups cover existing reports and optional renewal diagnostics. On the host, a candidate passed both TLS purposes and all four identities; an unrelated DNS/IP certificate was rejected by the constrained trust chain. Live activation kept the same mongod PID and all database health checks passed. A fresh Node22/application-credential connection read an existing article through a temporary SSH tunnel using the unchanged backend CA; public website/backend/monitor reads returned200. No database content was written.
 
-Local restricted rollout receipts: `mongodb-migration/reports/certificate-renewal-verification.json`, `certificate-renewal-node-connection.json`, `certificate-renewal-constraints.json`, and `certificate-renewal-issuer.json`. Key values are absent from this repository and Pages.
+Current verification receipt: workspace `local-operations/reports/certificate-renewal-verification.json`. Supporting historical receipts (`certificate-renewal-node-connection.json`, `certificate-renewal-constraints.json`, `certificate-renewal-issuer.json`) are in `local-operations/archive/migration-20261028-20261103/reports/`. Start with workspace `USTW_HANDOFF.md` for current maintenance instructions. Key values are absent from this repository and Pages.
 
 MongoDB behavior: https://www.mongodb.com/docs/manual/reference/command/rotateCertificates/ ; certificate constraints: https://docs.openssl.org/3.5/man5/x509v3_config/ .

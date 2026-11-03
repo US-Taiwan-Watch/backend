@@ -14,7 +14,7 @@ is held in GitHub. The job does not read, dump or upload the database.
 | Receipt scope | media; no database archive or database checksum |
 | Access | Read/list source media; create-only destination; HTTPS/server-IP restricted |
 | Encryption | CMS AES-256-GCM with RSA-OAEP/SHA256; public certificate on writer only |
-| Private key | Protected Mac recovery-validation/key/recipient.key; absent from writer/Azure |
+| Private key | Existing Notion service credentials → Production recovery kit; absent from writer/Azure |
 | Configuration | /etc/ustw-recovery/config.json, root/0600 |
 | Status/cache | /var/lib/ustw-recovery/, root/0700; cache objects are encrypted |
 | Worker | /usr/local/lib/ustw-recovery/backup.py and seal.py |
@@ -31,7 +31,10 @@ existing cloud objects.
 ## Restore media
 
 1. Download media.tar.cms and receipt.json.cms from one successful timestamp
-   into a protected directory. Obtain the private recovery key separately.
+   into a protected directory. Obtain `media-recovery.key` and its certificate
+   from [Notion service credentials](https://www.notion.so/2e449272635e4867afeb7ed843bf9730)
+   → **Production recovery kit**. For the commands below, save them as
+   `recipient.key` and `recipient.crt`; keep their directory private.
 2. Decrypt the receipt, verify recipient-certificate and encrypted archive
    SHA256 values, then run the media restore command below.
 3. Check the returned per-file checksums and manifest. Use new private Azure
@@ -70,9 +73,11 @@ returns inactive; the timer stays enabled and active. The unchanged helper
 recognizes the three offServerBackup* / backupCredentialValidBeyond30Days checks.
 
 The Azure backup container shares an account with live media, so it does not
-protect against loss of that whole account. Retained Mac archives are dated
-copies. No new hosting plan, separate backup service or source/database backup
-subscription is required.
+protect against loss of that whole account. The temporary Mac validation
+archives and duplicate keys were removed after recovery verification. Recovery
+keys are retained in the verified Notion kit; daily media archives remain in
+Azure. No new hosting plan or separate source/database backup subscription is
+required.
 
 ## Source validation
 
